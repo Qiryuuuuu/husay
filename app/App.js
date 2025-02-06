@@ -1,9 +1,11 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+
 import LoginScreen from "./screens/signIn";
 import SignUpScreen from "./screens/signUp";
-import securityQuestionScreen from "./screens/securityQuestion";
+import SecurityQuestionScreen from "./screens/securityQuestion";
+import ForgotPasswordScreen from "./screens/forgotPass"
 
 const Stack = createStackNavigator();
 
@@ -13,7 +15,8 @@ export default function App() {
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
-        <Stack.Screen name="SecurityQuestion" component={securityQuestionScreen} />
+        <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
