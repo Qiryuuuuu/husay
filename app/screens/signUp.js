@@ -35,7 +35,9 @@ export default function SignUpScreen({ navigation }) {
 
         <View style={styles.nextContainer}>
           <TouchableOpacity>
-            <Text style={styles.nextTriggerText}>Next</Text>
+            <Text style={styles.nextTriggerText} onPress={() => navigation.navigate("SecurityQuestion")}>
+                Next
+            </Text>
           </TouchableOpacity>
         </View>
 

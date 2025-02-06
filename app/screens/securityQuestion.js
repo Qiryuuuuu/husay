@@ -1,0 +1,235 @@
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+
+const logoImg = require("../../assets/logo.png");
+const backgroundImg = require("../../assets/signup-bg.webp");
+
+export default function SecurityQuestionScreen({ navigation }) {
+  const [selectedQuestion1, setSelectedQuestion1] = useState("");
+  const [selectedQuestion2, setSelectedQuestion2] = useState("");
+  const [selectedQuestion3, setSelectedQuestion3] = useState("");
+
+  const securityQuestions = [
+    "What is your pet’s name?",
+    "What is your mother’s maiden name?",
+    "What was the name of your first school?",
+    "What is your favorite movie?",
+    "What city were you born in?",
+  ];
+
+  return (
+    <View style={styles.container}>
+      {/* Left Side - Image and Title */}
+      <View style={styles.leftContainer}>
+        <View style={styles.headerContainer}>
+          <Image source={logoImg} style={styles.logo} />
+          <Text style={styles.title}>
+            Discover Your Adventure! Fun, Learning, and Play Await!
+          </Text>
+        </View>
+        <Image source={backgroundImg} style={styles.backgroundImage} />
+      </View>
+
+      {/* Right Side - Security Questions Form */}
+      <View style={styles.rightContainer}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.textSignUp}>Create an account</Text>
+
+          {/* Security Question 1 */}
+          <View style={styles.inputRow}>
+            <View style={styles.halfInput}>
+              <Picker
+                selectedValue={selectedQuestion1}
+                onValueChange={(itemValue) => setSelectedQuestion1(itemValue)}
+                style={[styles.picker, selectedQuestion1 === "" && styles.pickerPlaceholder]}
+              >
+                <Picker.Item label="Select a Security Question" value="" />
+                {securityQuestions.map((question, index) => (
+                    <Picker.Item 
+                    key={index} 
+                    label={question} 
+                    value={question} 
+                    color={selectedQuestion1 === question ? "#4A90E2" : "#BDBDBD"}
+                    />
+                ))}
+              </Picker>
+            </View>
+            <TextInput style={styles.halfInput} placeholder="Answer" placeholderTextColor="#BDBDBD" />
+          </View>
+
+          {/* Security Question 2 */}
+          <View style={styles.inputRow}>
+            <View style={styles.halfInput}>
+              <Picker
+                selectedValue={selectedQuestion2}
+                onValueChange={(itemValue) => setSelectedQuestion2(itemValue)}
+                style={[styles.picker, selectedQuestion2 === "" && styles.pickerPlaceholder]}              
+                >
+                <Picker.Item label="Select a Security Question" value="" />
+                {securityQuestions.map((question, index) => (
+                    <Picker.Item 
+                    key={index} 
+                    label={question} 
+                    value={question} 
+                    color={selectedQuestion2 === question ? "#4A90E2" : "#BDBDBD"}
+                    />
+                ))}
+              </Picker>
+            </View>
+            <TextInput style={styles.halfInput} placeholder="Answer" placeholderTextColor="#BDBDBD" />
+          </View>
+
+          {/* Security Question 3 */}
+          <View style={styles.inputRow}>
+            <View style={styles.halfInput}>
+              <Picker
+                selectedValue={selectedQuestion3}
+                onValueChange={(itemValue) => setSelectedQuestion3(itemValue)}
+                style={[styles.picker, selectedQuestion3 === "" && styles.pickerPlaceholder]} 
+              >
+                <Picker.Item label="Select a Security Question" value="" />
+                {securityQuestions.map((question, index) => (
+                    <Picker.Item 
+                    key={index} 
+                    label={question} 
+                    value={question} 
+                    color={selectedQuestion3 === question ? "#4A90E2" : "#BDBDBD"}
+                    />
+                ))}
+              </Picker>
+            </View>
+            <TextInput style={styles.halfInput} placeholder="Answer" placeholderTextColor="#BDBDBD" />
+          </View>
+        </View>
+
+        {/* Sign-In Button */}
+          <TouchableOpacity style={[styles.button, styles.shadow]}>
+            <Text style={styles.buttonText}>Sign up</Text>
+          </TouchableOpacity>
+  
+
+        {/* Already have an account? */}
+        <Text style={styles.signupText}>
+          Already have an account?{" "}
+          <Text style={styles.signupLink} onPress={() => navigation.navigate("Login")}>
+            Sign in
+          </Text>
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  leftContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    width: "50%",
+  },
+  rightContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backgroundImage: {
+    width: "100%",
+    height: "60%",
+    resizeMode: "cover",
+    borderRadius: 40,
+    marginVertical: 10,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginBottom: 10,
+    resizeMode: "contain",
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 18,
+    marginBottom: 10,
+    color: "#333",
+    flexShrink: 1,
+  },
+  textSignUp: {
+    textAlign: "center",
+    marginBottom: 10,
+    fontSize: 14,
+  },
+  inputContainer: {
+    width: "100%",
+    maxWidth: 400,
+    marginVertical: 10,
+  },
+  inputRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    maxWidth: 400,
+    gap: 10,
+  },
+  halfInput: {
+    flex: 1,
+    paddingLeft: 12,
+    paddingRight: 12,
+    borderWidth: 1,
+    borderColor: "#5A8EF4",
+    borderRadius: 10,
+    marginBottom: 10,
+    fontSize: 14,
+    backgroundColor: "#f9f9f9",
+    color: "#333",
+  },
+  picker: {
+    width: "100%",
+    height: 50,
+    color: "#333",
+  },
+  pickerPlaceholder: {
+    color: "#aaa", 
+  },
+  button: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#5A8EF4",
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "white",
+    marginBottom: 15,
+  },
+  shadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    backgroundColor: "#4A90E2",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  signupLink: {
+    color: "#5A8EF4",
+    textDecorationLine: "underline",
+  },
+});
