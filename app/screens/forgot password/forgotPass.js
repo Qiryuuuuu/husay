@@ -43,7 +43,7 @@ export default function ForgotPasswordScreen({ navigation }) {
         </View>
 
         <TouchableOpacity>
-            <Text style={styles.securityQuestionText}>Answer security questions?</Text>
+            <Text style={styles.securityQuestionText} onPress={() => navigation.navigate("ForgotSecurityQuestion")}>Answer security questions?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.shadow]}>
