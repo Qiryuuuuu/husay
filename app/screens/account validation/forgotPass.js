@@ -1,12 +1,19 @@
 import React from "react";
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
 
-const logoImg = require("../../assets/logo.png");
-const backIcon = require("../../assets/back-icon.png")
+const logoImg = require("../../../assets/logo.png");
+const backIcon = require("../../../assets/back-icon.png")
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
 
 export default function ForgotPasswordScreen({ navigation }) {
   return (
     <View style={styles.container}>
+        <Image source={element2} style={styles.element2} />
+        <Image source={element3} style={styles.element3} />
+        <Image source={element4} style={styles.element4} />
+
         <View style={styles.backHeader}>
             <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.backButton}>
                 <Image source={backIcon} style={styles.backIcon}/>
@@ -48,6 +55,24 @@ export default function ForgotPasswordScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  element2:{
+    position: "absolute",
+    top: -30,
+    right: -70,   
+    resizeMode: "contain",
+  },
+  element3:{
+    position: "absolute",
+    bottom: -50,
+    left: -90,   
+    resizeMode: "contain",
+  },
+  element4:{
+    position: "absolute",
+    bottom: -70,
+    right: -70,   
+    resizeMode: "contain",
+  },
   backHeader: {
     position: "absolute",
     top: 45,   

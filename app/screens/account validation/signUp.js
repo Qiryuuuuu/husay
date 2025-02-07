@@ -1,25 +1,24 @@
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
 
-const logoImg = require("../../assets/logo.png");
-const backgroundImg = require("../../assets/signup-bg.webp");
+const logoImg = require("../../../assets/logo.png");
+const element1 = require("../../../assets/element1.png");
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
 
 export default function SignUpScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      {/* Left Side - Image and Title */}
-      <View style={styles.leftContainer}>
+        <Image source={element1} style={styles.element1} />
+        <Image source={element2} style={styles.element2} />
+        <Image source={element3} style={styles.element3} />
+        <Image source={element4} style={styles.element4} />
+
         <View style={styles.headerContainer}>
           <Image source={logoImg} style={styles.logo} />
-          <Text style={styles.title}>
-            Discover Your Adventure! Fun, Learning, and Play Await!
-          </Text>
         </View>
-        <Image source={backgroundImg} style={styles.backgroundImage} />
-      </View>
 
-      {/* Right Side - Sign-up Form */}
-      <View style={styles.rightContainer}>
         <View style={styles.inputContainer}>
           <Text style={styles.textSignUp}>Create an account</Text>
           <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#BDBDBD" />
@@ -48,14 +47,35 @@ export default function SignUpScreen({ navigation }) {
           </Text>
         </Text>
       </View>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  element1:{
+    position: "absolute",
+    top: -30,
+    left: -50,   
+    resizeMode: "contain",
+  },
+  element2:{
+    position: "absolute",
+    top: -30,
+    right: -70,   
+    resizeMode: "contain",
+  },
+  element3:{
+    position: "absolute",
+    bottom: -50,
+    left: -90,   
+    resizeMode: "contain",
+  },
+  element4:{
+    position: "absolute",
+    bottom: -70,
+    right: -70,   
+    resizeMode: "contain",
+  },
   container: {
-    flex: 1,
-    flexDirection: "row", 
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
@@ -66,37 +86,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-  leftContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    width: "50%", 
-  },
-  rightContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backgroundImage: {
-    width: "100%", 
-    height: "60%", 
-    resizeMode: "cover",
-    borderRadius: 40, 
-    marginVertical: 10, 
-  },
   logo: {
-    width: 50,
-    height: 50,
-    marginBottom: 10,
+    width: 40,
+    height: 40,
     resizeMode: "contain",
-    marginRight: 10,
-  },
-  title: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: "#333",
-    flexShrink: 1,
   },
   textSignUp: {
     textAlign: "center",
@@ -117,7 +110,7 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     flex: 1,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: "#5A8EF4",
     borderRadius: 10,
@@ -128,7 +121,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "100%",
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: "#5A8EF4",
     borderRadius: 10,
