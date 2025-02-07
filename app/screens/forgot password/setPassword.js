@@ -2,12 +2,12 @@ import React from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
-const element1 = require("../../../assets/element1.png")
+const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png")
 const element3 = require("../../../assets/element3.png")
 const element4 = require("../../../assets/element4.png")
 
-export default function LoginScreen({ navigation }) {
+export default function SetPasswordScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
 
   return (
@@ -20,43 +20,31 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.headerContainer}>
           <Image source={logoImg} style={styles.logo} />
             <View style={styles.textHeader}>
-              <Text style={styles.title}>Empower Young Minds</Text>
-              <Text style={styles.subtitle}>Your pupil’s first step into fun and creative learning!</Text>
+              <Text style={styles.title}>Set new password</Text>
+              <Text style={styles.subtitle}>Create a secure password</Text>
             </View>
         </View>
 
         <View style={styles.inputContainer}>
-          <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#BDBDBD" />
+          <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#BDBDBD" secureTextEntry />
           <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#BDBDBD" secureTextEntry />
         </View>
 
-        <View style={styles.forgotContainer}>
-          <TouchableOpacity>
-            <Text style={styles.forgotText} onPress={() => navigation.navigate("ForgotPassword")}>Forgot password?</Text>
-          </TouchableOpacity>
-        </View>
-
         <TouchableOpacity style={[styles.button, styles.shadow]}>
-          <Text style={styles.buttonText}>Sign in</Text>
+          <Text style={styles.buttonText}>Reset password</Text>
         </TouchableOpacity>
 
-        <Text style={styles.signupText}>
-          Don’t have an account yet?{" "}
-          <Text style={styles.signupLink} onPress={() => navigation.navigate("SignUp")}>
-            Sign up
-          </Text>
-        </Text>
       </View>
   );
 }
 
 const styles = StyleSheet.create({
-    element1:{
-      position: "absolute",
-      top: -30,
-      left: -50,   
-      resizeMode: "contain",
-    },
+  element1:{
+    position: "absolute",
+    top: -30,
+    left: -50,   
+    resizeMode: "contain",
+  },
     element2:{
       position: "absolute",
       top: -30,
@@ -94,6 +82,7 @@ const styles = StyleSheet.create({
     },
     textHeader:{
       alignItems: "center",
+      marginBottom: 10
     },
     title: {
       fontSize: 18,
@@ -116,11 +105,6 @@ const styles = StyleSheet.create({
       backgroundColor: "#f9f9f9",
       color: "#333",
     },
-    forgotText: {
-      color: "#007BFF",
-      fontSize: 14,
-      textDecorationLine: "underline"
-    },
     button: {
       width: "100%",
       maxWidth: 400,
@@ -128,7 +112,6 @@ const styles = StyleSheet.create({
       padding: 10,
       borderRadius: 10,
       alignItems: "center",
-      marginVertical: 10,
       borderWidth: 2,
       borderColor: "white",
     },
@@ -144,14 +127,5 @@ const styles = StyleSheet.create({
       color: "#fff",
       fontSize: 16,
       fontWeight: "bold",
-    },
-    signupText: {
-      marginTop: 10,
-      fontSize: 14,
-      color: "#555", 
-    },
-    signupLink: {
-      color: "#5A8EF4",
-      textDecorationLine: "underline"
     },
   });
