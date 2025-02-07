@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
 
-const logoImg = require("../../assets/logo.png");
-const backgroundImg = require("../../assets/login-bg.webp");
+const logoImg = require("../../../assets/logo.png");
+const backgroundImg = require("../../../assets/login-bg.webp");
 
 export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
