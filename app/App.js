@@ -11,6 +11,8 @@ import ForgotSecurityQuestionScreen from "./screens/forgot password/forgotSecuQu
 import EnterCodeScreen from "./screens/forgot password/enterCode"
 import SetPasswordScreen from "./screens/forgot password/setPassword"
 
+import StudentProfileScreen from "./screens/manage profile/studentProfile"
+
 
 
 const Stack = createStackNavigator();
@@ -22,10 +24,13 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
+
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="ForgotSecurityQuestion" component={ForgotSecurityQuestionScreen} />
         <Stack.Screen name="EnterCode" component={EnterCodeScreen} />
         <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
+
+        <Stack.Screen name="StudentProfile" component={StudentProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

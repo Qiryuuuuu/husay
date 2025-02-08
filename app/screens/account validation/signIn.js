@@ -36,7 +36,7 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]}>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("StudentProfile")}>
           <Text style={styles.buttonText}>Sign in</Text>
         </TouchableOpacity>
 
