@@ -59,7 +59,24 @@ export default function LoginScreen({ navigation }) {
           </Text>
         </View>
       </View>
-      
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#BDBDBD"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#BDBDBD"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -89,7 +106,7 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]}>
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignIn}>
           <Text style={styles.buttonText}>Sign in</Text>
         </TouchableOpacity>
 
