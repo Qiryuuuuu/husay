@@ -16,10 +16,6 @@ const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
-const element1 = require("../../../assets/element1.png");
-const element2 = require("../../../assets/element2.png");
-const element3 = require("../../../assets/element3.png");
-const element4 = require("../../../assets/element4.png");
 
 export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
@@ -53,10 +49,6 @@ export default function LoginScreen({ navigation }) {
       <Image source={element2} style={styles.element2} />
       <Image source={element3} style={styles.element3} />
       <Image source={element4} style={styles.element4} />
-      <Image source={element1} style={styles.element1} />
-      <Image source={element2} style={styles.element2} />
-      <Image source={element3} style={styles.element3} />
-      <Image source={element4} style={styles.element4} />
 
       <View style={styles.headerContainer}>
         <Image source={logoImg} style={styles.logo} />
@@ -67,24 +59,7 @@ export default function LoginScreen({ navigation }) {
           </Text>
         </View>
       </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#BDBDBD"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#BDBDBD"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
+      
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
