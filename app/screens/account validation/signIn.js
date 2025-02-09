@@ -10,6 +10,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import axios from "axios";
+import { useNavigation } from '@react-navigation/native';
+
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -21,6 +23,7 @@ export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigation();
 
   const handleSignIn = async () => {
     try {
@@ -31,7 +34,7 @@ export default function LoginScreen({ navigation }) {
 
       if (response.status === 200) {
         Alert.alert("Success", response.data.message);
-        // Navigate to another screen or save the token
+        navigate.navigate("StudentProfile");
         console.log("Token:", response.data.token);
       }
     } catch (error) {
