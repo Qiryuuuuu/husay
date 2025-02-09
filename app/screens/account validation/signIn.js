@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
     element5:{position: "absolute", bottom: -40, right: 40 , resizeMode: "contain", },
     element6:{position: "absolute", top: -70, left: 400, resizeMode: "contain", },
 
-
     container: {
       flex: 1,
       backgroundColor: "#fff",
