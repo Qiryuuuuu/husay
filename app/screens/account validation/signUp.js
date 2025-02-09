@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png")
@@ -16,110 +16,109 @@ const nameIcon = require("../../../assets/name-icon.png");
 const emplNum = require("../../../assets/employee-icon.png");
 
 export default function SignUpScreen({ navigation }) {
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  // State variables for input fields
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [employeeNo, setEmployeeNo] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Check if password meets requirements
-  const isLengthValid = password.length >= 8;
-  const hasLowercase = /[a-z]/.test(password);
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasNumber = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*?/.,]/.test(password);
+  // Function to handle Sign-Up
+  const handleSignUp = async () => {
+    if (!email || !fullName || !employeeNo || !password || !confirmPassword) {
+      Alert.alert("Error", "All fields are required.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://10.0.2.2:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, fullName, employeeNo, password, securityQuestions: [] }), // Empty securityQuestions for now
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log("✅ Sign-up Successful:", data);
+        Alert.alert("Success", "Account created successfully!");
+
+        // Navigate to the Security Questions screen
+        navigation.navigate("SecurityQuestion", { email }); // Passing email for security question setup
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error signing up:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <View style={styles.container}>
-        <Image source={element1} style={styles.element1} />
-        <Image source={element2} style={styles.element2} />
-        <Image source={element3} style={styles.element3} />
-        <Image source={element4} style={styles.element4} />
-        <Image source={element5} style={styles.element5} />
-        <Image source={element6} style={styles.element6} />
+      <Image source={element1} style={styles.element1} />
+      <Image source={element2} style={styles.element2} />
+      <Image source={element3} style={styles.element3} />
+      <Image source={element4} style={styles.element4} />
 
       <View style={styles.headerContainer}>
         <Image source={logoImg} style={styles.logo} />
-        <View style={styles.textHeader}>
-          <Text style={styles.title}>Create an Account</Text>
-          <Text style={styles.subtitle}>Join us for an exciting learning journey!</Text>
-        </View>
       </View>
 
       <View style={styles.inputContainer}>
-        {/* Email Input with Icon */}
-        <View style={styles.inputWrapper}>
-          <Image source={userIcon} style={styles.inputIcon} />
-          <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#BDBDBD" />
-        </View>
-
-        {/* Full Name & Employee No. */}
+        <Text style={styles.textSignUp}>Create an account</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#BDBDBD"
+          value={email}
+          onChangeText={setEmail}
+        />
+        
         <View style={styles.inputRow}>
-          <View style={styles.inputWrapper}>
-            <Image source={nameIcon} style={styles.inputIcon} />
-            <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#BDBDBD" />
-          </View>
-          <View style={styles.inputWrapper}>
-            <Image source={emplNum} style={styles.inputIcon} />
-            <TextInput style={styles.input} placeholder="Employee No." placeholderTextColor="#BDBDBD" />
-          </View>
-        </View>
-
-        {/* Password Input with Icon & Show/Hide */}
-        <View style={styles.inputWrapper}>
-          <Image source={keyIcon} style={styles.inputIcon} />
           <TextInput
-            style={styles.input}
-            placeholder="Password"
+            style={styles.halfInput}
+            placeholder="Full Name"
             placeholderTextColor="#BDBDBD"
-            secureTextEntry={!passwordVisible}
-            onFocus={() => setShowPasswordRequirements(true)}
-            onBlur={() => setShowPasswordRequirements(false)}
-            onChangeText={setPassword}
+            value={fullName}
+            onChangeText={setFullName}
           />
-          <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-            <Image source={passwordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Password Requirements Message */}
-        {showPasswordRequirements && (
-          <View style={styles.passwordRequirements}>
-            <Text style={[styles.requirementText, isLengthValid && styles.validRequirement]}>
-              • At least 8 characters long
-            </Text>
-            <Text style={[styles.requirementText, hasLowercase && styles.validRequirement]}>
-              • Contains at least one lowercase letter (a-z)
-            </Text>
-            <Text style={[styles.requirementText, hasUppercase && styles.validRequirement]}>
-              • Contains at least one uppercase letter (A-Z)
-            </Text>
-            <Text style={[styles.requirementText, hasNumber && styles.validRequirement]}>
-              • Includes a number (0-9)
-            </Text>
-            <Text style={[styles.requirementText, hasSpecialChar && styles.validRequirement]}>
-              • Includes a special character (!@#$%^&*?/.,)
-            </Text>
-          </View>
-        )}
-
-        {/* Confirm Password Input with Icon & Show/Hide */}
-        <View style={styles.inputWrapper}>
-          <Image source={keyIcon} style={styles.inputIcon} />
           <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
+            style={styles.halfInput}
+            placeholder="Employee No."
             placeholderTextColor="#BDBDBD"
-            secureTextEntry={!confirmPasswordVisible}
+            value={employeeNo}
+            onChangeText={setEmployeeNo}
           />
-          <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
-            <Image source={confirmPasswordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
-          </TouchableOpacity>
         </View>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#BDBDBD"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          placeholderTextColor="#BDBDBD"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("SecurityQuestion")}>
-        <Text style={styles.buttonText}>Next</Text>
-      </TouchableOpacity>
+      <View style={styles.nextContainer}>
+        <TouchableOpacity onPress={handleSignUp}>
+          <Text style={styles.nextTriggerText}>Next</Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.signupText}>
         Already have an account?{" "}
@@ -127,22 +126,35 @@ export default function SignUpScreen({ navigation }) {
           Sign in
         </Text>
       </Text>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  element1:{position: "absolute", bottom: -180, left: -10, resizeMode: "contain",},
-  element2:{position: "absolute", top: -180, right: -70, resizeMode: "contain",},
-  element3:{position: "absolute", left: -50, resizeMode: "contain",},
-  element4:{position: "absolute", right: -180 , resizeMode: "contain", },
-  element5:{position: "absolute", bottom: -40, right: 40 , resizeMode: "contain", },
-  element6:{position: "absolute", top: -70, left: 400, resizeMode: "contain", },
-
+  element1: {
+    position: "absolute",
+    top: -30,
+    left: -50,
+    resizeMode: "contain",
+  },
+  element2: {
+    position: "absolute",
+    top: -30,
+    right: -70,
+    resizeMode: "contain",
+  },
+  element3: {
+    position: "absolute",
+    bottom: -50,
+    left: -90,
+    resizeMode: "contain",
+  },
+  element4: {
+    position: "absolute",
+    bottom: -70,
+    right: -70,
+    resizeMode: "contain",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -215,9 +227,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  passwordRequirements: {
-    alignSelf: "flex-start",
-    marginLeft: 10,
+  nextTriggerText: {
+    color: "#5A8EF4",
+    fontSize: 14,
+    textDecorationLine: "underline",
     marginBottom: 10,
   },
   requirementText: {

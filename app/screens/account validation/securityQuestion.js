@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const logoImg = require("../../../assets/logo.png");
@@ -11,9 +11,15 @@ const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 const answerIcon = require("../../../assets/book-icon.png");
 
-export default function SecurityQuestionScreen({ navigation }) {
+export default function SecurityQuestionScreen({ navigation, route }) {
+  const { email, isRegistration } = route.params || {}; // Get email and mode from previous screen
+
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
+  const [answer1, setAnswer1] = useState("");
+
   const [selectedQuestion2, setSelectedQuestion2] = useState("");
+  const [answer2, setAnswer2] = useState("");
+
   const [selectedQuestion3, setSelectedQuestion3] = useState("");
   const [answer1, setAnswer1] = useState("");
   const [answer2, setAnswer2] = useState("");
@@ -26,6 +32,73 @@ export default function SecurityQuestionScreen({ navigation }) {
     "What is your favorite movie?",
     "What city were you born in?",
   ];
+
+  const securityAnswers = [
+    { question: selectedQuestion1, answer: answer1 },
+    { question: selectedQuestion2, answer: answer2 },
+    { question: selectedQuestion3, answer: answer3 },
+  ];
+
+  // Function to handle saving security questions during registration
+const handleSaveSecurityQuestions = async () => {
+    if (!selectedQuestion1 || !answer1 || !selectedQuestion2 || !answer2 || !selectedQuestion3 || !answer3) {
+      Alert.alert("Error", "Please select and answer all security questions.");
+      return;
+    }
+  
+    const securityAnswers = [
+      { question: selectedQuestion1, answer: answer1 },
+      { question: selectedQuestion2, answer: answer2 },
+      { question: selectedQuestion3, answer: answer3 },
+    ];
+  
+    console.log("🔄 Saving security questions to server:", securityAnswers);
+  
+    try {
+      const response = await fetch(`${API_URL}/api/auth/save-security`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, securityQuestions: securityAnswers }),
+      });
+  
+      const data = await response.json();
+      console.log("🔄 Server Response:", data);
+  
+      if (response.ok) {
+        console.log("✅ Security Questions Saved in DB!");
+        Alert.alert("Success", "Security questions saved successfully!");
+        navigation.navigate("HomeScreen"); // Change to actual destination
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error saving security questions:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
+  // Function to handle validating security questions during login
+  const handleSecurityValidation = async () => {
+    try {
+      const response = await fetch("http:10.0.2.2:5000/api/auth/validate-security", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, securityAnswers }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log("✅ Security Questions Verified!");
+        Alert.alert("Success", "Security questions verified successfully!");
+        navigation.navigate("ResetPasswordScreen"); // Change to actual destination
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error validating security questions:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -143,6 +216,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    flex: 1,
   },
   headerContainer: {
     alignItems: "center",
@@ -212,6 +286,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
     marginBottom: 15,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   shadow: {
     shadowColor: "#000",

@@ -27,13 +27,15 @@ export default function LoginScreen({ navigation }) {
         <Image source={element6} style={styles.element6} />
 
 
-        <View style={styles.headerContainer}>
-          <Image source={logoImg} style={styles.logo} />
-            <View style={styles.textHeader}>
-              <Text style={styles.title}>Empower Young Minds</Text>
-              <Text style={styles.subtitle}>Your pupil’s first step into fun and creative learning!</Text>
-            </View>
+      <View style={styles.headerContainer}>
+        <Image source={logoImg} style={styles.logo} />
+        <View style={styles.textHeader}>
+          <Text style={styles.title}>Empower Young Minds</Text>
+          <Text style={styles.subtitle}>
+            Your pupil’s first step into fun and creative learning!
+          </Text>
         </View>
+      </View>
 
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
@@ -65,7 +67,7 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("StudentProfile")}>
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignIn}>
           <Text style={styles.buttonText}>Sign in</Text>
         </TouchableOpacity>
 
