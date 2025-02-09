@@ -1,17 +1,27 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const logoImg = require("../../../assets/logo.png");
-const element1 = require("../../../assets/element1.png")
-const element2 = require("../../../assets/element2.png")
-const element3 = require("../../../assets/element3.png")
-const element4 = require("../../../assets/element4.png")
+const element1 = require("../../../assets/element1.png");
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
 
-export default function SecurityQuestionScreen({ navigation }) {
+// 📌 Use your local IP if using a physical device
+const API_URL = "http://10.0.2.2:5000";  // Change to your actual API URL
+
+export default function SecurityQuestionScreen({ navigation, route }) {
+  const { email, isRegistration } = route.params || {}; // Get email and mode from previous screen
+
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
+  const [answer1, setAnswer1] = useState("");
+
   const [selectedQuestion2, setSelectedQuestion2] = useState("");
+  const [answer2, setAnswer2] = useState("");
+
   const [selectedQuestion3, setSelectedQuestion3] = useState("");
+  const [answer3, setAnswer3] = useState("");
 
   const securityQuestions = [
     "What is your pet’s name?",
@@ -21,118 +31,156 @@ export default function SecurityQuestionScreen({ navigation }) {
     "What city were you born in?",
   ];
 
+  const securityAnswers = [
+    { question: selectedQuestion1, answer: answer1 },
+    { question: selectedQuestion2, answer: answer2 },
+    { question: selectedQuestion3, answer: answer3 },
+  ];
+
+  // Function to handle saving security questions during registration
+const handleSaveSecurityQuestions = async () => {
+    if (!selectedQuestion1 || !answer1 || !selectedQuestion2 || !answer2 || !selectedQuestion3 || !answer3) {
+      Alert.alert("Error", "Please select and answer all security questions.");
+      return;
+    }
+  
+    const securityAnswers = [
+      { question: selectedQuestion1, answer: answer1 },
+      { question: selectedQuestion2, answer: answer2 },
+      { question: selectedQuestion3, answer: answer3 },
+    ];
+  
+    console.log("🔄 Saving security questions to server:", securityAnswers);
+  
+    try {
+      const response = await fetch(`${API_URL}/api/auth/save-security`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, securityQuestions: securityAnswers }),
+      });
+  
+      const data = await response.json();
+      console.log("🔄 Server Response:", data);
+  
+      if (response.ok) {
+        console.log("✅ Security Questions Saved in DB!");
+        Alert.alert("Success", "Security questions saved successfully!");
+        navigation.navigate("HomeScreen"); // Change to actual destination
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error saving security questions:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
+  // Function to handle validating security questions during login
+  const handleSecurityValidation = async () => {
+    try {
+      const response = await fetch("http:10.0.2.2:5000/api/auth/validate-security", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, securityAnswers }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log("✅ Security Questions Verified!");
+        Alert.alert("Success", "Security questions verified successfully!");
+        navigation.navigate("ResetPasswordScreen"); // Change to actual destination
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error validating security questions:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <View style={styles.container}>
-        <Image source={element1} style={styles.element1} />
-        <Image source={element2} style={styles.element2} />
-        <Image source={element3} style={styles.element3} />
-        <Image source={element4} style={styles.element4} />
+      <Image source={element1} style={styles.element1} />
+      <Image source={element2} style={styles.element2} />
+      <Image source={element3} style={styles.element3} />
+      <Image source={element4} style={styles.element4} />
 
-        <View style={styles.headerContainer}>
-          <Image source={logoImg} style={styles.logo} />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.textSignUp}>Create an account</Text>
-
-          {/* Security Question 1 */}
-          <View style={styles.inputRow}>
-            <View style={styles.halfInput}>
-              <Picker
-                selectedValue={selectedQuestion1}
-                onValueChange={(itemValue) => setSelectedQuestion1(itemValue)}
-                style={[styles.picker, selectedQuestion1 === "" && styles.pickerPlaceholder]}
-              >
-                <Picker.Item label="Select a Security Question" value="" />
-                {securityQuestions.map((question, index) => (
-                    <Picker.Item 
-                    key={index} 
-                    label={question} 
-                    value={question} 
-                    color={selectedQuestion1 === question ? "#4A90E2" : "#BDBDBD"}
-                    />
-                ))}
-              </Picker>
-            </View>
-            <TextInput style={styles.halfInput} placeholder="Answer" placeholderTextColor="#BDBDBD" />
-          </View>
-
-          {/* Security Question 2 */}
-          <View style={styles.inputRow}>
-            <View style={styles.halfInput}>
-              <Picker
-                selectedValue={selectedQuestion2}
-                onValueChange={(itemValue) => setSelectedQuestion2(itemValue)}
-                style={[styles.picker, selectedQuestion2 === "" && styles.pickerPlaceholder]}              
-                >
-                <Picker.Item label="Select a Security Question" value="" />
-                {securityQuestions.map((question, index) => (
-                    <Picker.Item 
-                    key={index} 
-                    label={question} 
-                    value={question} 
-                    color={selectedQuestion2 === question ? "#4A90E2" : "#BDBDBD"}
-                    />
-                ))}
-              </Picker>
-            </View>
-            <TextInput style={styles.halfInput} placeholder="Answer" placeholderTextColor="#BDBDBD" />
-          </View>
-
-          {/* Security Question 3 */}
-          <View style={styles.inputRow}>
-            <View style={styles.halfInput}>
-              <Picker
-                selectedValue={selectedQuestion3}
-                onValueChange={(itemValue) => setSelectedQuestion3(itemValue)}
-                style={[styles.picker, selectedQuestion3 === "" && styles.pickerPlaceholder]} 
-              >
-                <Picker.Item label="Select a Security Question" value="" />
-                {securityQuestions.map((question, index) => (
-                    <Picker.Item 
-                    key={index} 
-                    label={question} 
-                    value={question} 
-                    color={selectedQuestion3 === question ? "#4A90E2" : "#BDBDBD"}
-                    />
-                ))}
-              </Picker>
-            </View>
-            <TextInput style={styles.halfInput} placeholder="Answer" placeholderTextColor="#BDBDBD" />
-          </View>
-        </View>
-
-          <TouchableOpacity style={[styles.button, styles.shadow]}>
-            <Text style={styles.buttonText}>Sign up</Text>
-          </TouchableOpacity>
-
+      <View style={styles.headerContainer}>
+        <Image source={logoImg} style={styles.logo} />
       </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.textSignUp}>
+          {isRegistration ? "Set up your security questions" : "Verify your security questions"}
+        </Text>
+
+        {/* Security Questions */}
+        {[1, 2, 3].map((index) => (
+          <View key={index} style={styles.inputRow}>
+            <View style={styles.halfInput}>
+              <Picker
+                selectedValue={index === 1 ? selectedQuestion1 : index === 2 ? selectedQuestion2 : selectedQuestion3}
+                onValueChange={(itemValue) => {
+                  if (index === 1) setSelectedQuestion1(itemValue);
+                  if (index === 2) setSelectedQuestion2(itemValue);
+                  if (index === 3) setSelectedQuestion3(itemValue);
+                }}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select a Security Question" value="" />
+                {securityQuestions.map((question, i) => (
+                  <Picker.Item key={i} label={question} value={question} />
+                ))}
+              </Picker>
+            </View>
+            <TextInput
+              style={styles.halfInput}
+              placeholder="Answer"
+              placeholderTextColor="#BDBDBD"
+              value={index === 1 ? answer1 : index === 2 ? answer2 : answer3}
+              onChangeText={(text) => {
+                if (index === 1) setAnswer1(text);
+                if (index === 2) setAnswer2(text);
+                if (index === 3) setAnswer3(text);
+              }}
+            />
+          </View>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.button, styles.shadow]}
+        onPress={isRegistration ? handleSaveSecurityQuestions : handleSecurityValidation}
+      >
+        <Text style={styles.buttonText}>{isRegistration ? "Save" : "Sign Up"}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  element1:{
+  element1: {
     position: "absolute",
     top: -30,
-    left: -50,   
+    left: -50,
     resizeMode: "contain",
   },
-  element2:{
+  element2: {
     position: "absolute",
     top: -30,
-    right: -70,   
+    right: -70,
     resizeMode: "contain",
   },
-  element3:{
+  element3: {
     position: "absolute",
     bottom: -50,
-    left: -90,   
+    left: -90,
     resizeMode: "contain",
   },
-  element4:{
+  element4: {
     position: "absolute",
     bottom: -70,
-    right: -70,   
+    right: -70,
     resizeMode: "contain",
   },
   container: {
@@ -140,6 +188,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    flex: 1,
   },
   headerContainer: {
     flexDirection: "row",
@@ -149,12 +198,14 @@ const styles = StyleSheet.create({
   logo: {
     width: 40,
     height: 40,
-    resizeMode: "contain"
+    resizeMode: "contain",
   },
   textSignUp: {
     textAlign: "center",
     marginBottom: 10,
     fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
   },
   inputContainer: {
     width: "100%",
@@ -186,7 +237,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   pickerPlaceholder: {
-    color: "#aaa", 
+    color: "#aaa",
   },
   button: {
     width: "100%",
@@ -199,6 +250,11 @@ const styles = StyleSheet.create({
     borderColor: "white",
     marginBottom: 15,
   },
+  buttonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
   shadow: {
     shadowColor: "#000",
     shadowOffset: { width: 2, height: 4 },
@@ -206,10 +262,5 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 6,
     backgroundColor: "#4A90E2",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
   },
 });
