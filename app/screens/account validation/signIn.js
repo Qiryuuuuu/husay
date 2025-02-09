@@ -77,24 +77,7 @@ export default function LoginScreen({ navigation }) {
           onChangeText={setPassword}
         />
       </View>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#BDBDBD"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#BDBDBD"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-
+      
       <View style={styles.forgotContainer}>
         <TouchableOpacity>
           <Text
