@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
-const element1 = require("../../../assets/element1.png")
-const element2 = require("../../../assets/element2.png")
-const element3 = require("../../../assets/element3.png")
-const element4 = require("../../../assets/element4.png")
-const element5 = require("../../../assets/element5.png")
-const element6 = require("../../../assets/element6.png")
+const element1 = require("../../../assets/element1.png");
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
+const element5 = require("../../../assets/element5.png");
+const element6 = require("../../../assets/element6.png");
 const userIcon = require("../../../assets/user-icon.png");
 const keyIcon = require("../../../assets/key-icon.png");
 const eyeOpen = require("../../../assets/show-icon.png");
@@ -16,12 +16,23 @@ const nameIcon = require("../../../assets/name-icon.png");
 const emplNum = require("../../../assets/employee-icon.png");
 
 export default function SignUpScreen({ navigation }) {
-  // State variables for input fields
+  // State variables
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [employeeNo, setEmployeeNo] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+
+  // Password validation checks
+  const isLengthValid = password.length >= 8;
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*?/.,]/.test(password);
 
   // Function to handle Sign-Up
   const handleSignUp = async () => {
@@ -39,16 +50,14 @@ export default function SignUpScreen({ navigation }) {
       const response = await fetch("http://10.0.2.2:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, fullName, employeeNo, password, securityQuestions: [] }), // Empty securityQuestions for now
+        body: JSON.stringify({ email, fullName, employeeNo, password, securityQuestions: [] }),
       });
 
       const data = await response.json();
       if (response.ok) {
         console.log("✅ Sign-up Successful:", data);
         Alert.alert("Success", "Account created successfully!");
-
-        // Navigate to the Security Questions screen
-        navigation.navigate("SecurityQuestion", { email }); // Passing email for security question setup
+        navigation.navigate("SecurityQuestion", { email }); 
       } else {
         Alert.alert("Error", data.message);
       }
@@ -60,75 +69,121 @@ export default function SignUpScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Background Elements for Consistency */}
       <Image source={element1} style={styles.element1} />
       <Image source={element2} style={styles.element2} />
       <Image source={element3} style={styles.element3} />
       <Image source={element4} style={styles.element4} />
+      <Image source={element5} style={styles.element5} />
+      <Image source={element6} style={styles.element6} />
 
       <View style={styles.headerContainer}>
         <Image source={logoImg} style={styles.logo} />
+        <View style={styles.textHeader}>
+          <Text style={styles.title}>Create an Account</Text>
+          <Text style={styles.subtitle}>Join us for an exciting learning journey!</Text>
+        </View>
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.textSignUp}>Create an account</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#BDBDBD"
-          value={email}
-          onChangeText={setEmail}
-        />
-        
-        <View style={styles.inputRow}>
+        {/* Email Input with Icon */}
+        <View style={styles.inputWrapper}>
+          <Image source={userIcon} style={styles.inputIcon} />
           <TextInput
-            style={styles.halfInput}
-            placeholder="Full Name"
+            style={styles.input}
+            placeholder="Email"
             placeholderTextColor="#BDBDBD"
-            value={fullName}
-            onChangeText={setFullName}
-          />
-          <TextInput
-            style={styles.halfInput}
-            placeholder="Employee No."
-            placeholderTextColor="#BDBDBD"
-            value={employeeNo}
-            onChangeText={setEmployeeNo}
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#BDBDBD"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#BDBDBD"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
+        {/* Full Name & Employee No. */}
+        <View style={styles.inputRow}>
+          <View style={styles.inputWrapper}>
+            <Image source={nameIcon} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              placeholderTextColor="#BDBDBD"
+              value={fullName}
+              onChangeText={setFullName}
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Image source={emplNum} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Employee No."
+              placeholderTextColor="#BDBDBD"
+              value={employeeNo}
+              onChangeText={setEmployeeNo}
+            />
+          </View>
+        </View>
+
+        {/* Password Input with Icon & Show/Hide */}
+        <View style={styles.inputWrapper}>
+          <Image source={keyIcon} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#BDBDBD"
+            secureTextEntry={!passwordVisible}
+            onFocus={() => setShowPasswordRequirements(true)}
+            onBlur={() => setShowPasswordRequirements(false)}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
+            <Image source={passwordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Password Requirements Message */}
+        {showPasswordRequirements && (
+          <View style={styles.passwordRequirements}>
+            <Text style={[styles.requirementText, isLengthValid && styles.validRequirement]}>
+              • At least 8 characters long
+            </Text>
+            <Text style={[styles.requirementText, hasLowercase && styles.validRequirement]}>
+              • Contains at least one lowercase letter (a-z)
+            </Text>
+            <Text style={[styles.requirementText, hasUppercase && styles.validRequirement]}>
+              • Contains at least one uppercase letter (A-Z)
+            </Text>
+            <Text style={[styles.requirementText, hasNumber && styles.validRequirement]}>
+              • Includes a number (0-9)
+            </Text>
+            <Text style={[styles.requirementText, hasSpecialChar && styles.validRequirement]}>
+              • Includes a special character (!@#$%^&*?/.,)
+            </Text>
+          </View>
+        )}
+
+        {/* Confirm Password Input */}
+        <View style={styles.inputWrapper}>
+          <Image source={keyIcon} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            placeholderTextColor="#BDBDBD"
+            secureTextEntry={!confirmPasswordVisible}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
+            <Image source={confirmPasswordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <View style={styles.nextContainer}>
-        <TouchableOpacity onPress={handleSignUp}>
-          <Text style={styles.nextTriggerText}>Next</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.signupText}>
-        Already have an account?{" "}
-        <Text style={styles.signupLink} onPress={() => navigation.navigate("Login")}>
-          Sign in
-        </Text>
-      </Text>
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignUp}>
+        <Text style={styles.buttonText}>Next</Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1: {
@@ -229,7 +284,7 @@ const styles = StyleSheet.create({
   },
   nextTriggerText: {
     color: "#5A8EF4",
-    fontSize: 14,
+    fontSize: 14, 
     textDecorationLine: "underline",
     marginBottom: 10,
   },
