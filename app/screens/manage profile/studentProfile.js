@@ -1,16 +1,34 @@
 import React, { useState } from "react";
 import { 
-  View, Text, Image, StyleSheet, useWindowDimensions, TouchableOpacity, Alert 
+  View, Text,FlatList, Image, StyleSheet, useWindowDimensions, TouchableOpacity, Alert, Scr 
 } from "react-native";
 import { Searchbar } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
+import StudentCard from "../../component/studentCard";
+
 
 const logoImg = require("../../../assets/logo.png");
 const defaultProfile = require("../../../assets/default-profile.png");
 
+
 export default function StudentProfileScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
+  const [searchQuery, setSearchQuery] = useState("");
   const [profileImage, setProfileImage] = useState(null);
+
+  const students = [
+    { id: "1", name: "Rosa Celso"},
+    { id: "2", name: "Jose Navarro" },
+    { id: "3", name: "Nestor Torosa" },
+    { id: "4", name: "Pedro Santiago" },
+    { id: "5", name: "Marco Cruz"},
+    { id: "6", name: "Kyle Silang"},
+    { id: "7", name: "Arturo Roa"},
+    { id: "8", name: "Sasa Aciando" },
+    { id: "9", name: "Julius Pando" },
+    { id: "10", name: "Marga Green" },
+  ];
+  
 
   // Function to handle image selection
   const selectImage = async () => {
@@ -24,9 +42,9 @@ export default function StudentProfileScreen({ navigation }) {
 
     // Open the gallery
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.Images,
       allowsEditing: true,
-      aspect: [1, 1], // Crop to a square
+      aspect: [1, 1],
       quality: 1,
     });
 
@@ -36,6 +54,10 @@ export default function StudentProfileScreen({ navigation }) {
       setProfileImage(result.assets[0].uri);
     }
   };
+    // Filtered students based on search query
+    const filteredStudents = students.filter(student =>
+      student.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <View style={styles.container}>
@@ -45,13 +67,16 @@ export default function StudentProfileScreen({ navigation }) {
         <View style={styles.textHeader}>
           <Text style={styles.title}>Husay</Text>
           <Text style={styles.subtitle}>Hugis, Bilang, at Kulay, Aalalay!</Text>
-
+         
           <Searchbar
             placeholder="Search students..."
             placeholderTextColor="#BDBDBD"
             style={styles.searchBar}
             inputStyle={styles.inputStyle}
+            onChangeText={setSearchQuery}
+            value={searchQuery}
           />
+        
         </View>
 
         {/* Clickable Profile Image */}
@@ -66,10 +91,23 @@ export default function StudentProfileScreen({ navigation }) {
           <Text style={[styles.buttonText, styles.buttonTextDashboard]}>View Dashboard</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]}>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("AddStudent")}>
           <Text style={styles.buttonText}>Add Students</Text>
         </TouchableOpacity>
       </View>
+
+      <FlatList
+        data={filteredStudents}
+        keyExtractor={(item) => item.id}
+        numColumns={4}
+        contentContainerStyle={styles.grid}
+        renderItem={({ item }) => (
+          <StudentCard 
+            student={item} 
+            onPress={() => navigation.navigate("Home", { student: item })} 
+          />
+        )}
+      />
     </View>
   );
 }

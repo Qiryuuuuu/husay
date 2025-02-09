@@ -12,7 +12,9 @@ import EnterCodeScreen from "./screens/forgot password/enterCode"
 import SetPasswordScreen from "./screens/forgot password/setPassword"
 
 import StudentProfileScreen from "./screens/manage profile/studentProfile"
+import AddStudentScreen from "./screens/manage profile/addStudents"
 
+import homeScreen from "./screens/home/home"
 
 
 const Stack = createStackNavigator();
@@ -30,7 +32,12 @@ export default function App() {
         <Stack.Screen name="EnterCode" component={EnterCodeScreen} />
         <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
 
+        <Stack.Screen name="AddStudent" component={AddStudentScreen} />
         <Stack.Screen name="StudentProfile" component={StudentProfileScreen} />
+
+
+        <Stack.Screen name="Home" component={homeScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
