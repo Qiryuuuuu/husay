@@ -1,52 +1,108 @@
-import React from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Alert,
+  useWindowDimensions,
+} from "react-native";
+import axios from "axios";
 
 const logoImg = require("../../../assets/logo.png");
-const element1 = require("../../../assets/element1.png")
-const element2 = require("../../../assets/element2.png")
-const element3 = require("../../../assets/element3.png")
-const element4 = require("../../../assets/element4.png")
+const element1 = require("../../../assets/element1.png");
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
 
 export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSignIn = async () => {
+    try {
+      const response = await axios.post("http://10.0.2.2:5001/login", {
+        email,
+        password,
+      });
+
+      if (response.status === 200) {
+        Alert.alert("Success", response.data.message);
+        // Navigate to another screen or save the token
+        console.log("Token:", response.data.token);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error.response ? error.response.data.message : "Something went wrong"
+      );
+      console.log(error.response.data.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
-        <Image source={element1} style={styles.element1} />
-        <Image source={element2} style={styles.element2} />
-        <Image source={element3} style={styles.element3} />
-        <Image source={element4} style={styles.element4} />
+      <Image source={element1} style={styles.element1} />
+      <Image source={element2} style={styles.element2} />
+      <Image source={element3} style={styles.element3} />
+      <Image source={element4} style={styles.element4} />
 
-        <View style={styles.headerContainer}>
-          <Image source={logoImg} style={styles.logo} />
-            <View style={styles.textHeader}>
-              <Text style={styles.title}>Empower Young Minds</Text>
-              <Text style={styles.subtitle}>Your pupil’s first step into fun and creative learning!</Text>
-            </View>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#BDBDBD" />
-          <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#BDBDBD" secureTextEntry />
-        </View>
-
-        <View style={styles.forgotContainer}>
-          <TouchableOpacity>
-            <Text style={styles.forgotText} onPress={() => navigation.navigate("ForgotPassword")}>Forgot password?</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={[styles.button, styles.shadow]}>
-          <Text style={styles.buttonText}>Sign in</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.signupText}>
-          Don’t have an account yet?{" "}
-          <Text style={styles.signupLink} onPress={() => navigation.navigate("SignUp")}>
-            Sign up
+      <View style={styles.headerContainer}>
+        <Image source={logoImg} style={styles.logo} />
+        <View style={styles.textHeader}>
+          <Text style={styles.title}>Empower Young Minds</Text>
+          <Text style={styles.subtitle}>
+            Your pupil’s first step into fun and creative learning!
           </Text>
-        </Text>
+        </View>
       </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#BDBDBD"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#BDBDBD"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+      </View>
+
+      <View style={styles.forgotContainer}>
+        <TouchableOpacity>
+          <Text
+            style={styles.forgotText}
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
+            Forgot password?
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignIn}>
+        <Text style={styles.buttonText}>Sign in</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.signupText}>
+        Don’t have an account yet?{" "}
+        <Text
+          style={styles.signupLink}
+          onPress={() => navigation.navigate("SignUp")}
+        >
+          Sign up
+        </Text>
+      </Text>
+    </View>
   );
 }
 
