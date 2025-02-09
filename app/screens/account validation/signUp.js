@@ -252,6 +252,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  signupText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#555", 
+  },
+  signupLink: {
+    color: "#5A8EF4",
+    textDecorationLine: "underline"
+  },
   footer: {
     position: "absolute",
     bottom: 20,

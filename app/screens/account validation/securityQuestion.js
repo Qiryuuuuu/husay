@@ -9,6 +9,7 @@ const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
+const answerIcon = require("../../../assets/book-icon.png");
 
 export default function SecurityQuestionScreen({ navigation }) {
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
@@ -57,13 +58,16 @@ export default function SecurityQuestionScreen({ navigation }) {
             ))}
           </Picker>
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="Answer"
-          placeholderTextColor="#BDBDBD"
-          value={answer1}
-          onChangeText={setAnswer1}
-        />
+        <View style={styles.inputWrapper}>
+          <Image source={answerIcon} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Answer"
+            placeholderTextColor="#BDBDBD"
+            value={answer1}
+            onChangeText={setAnswer1}
+          />
+        </View>
 
         {/* Security Question 2 */}
         <View style={styles.inputWrapper}>
@@ -78,13 +82,16 @@ export default function SecurityQuestionScreen({ navigation }) {
             ))}
           </Picker>
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="Answer"
-          placeholderTextColor="#BDBDBD"
-          value={answer2}
-          onChangeText={setAnswer2}
-        />
+        <View style={styles.inputWrapper}>
+          <Image source={answerIcon} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Answer"
+            placeholderTextColor="#BDBDBD"
+            value={answer2}
+            onChangeText={setAnswer2}
+          />
+        </View>
 
         {/* Security Question 3 */}
         <View style={styles.inputWrapper}>
@@ -99,13 +106,16 @@ export default function SecurityQuestionScreen({ navigation }) {
             ))}
           </Picker>
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="Answer"
-          placeholderTextColor="#BDBDBD"
-          value={answer3}
-          onChangeText={setAnswer3}
-        />
+        <View style={styles.inputWrapper}>
+          <Image source={answerIcon} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Answer"
+            placeholderTextColor="#BDBDBD"
+            value={answer3}
+            onChangeText={setAnswer3}
+          />
+        </View>
       </View>
 
       <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("NextStep")}>
@@ -164,27 +174,32 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 500,
+    paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: "#5A8EF4",
     borderRadius: 10,
     marginBottom: 10,
     backgroundColor: "#f9f9f9",
-    overflow: "hidden",
   },
   picker: {
     width: "100%",
     height: 50,
     color: "#333",
   },
+  inputIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+    resizeMode: "contain",
+  },
   input: {
-    width: "100%",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#5A8EF4",
-    borderRadius: 10,
-    marginBottom: 10,
+    flex: 1,
+    paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
     color: "#333",
   },
   button: {
