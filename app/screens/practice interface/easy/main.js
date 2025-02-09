@@ -4,10 +4,10 @@ import { View, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-nat
 const { width, height } = Dimensions.get("window");
 
 const backButton = require("./assets/Back.png");
-const easyImg = require("./assets/Easy.png");
-const mediumImg = require("./assets/Medium.png");
-const hardImg = require("./assets/Hard.png");
-const selectDifficultyImg = require("./assets/Selectdifficulty.png");
+const shapeImg = require("./assets/Shape.png");
+const colorImg = require("./assets/Color.png");
+const numberImg = require("./assets/Number.png");
+const EasyFrameImg = require("./assets/EasyFrame.png");
 const shapes = {
   ellipse5: require("./assets/Ellipse 5.png"),
   ellipse7: require("./assets/Ellipse 7.png"),
@@ -28,16 +28,16 @@ const DifficultySelection = () => {
       <TouchableOpacity style={styles.backTouchable}>
         <Image source={backButton} style={styles.backButton} />
       </TouchableOpacity>
-      <Image source={selectDifficultyImg} style={styles.selectDifficulty} />
+      <Image source={EasyFrameImg} style={styles.EasyFrame} />
       <View style={styles.difficultyContainer}>
         <TouchableOpacity style={styles.option} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Image source={easyImg} style={styles.image} />
+          <Image source={shapeImg} style={styles.image} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.option} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Image source={mediumImg} style={styles.image} />
+          <Image source={colorImg} style={styles.image} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.option} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Image source={hardImg} style={styles.image} />
+          <Image source={numberImg} style={styles.image} />
         </TouchableOpacity>
       </View>
       <View style={styles.decorations}>
@@ -120,5 +120,6 @@ const styles = StyleSheet.create({
   rect25: { bottom: 670, right: 800, width: 100, height: 140 },
   countdown: { top: -20, right: 90, width: 100, height: 140 },
   copyright: { bottom: 20, alignSelf: "center", width: 200, height: 50 },
-  selectDifficulty: { top: 120, alignSelf: "center", width: 250, height: 100, resizeMode: "contain", zIndex: 2 },
+  EasyFrame: { top: 120, alignSelf: "center", width: 250, height: 100, resizeMode: "contain", zIndex: 2 },
 });
+
