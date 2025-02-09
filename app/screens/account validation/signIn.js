@@ -80,7 +80,7 @@ export default function LoginScreen({ navigation }) {
           onChangeText={setPassword}
         />
       </View>
-
+      
       <View style={styles.forgotContainer}>
         <TouchableOpacity>
           <Text
