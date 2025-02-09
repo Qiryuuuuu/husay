@@ -89,9 +89,9 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>Sign in</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("StudentProfile")}>
+          <Text style={styles.buttonText}>Sign in</Text>
+        </TouchableOpacity>
 
       <Text style={styles.signupText}>
         Don’t have an account yet?{" "}
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
       resizeMode: "contain",
     },
     container: {
+      flex: 1,
       backgroundColor: "#fff",
       alignItems: "center",
       justifyContent: "center",
