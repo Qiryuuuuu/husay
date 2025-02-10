@@ -180,36 +180,32 @@ export default function SignUpScreen({ navigation }) {
       <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignUp}>
         <Text style={styles.buttonText}>Next</Text>
       </TouchableOpacity>
+
+      {/* Sign Up Navigation */}
+      <Text style={styles.signupText}>
+        Already have an account{" "}
+        <Text style={styles.signupLink} onPress={() => navigation.navigate("Login")}>
+          Sign in
+        </Text>
+      </Text>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+      </View>
     </View>
   );
 }
 
 
 const styles = StyleSheet.create({
-  element1: {
-    position: "absolute",
-    top: -30,
-    left: -50,
-    resizeMode: "contain",
-  },
-  element2: {
-    position: "absolute",
-    top: -30,
-    right: -70,
-    resizeMode: "contain",
-  },
-  element3: {
-    position: "absolute",
-    bottom: -50,
-    left: -90,
-    resizeMode: "contain",
-  },
-  element4: {
-    position: "absolute",
-    bottom: -70,
-    right: -70,
-    resizeMode: "contain",
-  },
+  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
+  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element3: { position: "absolute", left: -50, resizeMode: "contain" },
+  element4: { position: "absolute", right: -180, resizeMode: "contain" },
+  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
+  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
+  
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -236,8 +232,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#555",
+    fontSize: 24,
     marginBottom: 15,
   },
   inputContainer: {
@@ -284,17 +279,20 @@ const styles = StyleSheet.create({
   },
   nextTriggerText: {
     color: "#5A8EF4",
-    fontSize: 14, 
+    fontSize: 16, 
     textDecorationLine: "underline",
     marginBottom: 10,
   },
   requirementText: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#777",
+  },
+  passwordRequirements:{
+    margin: 15
   },
   validRequirement: {
     color: "green",
-    fontWeight: "bold",
+    fontWeight: "bold"
   },
   button: {
     width: "100%",
