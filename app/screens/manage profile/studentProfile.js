@@ -23,8 +23,6 @@ export default function StudentProfileScreen({ navigation }) {
     { id: "6", name: "Kyle Silang"},
     { id: "7", name: "Arturo Roa"},
     { id: "8", name: "Sasa Aciando" },
-    { id: "9", name: "Julius Pando" },
-    { id: "10", name: "Marga Green" },
   ];
 
   // Function to handle image selection
@@ -47,7 +45,6 @@ export default function StudentProfileScreen({ navigation }) {
     }
   };
 
-  // 🔹 Filter students based on search query
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -86,12 +83,11 @@ export default function StudentProfileScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 🔹 Use filteredStudents in FlatList */}
       {filteredStudents.length === 0 ? (
         <Text style={styles.noResults}>No students found. Try searching with a different name.</Text>
       ) : (
         <FlatList
-          data={filteredStudents} // 🔹 This now filters the displayed students
+          data={filteredStudents} 
           keyExtractor={(item) => item.id}
           numColumns={4}
           contentContainerStyle={styles.grid}

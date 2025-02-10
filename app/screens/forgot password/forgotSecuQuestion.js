@@ -217,6 +217,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     color: "#333",
+    backgroundColor: "transparent", 
+    borderWidth: 0, 
+    outline: "none", 
   },
   inputIcon: {
     width: 20,

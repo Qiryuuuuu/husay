@@ -3,7 +3,7 @@ import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "reac
 
 const logoImg = require("../../../assets/logo.png");
 const backIcon = require("../../../assets/back-icon.png");
-const emailIcon = require("../../../assets/user-icon.png"); // Added email icon
+const emailIcon = require("../../../assets/user-icon.png"); 
 const element1 = require("../../../assets/element1.png")
 const element2 = require("../../../assets/element2.png")
 const element3 = require("../../../assets/element3.png")

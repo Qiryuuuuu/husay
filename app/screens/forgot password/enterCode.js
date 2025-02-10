@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
   backText: {
     color: "#5A8EF4",
     fontSize: 16,
-    textDecorationLine: "underline",
   },  
   container: {
     flex: 1,  
