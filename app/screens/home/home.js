@@ -75,7 +75,7 @@ export default function homeScreen({ navigation }) {
   
 
       <View style={styles.btnContainer}>
-        <TouchableOpacity style={[styles.button, styles.shadow]} >
+        <TouchableOpacity style={[styles.button, styles.shadow]}  onPress={() => navigation.navigate("Class")}>
           <Text style={styles.buttonText}>Class</Text>
         </TouchableOpacity>
 
