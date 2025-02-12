@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, useWindowDimensions } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import axios from "axios"; // ✅ Import axios
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -14,12 +14,11 @@ const keyIcon = require("../../../assets/key-icon.png");
 const eyeOpen = require("../../../assets/show-icon.png");
 const eyeClosed = require("../../../assets/hide-icon.png");
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation }) {  // ✅ Remove useNavigation() and use navigation prop directly
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const navigate = useNavigation();
 
   // Function to handle Sign-In API request
   const handleSignIn = async () => {
@@ -31,15 +30,12 @@ export default function LoginScreen({ navigation }) {
 
       if (response.status === 200) {
         Alert.alert("Success", response.data.message);
-        navigate.navigate("StudentProfile");
+        navigation.navigate("StudentProfile");  // ✅ Use navigation directly
         console.log("Token:", response.data.token);
       }
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error.response ? error.response.data.message : "Something went wrong"
-      );
-      console.log(error.response.data.message);
+      console.error("❌ Error:", error);
+      Alert.alert("Error", error.response?.data?.message || "Something went wrong"); // ✅ Fixed error handling
     }
   };
 
@@ -120,6 +116,7 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
