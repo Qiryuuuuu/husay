@@ -15,14 +15,21 @@ export default function StudentProfileScreen({ navigation }) {
   const [profileImage, setProfileImage] = useState(null);
 
   const students = [
-    { id: "1", name: "Rosa Celso"},
-    { id: "2", name: "Jose Navarro" },
-    { id: "3", name: "Nestor Torosa" },
-    { id: "4", name: "Pedro Santiago" },
-    { id: "5", name: "Marco Cruz"},
-    { id: "6", name: "Kyle Silang"},
-    { id: "7", name: "Arturo Roa"},
-    { id: "8", name: "Sasa Aciando" },
+    { id: 1, name: "Superman", stars: 15 },
+    { id: 2, name: "Batman", stars: 17 },
+    { id: 3, name: "Wonder Woman", stars: 13 },
+    { id: 4, name: "Flash", stars: 12 },
+    { id: 5, name: "Aquaman", stars: 11 },
+    { id: 6, name: "Green Lantern", stars: 10 },
+    { id: 7, name: "Thor", stars: 9 },
+    { id: 8, name: "Iron Man", stars: 8 },
+    { id: 9, name: "Hulk", stars: 7 },
+    { id: 10, name: "Black Panther", stars: 6 },
+    { id: 11, name: "Captain America", stars: 5 },
+    { id: 12, name: "Doctor Strange", stars: 4 },
+    { id: 13, name: "Spider-Man", stars: 3 },
+    { id: 14, name: "Black Widow", stars: 2 },
+    { id: 15, name: "Scarlet Witch", stars: 1 }
   ];
 
   // Function to handle image selection
@@ -89,7 +96,7 @@ export default function StudentProfileScreen({ navigation }) {
         <FlatList
           data={filteredStudents} 
           keyExtractor={(item) => item.id}
-          numColumns={4}
+          numColumns={5}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => (
@@ -201,6 +208,7 @@ const styles = StyleSheet.create({
   grid: {
     justifyContent: "center",
     alignItems: "center",
+    flexGrow: 1
   },
   row: {
     flex: 1,

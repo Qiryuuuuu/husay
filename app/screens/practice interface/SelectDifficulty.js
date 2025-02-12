@@ -3,11 +3,10 @@ import { View, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-nat
 
 const { width, height } = Dimensions.get("window");
 
-const backButton = require("../../../assets/Back.png");
+const backButton = require("../../../assets/back-icon.png");
 const easyImg = require("../../../assets/Easy.png");
 const mediumImg = require("../../../assets/Medium.png");
 const hardImg = require("../../../assets/Hard.png");
-const selectDifficultyImg = require("../../../assets/Selectdifficulty.png");
 const shapes = {
   shape1: require("../../../assets/shape1.png"),
   shape2: require("../../../assets/shape2.png"),
@@ -19,7 +18,6 @@ const shapes = {
   shape8: require("../../../assets/shape8.png"),
   shape9: require("../../../assets/shape9.png"),
   countdown: require("../../../assets/countdown.png"),
-  copyright: require("../../../assets/copyright.png"),
 };
 
 const DifficultySelection = () => {
@@ -28,7 +26,6 @@ const DifficultySelection = () => {
       <TouchableOpacity style={styles.backTouchable}>
         <Image source={backButton} style={styles.backButton} />
       </TouchableOpacity>
-      <Image source={selectDifficultyImg} style={styles.selectDifficulty} />
       <View style={styles.difficultyContainer}>
         <TouchableOpacity style={styles.option} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
           <Image source={easyImg} style={styles.image} />
@@ -119,6 +116,5 @@ const styles = StyleSheet.create({
   shape8: { bottom: 45, right: 100, width: 140, height: 90 },
   shape9: { bottom: 670, right: 800, width: 100, height: 140 },
   countdown: { top: -20, right: 90, width: 100, height: 140 },
-  copyright: { bottom: 20, alignSelf: "center", width: 200, height: 50 },
   selectDifficulty: { top: 120, alignSelf: "center", width: 250, height: 100, resizeMode: "contain", zIndex: 2 },
 });

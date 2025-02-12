@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, useWindowDimensions } from "react-native";
+import { useNavigation } from '@react-navigation/native';
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -18,32 +19,27 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const navigate = useNavigation();
 
   // Function to handle Sign-In API request
   const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
-      return;
-    }
-
     try {
-      const response = await fetch("http://10.0.2.2:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
+        email,
+        password,
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        console.log("✅ Login Successful:", data);
-        Alert.alert("Success", "Login successful!");
-        navigation.navigate("StudentProfile"); // Adjust destination as needed
-      } else {
-        Alert.alert("Error", data.message);
+      if (response.status === 200) {
+        Alert.alert("Success", response.data.message);
+        navigate.navigate("StudentProfile");
+        console.log("Token:", response.data.token);
       }
     } catch (error) {
-      console.error("❌ Login Error:", error);
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      Alert.alert(
+        "Error",
+        error.response ? error.response.data.message : "Something went wrong"
+      );
+      console.log(error.response.data.message);
     }
   };
 

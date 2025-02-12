@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
+
 const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
+
 const userIcon = require("../../../assets/user-icon.png");
 const keyIcon = require("../../../assets/key-icon.png");
 const eyeOpen = require("../../../assets/show-icon.png");

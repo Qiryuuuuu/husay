@@ -18,6 +18,11 @@ import HomeScreen from "./screens/home/home"
 
 import  ClassScreen from "./screens/class/class"
 
+import  PracticeInterfaceScreen from "./screens/practice interface/SelectDifficulty"
+import  ShapeGameScreen from "./screens/practice interface/easy/shape/shapeGame"
+
+
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -40,6 +45,8 @@ export default function App() {
 
         <Stack.Screen name="Class" component={ClassScreen} />
 
+        <Stack.Screen name="PracticeInterface" component={PracticeInterfaceScreen} />
+        <Stack.Screen name="ShapeGameScreen" component={ShapeGameScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
