@@ -7,9 +7,9 @@ const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
-
-// 📌 API Base URL
-const API_URL = "http://10.0.2.2:5000";  
+const element5 = require("../../../assets/element5.png");
+const element6 = require("../../../assets/element6.png");
+const answerIcon = require("../../../assets/book-icon.png");
 
 export default function SecurityQuestionScreen({ navigation, route }) {
   const { email, isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
@@ -29,23 +29,23 @@ export default function SecurityQuestionScreen({ navigation, route }) {
     "What city were you born in?",
   ];
 
-  // ✅ Function to Save Security Questions
+  const securityAnswers = [
+    { question: selectedQuestion1, answer: answer1 },
+    { question: selectedQuestion2, answer: answer2 },
+    { question: selectedQuestion3, answer: answer3 },
+  ];
+
+  // Function to handle saving security questions during registration
   const handleSaveSecurityQuestions = async () => {
     if (!selectedQuestion1 || !answer1 || !selectedQuestion2 || !answer2 || !selectedQuestion3 || !answer3) {
       Alert.alert("Error", "Please select and answer all security questions.");
       return;
     }
 
-    const securityAnswers = [
-      { question: selectedQuestion1, answer: answer1 },
-      { question: selectedQuestion2, answer: answer2 },
-      { question: selectedQuestion3, answer: answer3 },
-    ];
-
     console.log("🔄 Saving security questions to server:", securityAnswers);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/save-security`, {
+      const response = await fetch("http://10.0.2.2:5000/api/auth/save-security", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, securityQuestions: securityAnswers }),
@@ -57,7 +57,7 @@ export default function SecurityQuestionScreen({ navigation, route }) {
       if (response.ok) {
         console.log("✅ Security Questions Saved!");
         Alert.alert("Success", "Security questions saved successfully!");
-        navigation.navigate("Login"); // Change to actual destination
+        navigation.navigate("HomeScreen"); // Adjust based on next step
       } else {
         Alert.alert("Error", data.message);
       }
@@ -67,202 +67,167 @@ export default function SecurityQuestionScreen({ navigation, route }) {
     }
   };
 
-  // ✅ Function to Validate Security Questions
-  const handleSecurityValidation = async () => {
-    const securityAnswers = [
-      { question: selectedQuestion1, answer: answer1 },
-      { question: selectedQuestion2, answer: answer2 },
-      { question: selectedQuestion3, answer: answer3 },
-    ];
-
-    console.log("🔄 Validating security questions with:", securityAnswers);
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/validate-security`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, securityAnswers }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        console.log("✅ Security Questions Verified!");
-        Alert.alert("Success", "Security questions verified successfully!");
-        navigation.navigate(""); // Change to actual destination
-      } else {
-        Alert.alert("Error", data.message);
-      }
-    } catch (error) {
-      console.error("❌ Error validating security questions:", error);
-      Alert.alert("Error", "Something went wrong. Please try again.");
-    }
-  };
-
   return (
     <View style={styles.container}>
+      {/* Background Elements */}
       <Image source={element1} style={styles.element1} />
       <Image source={element2} style={styles.element2} />
       <Image source={element3} style={styles.element3} />
       <Image source={element4} style={styles.element4} />
+      <Image source={element5} style={styles.element5} />
+      <Image source={element6} style={styles.element6} />
 
+      {/* Header */}
       <View style={styles.headerContainer}>
         <Image source={logoImg} style={styles.logo} />
+        <View style={styles.textHeader}>
+          <Text style={styles.title}>Security Questions</Text>
+          <Text style={styles.subtitle}>Provide answers to secure your account</Text>
+        </View>
       </View>
 
+      {/* Security Questions Form */}
       <View style={styles.inputContainer}>
-        <Text style={styles.textSignUp}>
-          {isRegistration ? "Set up your security questions" : "Verify your security questions"}
-        </Text>
-
-        {/* Security Questions */}
-        {[1, 2, 3].map((index) => (
-          <View key={index} style={styles.inputRow}>
-            <View style={styles.halfInput}>
+        {[{ question: selectedQuestion1, setQuestion: setSelectedQuestion1, answer: answer1, setAnswer: setAnswer1 },
+          { question: selectedQuestion2, setQuestion: setSelectedQuestion2, answer: answer2, setAnswer: setAnswer2 },
+          { question: selectedQuestion3, setQuestion: setSelectedQuestion3, answer: answer3, setAnswer: setAnswer3 }
+        ].map((item, index) => (
+          <View key={index}>
+            <View style={styles.inputWrapper}>
               <Picker
-                selectedValue={index === 1 ? selectedQuestion1 : index === 2 ? selectedQuestion2 : selectedQuestion3}
-                onValueChange={(itemValue) => {
-                  if (index === 1) setSelectedQuestion1(itemValue);
-                  if (index === 2) setSelectedQuestion2(itemValue);
-                  if (index === 3) setSelectedQuestion3(itemValue);
-                }}
+                selectedValue={item.question}
+                onValueChange={(value) => item.setQuestion(value)}
                 style={styles.picker}
               >
                 <Picker.Item label="Select a Security Question" value="" />
-                {securityQuestions.map((question, i) => (
-                  <Picker.Item key={i} label={question} value={question} />
+                {securityQuestions.map((question, idx) => (
+                  <Picker.Item key={idx} label={question} value={question} />
                 ))}
               </Picker>
             </View>
-            <TextInput
-              style={styles.halfInput}
-              placeholder="Answer"
-              placeholderTextColor="#BDBDBD"
-              value={index === 1 ? answer1 : index === 2 ? answer2 : answer3}
-              onChangeText={(text) => {
-                if (index === 1) setAnswer1(text);
-                if (index === 2) setAnswer2(text);
-                if (index === 3) setAnswer3(text);
-              }}
-            />
+            <View style={styles.inputWrapper}>
+              <Image source={answerIcon} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Answer"
+                placeholderTextColor="#BDBDBD"
+                value={item.answer}
+                onChangeText={item.setAnswer}
+              />
+            </View>
           </View>
         ))}
       </View>
 
-      {/* Save/Validate Button */}
-      <TouchableOpacity
-        style={[styles.button, styles.shadow]}
-        onPress={isRegistration ? handleSaveSecurityQuestions : handleSecurityValidation}
-      >
-        <Text style={styles.buttonText}>{isRegistration ? "Save" : "Validate"}</Text>
+      {/* Save Button */}
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSaveSecurityQuestions}>
+        <Text style={styles.buttonText}>Save</Text>
       </TouchableOpacity>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+      </View>
     </View>
   );
 }
 
 
 const styles = StyleSheet.create({
-  element1: {
-    position: "absolute",
-    top: -30,
-    left: -50,
-    resizeMode: "contain",
-  },
-  element2: {
-    position: "absolute",
-    top: -30,
-    right: -70,
-    resizeMode: "contain",
-  },
-  element3: {
-    position: "absolute",
-    bottom: -50,
-    left: -90,
-    resizeMode: "contain",
-  },
-  element4: {
-    position: "absolute",
-    bottom: -70,
-    right: -70,
-    resizeMode: "contain",
-  },
+  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
+  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element3: { position: "absolute", left: -50, resizeMode: "contain" },
+  element4: { position: "absolute", right: -180, resizeMode: "contain" },
+  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
+  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
+
   container: {
+    flex: 1,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    flex: 1,
   },
   headerContainer: {
-    flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 80,
+    height: 80,
+    marginBottom: 10,
     resizeMode: "contain",
   },
-  textSignUp: {
-    textAlign: "center",
-    marginBottom: 10,
-    fontSize: 14,
-    fontWeight: "bold",
+  textHeader: {
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 20,
     color: "#333",
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#555",
+    textAlign: "center",
+    marginBottom: 15,
   },
   inputContainer: {
     width: "100%",
-    maxWidth: 600,
+    maxWidth: 500,
     marginVertical: 10,
   },
-  inputRow: {
+  inputWrapper: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
     width: "100%",
-    maxWidth: 600,
-    gap: 10,
-  },
-  halfInput: {
-    flex: 1,
-    paddingLeft: 12,
-    paddingRight: 12,
+    maxWidth: 500,
+    paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: "#5A8EF4",
     borderRadius: 10,
     marginBottom: 10,
-    fontSize: 14,
     backgroundColor: "#f9f9f9",
-    color: "#333",
   },
   picker: {
     width: "100%",
     height: 50,
     color: "#333",
   },
-  pickerPlaceholder: {
-    color: "#aaa",
+  inputIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+    resizeMode: "contain",
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#333",
   },
   button: {
     width: "100%",
-    maxWidth: 400,
+    maxWidth: 500,
     backgroundColor: "#5A8EF4",
     padding: 12,
     borderRadius: 10,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "white",
     marginBottom: 15,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
   },
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
-    backgroundColor: "#4A90E2",
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    alignSelf: "center",
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
   },
 });
