@@ -57,7 +57,7 @@ export default function SecurityQuestionScreen({ navigation, route }) {
       if (response.ok) {
         console.log("✅ Security Questions Saved!");
         Alert.alert("Success", "Security questions saved successfully!");
-        navigation.navigate("HomeScreen"); // Adjust based on next step
+        navigation.navigate("Login"); // Adjust based on next step
       } else {
         Alert.alert("Error", data.message);
       }
