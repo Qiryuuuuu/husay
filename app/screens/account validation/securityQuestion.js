@@ -8,18 +8,16 @@ const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 
-// 📌 Use your local IP if using a physical device
-const API_URL = "http://10.0.2.2:5000";  // Change to your actual API URL
+// 📌 API Base URL
+const API_URL = "http://10.0.2.2:5000";  
 
 export default function SecurityQuestionScreen({ navigation, route }) {
-  const { email, isRegistration } = route.params || {}; // Get email and mode from previous screen
+  const { email, isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
 
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
   const [answer1, setAnswer1] = useState("");
-
   const [selectedQuestion2, setSelectedQuestion2] = useState("");
   const [answer2, setAnswer2] = useState("");
-
   const [selectedQuestion3, setSelectedQuestion3] = useState("");
   const [answer3, setAnswer3] = useState("");
 
@@ -31,41 +29,35 @@ export default function SecurityQuestionScreen({ navigation, route }) {
     "What city were you born in?",
   ];
 
-  const securityAnswers = [
-    { question: selectedQuestion1, answer: answer1 },
-    { question: selectedQuestion2, answer: answer2 },
-    { question: selectedQuestion3, answer: answer3 },
-  ];
-
-  // Function to handle saving security questions during registration
-const handleSaveSecurityQuestions = async () => {
+  // ✅ Function to Save Security Questions
+  const handleSaveSecurityQuestions = async () => {
     if (!selectedQuestion1 || !answer1 || !selectedQuestion2 || !answer2 || !selectedQuestion3 || !answer3) {
       Alert.alert("Error", "Please select and answer all security questions.");
       return;
     }
-  
+
     const securityAnswers = [
       { question: selectedQuestion1, answer: answer1 },
       { question: selectedQuestion2, answer: answer2 },
       { question: selectedQuestion3, answer: answer3 },
     ];
-  
+
     console.log("🔄 Saving security questions to server:", securityAnswers);
-  
+
     try {
       const response = await fetch(`${API_URL}/api/auth/save-security`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, securityQuestions: securityAnswers }),
       });
-  
+
       const data = await response.json();
       console.log("🔄 Server Response:", data);
-  
+
       if (response.ok) {
-        console.log("✅ Security Questions Saved in DB!");
+        console.log("✅ Security Questions Saved!");
         Alert.alert("Success", "Security questions saved successfully!");
-        navigation.navigate("HomeScreen"); // Change to actual destination
+        navigation.navigate("Login"); // Change to actual destination
       } else {
         Alert.alert("Error", data.message);
       }
@@ -75,10 +67,18 @@ const handleSaveSecurityQuestions = async () => {
     }
   };
 
-  // Function to handle validating security questions during login
+  // ✅ Function to Validate Security Questions
   const handleSecurityValidation = async () => {
+    const securityAnswers = [
+      { question: selectedQuestion1, answer: answer1 },
+      { question: selectedQuestion2, answer: answer2 },
+      { question: selectedQuestion3, answer: answer3 },
+    ];
+
+    console.log("🔄 Validating security questions with:", securityAnswers);
+
     try {
-      const response = await fetch("http:10.0.2.2:5000/api/auth/validate-security", {
+      const response = await fetch(`${API_URL}/api/auth/validate-security`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, securityAnswers }),
@@ -88,7 +88,7 @@ const handleSaveSecurityQuestions = async () => {
       if (response.ok) {
         console.log("✅ Security Questions Verified!");
         Alert.alert("Success", "Security questions verified successfully!");
-        navigation.navigate("ResetPasswordScreen"); // Change to actual destination
+        navigation.navigate(""); // Change to actual destination
       } else {
         Alert.alert("Error", data.message);
       }
@@ -148,15 +148,17 @@ const handleSaveSecurityQuestions = async () => {
         ))}
       </View>
 
+      {/* Save/Validate Button */}
       <TouchableOpacity
         style={[styles.button, styles.shadow]}
         onPress={isRegistration ? handleSaveSecurityQuestions : handleSecurityValidation}
       >
-        <Text style={styles.buttonText}>{isRegistration ? "Save" : "Sign Up"}</Text>
+        <Text style={styles.buttonText}>{isRegistration ? "Save" : "Validate"}</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1: {
