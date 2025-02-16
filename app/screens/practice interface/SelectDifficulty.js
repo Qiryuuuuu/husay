@@ -42,13 +42,14 @@ const DifficultySelection = () => {
 
   return (
     <View style={styles.container}>
-    {overlayVisible && (
-      <TouchableOpacity style={styles.overlay} onPress={handleOverlayPress}>
-        <Image source={robotImgs[dialogueIndex % robotImgs.length]} style={styles.robotImg} />
-        <View style={styles.dialogueBox}>
-          <Text style={styles.dialogueText}>{dialogues[dialogueIndex]}</Text>
-        </View>
-      </TouchableOpacity>
+      {overlayVisible && (
+        <TouchableOpacity style={styles.overlay} onPress={handleOverlayPress}>
+          <Image source={robotImgs[dialogueIndex % robotImgs.length]} style={styles.robotImg} />
+          <View style={styles.dialogueBox}>
+            <Text style={styles.dialogueText}>{dialogues[dialogueIndex]}</Text>
+          </View>
+          <Text style={styles.tapToContinue}>Tap anywhere to continue</Text>
+        </TouchableOpacity>
       )}
       <TouchableOpacity style={styles.backTouchable}>
         <Image source={backButton} style={styles.backButton} />
@@ -115,16 +116,17 @@ const styles = StyleSheet.create({
   },
 
   dialogueBox: {
-    width: "75%",
+    width: "70%",
+    height: "25%",
     padding: 50,
-    top: '64%',
+    top: '60%',
     position: "absolute",
     resizeMode: "contain",
     textAlign: "center",
     fontFamily: "Poppins-Regular",
     backgroundColor: "#E1F1FF",
     zIndex: 10,
-    borderRadius: 100,
+    borderRadius: 50,
 
     borderWidth: 10,
     borderColor: "white",
@@ -137,7 +139,7 @@ const styles = StyleSheet.create({
   },
 
   dialogueText: {
-    fontSize: 20,
+    fontSize: 16,
     color: "black",
     textAlign: "center",
   },
@@ -149,6 +151,15 @@ const styles = StyleSheet.create({
     height: "50%",
     position: "absolute",
     alignItems: "center",
+  },
+
+  tapToContinue: {
+    fontSize: 16,
+    color: "#fff",
+    top: 670,
+    textAlign: "center",
+    fontWeight: "bold",
+    position: "absolute"
   },
 
   option: {
@@ -198,5 +209,5 @@ const styles = StyleSheet.create({
   shape5: { position: 'absolute', bottom: -45, left: 0, width: 250, height: 250, resizeMode: 'contain' },
   countdown: { position: 'absolute', top: -20, right: 90, width: 100, height: 140, resizeMode: 'contain' },
   copyright: { position: 'absolute', bottom: 20, alignSelf: "center", width: 250, height: 50, resizeMode: 'contain' },
-  selectDifficulty: { position: 'absolute', top: 120, alignSelf: "center", width: 200, height: 100, resizeMode: "contain", zIndex: 2 },
+  selectDifficulty: { position: 'absolute', top: 120, alignSelf: "center", width: 250, height: 100, resizeMode: "contain", zIndex: 2 },
 });

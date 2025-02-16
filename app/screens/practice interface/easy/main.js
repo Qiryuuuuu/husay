@@ -3,21 +3,20 @@ import { View, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-nat
 
 const { width, height } = Dimensions.get("window");
 
-const backButton = require("../../../assets/Back.png");
-const shapeImg = require("../../../assets/Shape.png");
-const colorImg = require("../../../assets/Color.png");
-const numberImg = require("../../../assets/Number.png");
-const EasyFrameImg = require("../../../assets/EasyFrame.png");
+const backButton = require("../../../../assets/Back.png");
+const shapeImg = require("../../../../assets/Shape.png");
+const colorImg = require("../../../../assets/Color.png");
+const numberImg = require("../../../../assets/Number.png");
+const EasyFrameImg = require("../../../../assets/EasyFrame.png");
 
 const shapes = {
-  shape1: require("../../../assets/shape1.png"),
-  shape2: require("../../../assets/shape2.png"),
-  shape3: require("../../../assets/shape3.png"),
-  shape4: require("../../../assets/shape4.png"),
-  shape5: require("../../../assets/shape5.png"),
-  countdown: require("../../../assets/countdown.png"),
-  copyright: require("../../../assets/copyright.png"),
-  EasyFrameImg: require("../../../assets/EasyFrame.png")
+  shape1: require("../../../../assets/shape1.png"),
+  shape2: require("../../../../assets/shape2.png"),
+  shape3: require("../../../../assets/shape3.png"),
+  shape4: require("../../../../assets/shape4.png"),
+  shape5: require("../../../../assets/shape5.png"),
+  countdown: require("../../../../assets/countdown.png"),
+  copyright: require("../../../../assets/copyright.png"),
 };
 
 const DifficultySelection = () => {
@@ -126,7 +125,7 @@ const styles = StyleSheet.create({
   shape5: { position: 'absolute', bottom: -45, left: 0, width: 250, height: 250, resizeMode: 'contain' },
   countdown: { position: 'absolute', top: -20, right: 90, width: 100, height: 140, resizeMode: 'contain' },
   copyright: { position: 'absolute', bottom: 20, alignSelf: "center", width: 250, height: 50, resizeMode: 'contain' },
-  EasyFrame: { position: 'absolute', top: 100, alignSelf: "center", width: 200, height: 100, resizeMode: "contain", zIndex: 2 },
+  EasyFrame: { position: 'absolute', top: 100, alignSelf: "center", width: 250, height: 150, resizeMode: "contain", zIndex: 2 },
 
 });
 

@@ -20,6 +20,7 @@ import  ClassScreen from "./screens/class/class"
 
 import  PracticeInterfaceScreen from "./screens/practice interface/SelectDifficulty"
 import  ShapeGameScreen from "./screens/practice interface/easy/shape/shapeGame"
+import PracticeInterfaceScreenSelect from "./screens/practice interface/easy/main"
 
 
 
