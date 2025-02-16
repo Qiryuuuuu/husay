@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Image, StyleSheet, Dimensions, TouchableOpacity, Text } from "react-native";
 
 const { width, height } = Dimensions.get("window");
@@ -24,7 +24,9 @@ const shapes = {
 const DifficultySelection = () => {
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [dialogueIndex, setDialogueIndex] = useState(0);
-
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+  
   const dialogues = [
     "Hi, I’m EVA, your trusted friendly guide here in Techtopia. Techtopia is a fun knowledge world. Here, we play under the sun and learn colors, shapes, and numbers along with other kids. Now, put on your thinking cats. Oops! Sorry, your thinking hats—and let’s check if you can get these questions right.",
     "Before we practice, let me give you these goodies. These are the tools you are going to use later. Now, are you ready? Let’s go kiddos!"
@@ -32,23 +34,41 @@ const DifficultySelection = () => {
 
   const robotImgs = [robotImg, robotImg2];
 
+  useEffect(() => {
+    setDisplayedText("");
+    setIsTyping(true);
+    let typingIndex = 0;
+    const interval = setInterval(() => {
+      if (typingIndex <= dialogues[dialogueIndex].length) {
+        setDisplayedText(dialogues[dialogueIndex].slice(0, typingIndex + 1));
+        typingIndex++;
+      } else {
+        clearInterval(interval);
+        setIsTyping(false);
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [dialogueIndex]);
+
   const handleOverlayPress = () => {
-    if (dialogueIndex < dialogues.length - 1) {
-      setDialogueIndex(dialogueIndex + 1);
-    } else {
-      setOverlayVisible(false);
+    if (!isTyping) {
+      if (dialogueIndex < dialogues.length - 1) {
+        setDialogueIndex(dialogueIndex + 1);
+      } else {
+        setOverlayVisible(false);
+      }
     }
   };
 
   return (
     <View style={styles.container}>
       {overlayVisible && (
-        <TouchableOpacity style={styles.overlay} onPress={handleOverlayPress}>
+        <TouchableOpacity style={styles.overlay} onPress={handleOverlayPress} disabled={isTyping}>
           <Image source={robotImgs[dialogueIndex % robotImgs.length]} style={styles.robotImg} />
           <View style={styles.dialogueBox}>
-            <Text style={styles.dialogueText}>{dialogues[dialogueIndex]}</Text>
+            <Text style={styles.dialogueText}>{displayedText}</Text>
           </View>
-          <Text style={styles.tapToContinue}>Tap anywhere to continue</Text>
+          {!isTyping && <Text style={styles.tapToContinue}>Tap anywhere to continue</Text>}
         </TouchableOpacity>
       )}
       <TouchableOpacity style={styles.backTouchable}>
@@ -73,6 +93,8 @@ const DifficultySelection = () => {
     </View>
   );
 };
+
+
 
 export default function App() {
   return (
