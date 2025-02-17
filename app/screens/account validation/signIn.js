@@ -10,8 +10,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import axios from "axios";
-import { useNavigation } from '@react-navigation/native';
-
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -19,11 +17,10 @@ const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation }) {  // ✅ Use navigation from props
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigation();
 
   const handleSignIn = async () => {
     try {
@@ -34,15 +31,14 @@ export default function LoginScreen({ navigation }) {
 
       if (response.status === 200) {
         Alert.alert("Success", response.data.message);
-        navigate.navigate("StudentProfile");
         console.log("Token:", response.data.token);
+
+        // ✅ Ensure the screen name matches Stack Navigator
+        navigation.navigate("Home"); 
       }
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error.response ? error.response.data.message : "Something went wrong"
-      );
-      console.log(error.response.data.message);
+      console.error("❌ Error:", error);
+      Alert.alert("Error", error.response?.data?.message || "Something went wrong");
     }
   };
 
@@ -93,8 +89,8 @@ export default function LoginScreen({ navigation }) {
       </View>
 
       <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignIn}>
-          <Text style={styles.buttonText}>Sign in</Text>
-        </TouchableOpacity>
+        <Text style={styles.buttonText}>Sign in</Text>
+      </TouchableOpacity>
 
       <Text style={styles.signupText}>
         Don’t have an account yet?{" "}
@@ -108,6 +104,7 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1: {
