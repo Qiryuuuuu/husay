@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import axios from "axios";
 
 const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png");
@@ -18,6 +19,9 @@ const genderIcon = require("../../../assets/gender-icon.png");
 
 export default function AddStudentScreen({ navigation }) {
   const [profileImage, setProfileImage] = useState(null);
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
 
   const selectImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -38,6 +42,35 @@ export default function AddStudentScreen({ navigation }) {
     }
   };
 
+  const addStudent = async () => {
+    if (!name || !age || !gender) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
+    try {
+      const newStudent = {
+        name,
+        age,
+        gender,
+        profileImage,
+        stars: 0,
+      };
+
+      await axios.post("YOUR_MONGODB_API_ENDPOINT", newStudent);
+      Alert.alert("Success", "Student added successfully!");
+      
+      // Reset form
+      setName("");
+      setAge("");
+      setGender("");
+      setProfileImage(null);
+    } catch (error) {
+      console.error("Error adding student:", error);
+      Alert.alert("Error", "Failed to add student.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image source={element1} style={styles.element1} />
@@ -47,7 +80,6 @@ export default function AddStudentScreen({ navigation }) {
       <Image source={element5} style={styles.element5} />
       <Image source={element6} style={styles.element6} />
 
-      {/* Back to Login */}
       <View style={styles.backHeader}>
         <TouchableOpacity onPress={() => navigation.navigate("StudentProfile")} style={styles.backButton}>
           <Image source={backIcon} style={styles.backIcon} />
@@ -55,7 +87,6 @@ export default function AddStudentScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Header */}
       <View style={styles.headerContainer}>
         <Image source={logoImg} style={styles.logo} />
         <View style={styles.textHeader}>
@@ -64,7 +95,6 @@ export default function AddStudentScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Centered Form */}
       <View style={styles.formWrapper}>
         <View style={[styles.formContainer, styles.shadow]}>
           <TouchableOpacity onPress={selectImage} style={styles.profileImgContainer}>
@@ -74,28 +104,26 @@ export default function AddStudentScreen({ navigation }) {
 
           <View style={styles.inputWrapper}>
             <Image source={userIcon} style={styles.inputIcon} />
-            <TextInput style={styles.input} placeholder="Student name" placeholderTextColor="#BDBDBD" />
+            <TextInput style={styles.input} placeholder="Student name" placeholderTextColor="#BDBDBD" value={name} onChangeText={setName} />
           </View>
 
-          {/* Age & Gender */}
           <View style={styles.inputRow}>
             <View style={styles.inputWrapper}>
               <Image source={ageIcon} style={styles.inputIcon} />
-              <TextInput style={styles.input} placeholder="Age" placeholderTextColor="#BDBDBD" />
+              <TextInput style={styles.input} placeholder="Age" placeholderTextColor="#BDBDBD" value={age} onChangeText={setAge} keyboardType="numeric" />
             </View>
             <View style={styles.inputWrapper}>
               <Image source={genderIcon} style={styles.inputIcon} />
-              <TextInput style={styles.input} placeholder="Gender" placeholderTextColor="#BDBDBD" />
+              <TextInput style={styles.input} placeholder="Gender" placeholderTextColor="#BDBDBD" value={gender} onChangeText={setGender} />
             </View>
           </View>
 
-          <TouchableOpacity style={[styles.button, styles.shadow]}>
+          <TouchableOpacity style={[styles.button, styles.shadow]} onPress={addStudent}>
             <Text style={styles.buttonText}>Add student</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
       </View>
