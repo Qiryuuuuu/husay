@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Image } from 'react-native';
 
-const backgroundImg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
 const evaExcited = require("../../../../../assets/eva/eva-excited.png");
 const shaneGreet = require("../../../../../assets/shane/shane-greet.png");
 const evaPointing = require("../../../../../assets/eva/eva-pointing.png");
+
 const PregameDialog = ({ onDialogComplete }) => {
     const shapeDialog = [
         "Hey there, superstar! 🌟 Today, we’re playing a fun game all about SHAPES! Can you find circles, squares, rectangle and triangles? Let’s see if you’re a shape expert",
@@ -44,74 +44,66 @@ const PregameDialog = ({ onDialogComplete }) => {
 
     return (
         <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={handlePress}>
-            <ImageBackground source={backgroundImg} style={styles.background}> 
-                <View style={styles.overlay}>
-                    <View style={styles.container}>
-                        {/* ✅ Use the correct `source` and `style` dynamically */}
-                        <Image source={shapeNpc[currentNpcImage].image} style={shapeNpc[currentNpcImage].style} />
-                        <View style={styles.chatBubbleContainer}>
-                            <View style={styles.chatContent}>
-                                <Text style={styles.npcName}>{shapeNpcName[currentShapeNpcName]}</Text>
-                                <Text style={styles.npcMessage}>{shapeDialog[currentMessageIndex]}</Text>
-                            </View>
-                        </View>
-                        <View style={styles.nextTrigger}>
-                            <Text style={styles.nextTriggerText}>Tap anywhere to continue</Text>
-                        </View>
-                    </View> 
-                </View> 
-            </ImageBackground>
+          <View style={styles.container}>
+              <Image source={shapeNpc[currentNpcImage].image} style={shapeNpc[currentNpcImage].style} />
+              <View style={styles.chatBubbleContainer}>
+                  <View style={styles.chatContent}>
+                      <Text style={styles.npcName}>{shapeNpcName[currentShapeNpcName]}</Text>
+                      <Text style={styles.npcMessage}>{shapeDialog[currentMessageIndex]}</Text>
+                  </View>
+              </View>
+              <View style={styles.nextTrigger}>
+                  <Text style={styles.nextTriggerText}>Tap anywhere to continue</Text>
+              </View>
+          </View> 
         </TouchableOpacity>
     );
 };
 
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  container:{
+  container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    flexDirection: "column"
+    width: "100%", 
+    paddingHorizontal: 20, 
   },
-  overlay:{
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.7)"
+  chatBubbleContainer: {
+    width: "100%",  
+    maxWidth: 950, 
+    alignItems: "center",
+    paddingHorizontal: 20,
   },
-  evaExcited:{
-    width: 340,
-    height: 480,
-  },
-  chatBubbleContainer:{
-    width: "60%"
-  },
-  chatContent:{
+  chatContent: {
     backgroundColor: "#E1F1FF",
-    padding: 40,
+    padding: 30,
     borderRadius: 30,
     borderWidth: 10,
     borderColor: "white",
+    width: "100%", 
+    maxWidth: 950, 
+    textAlign: "center",
   },
-  npcName:{
+  npcName: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10
+    marginBottom: 10,
+    textAlign: "center",
   },
-  npcMessage:{
-    fontSize: 20
+  npcMessage: {
+    fontSize: 20,
+    textAlign: "center", 
+    flexWrap: "wrap", 
+    width: "100%", 
+    maxWidth: 950, 
   },
-  nextTrigger:{
-    marginTop: 50,
+  nextTrigger: {
+    marginTop: 20,
   },
-  nextTriggerText:{
+  nextTriggerText: {
     color: "white",
-    fontSize: 16
+    fontSize: 16,
   }
 });
 

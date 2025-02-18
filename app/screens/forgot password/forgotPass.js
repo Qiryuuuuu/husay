@@ -56,7 +56,7 @@ export default function ForgotPasswordScreen({ navigation }) {
             style={styles.securityQuestionText} 
             onPress={() => navigation.navigate("ForgotSecurityQuestion")}
           >
-            Answer security questions?
+            Try another ways
           </Text>
         </TouchableOpacity>
 

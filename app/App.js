@@ -19,8 +19,10 @@ import HomeScreen from "./screens/home/home"
 import  ClassScreen from "./screens/class/class"
 
 import  PracticeInterfaceScreen from "./screens/practice interface/SelectDifficulty"
-import  ShapeGameScreen from "./screens/practice interface/easy/shape/shapeGame"
+import  ShapeStartScreen from "./screens/practice interface/easy/shape/shapeStart"
 
+import  CountdownScreen from "./component/countdown"
+import  ShapeGame from "./component/shapeGame"
 
 
 const Stack = createStackNavigator();
@@ -28,7 +30,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="ShapeSLogintart" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -46,7 +48,12 @@ export default function App() {
         <Stack.Screen name="Class" component={ClassScreen} />
 
         <Stack.Screen name="PracticeInterface" component={PracticeInterfaceScreen} />
-        <Stack.Screen name="ShapeGameScreen" component={ShapeGameScreen} />
+        <Stack.Screen name="ShapeStart" component={ShapeStartScreen} />
+      
+        <Stack.Screen name="Countdown" component={CountdownScreen} />
+        <Stack.Screen name="ShapeGame" component={ShapeGame} />
+
+
       </Stack.Navigator>
     </NavigationContainer>
   );
