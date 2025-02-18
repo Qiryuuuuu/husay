@@ -3,23 +3,20 @@ import { View, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-nat
 
 const { width, height } = Dimensions.get("window");
 
-const backButton = require("../../../assets/Back.png");
-const shapeImg = require("../../../assets/Shape.png");
-const colorImg = require("../../../assets/Color.png");
-const numberImg = require("../../../assets/Number.png");
-const EasyFrameImg = require("../../../assets/EasyFrame.png");
+const backButton = require("../../../../assets/Back.png");
+const shapeImg = require("../../../../assets/Shape.png");
+const colorImg = require("../../../../assets/Color.png");
+const numberImg = require("../../../../assets/Number.png");
+const EasyFrameImg = require("../../../../assets/EasyFrame.png");
+
 const shapes = {
-  shape1: require("../../../assets/shape1.png"),
-  shape2: require("../../../assets/shape2.png"),
-  shape3: require("../../../assets/shape3.png"),
-  shape4: require("../../../assets/shape4.png"),
-  shape5: require("../../../assets/shape5.png"),
-  shape6: require("../../../assets/shape6.png"),
-  shape7: require("../../../assets/shape7.png"),
-  shape8: require("../../../assets/shape8.png"),
-  shape9: require("../../../assets/shape9.png"),
-  countdown: require("../../../assets/countdown.png"),
-  copyright: require("../../../assets/copyright.png"),
+  shape1: require("../../../../assets/shape1.png"),
+  shape2: require("../../../../assets/shape2.png"),
+  shape3: require("../../../../assets/shape3.png"),
+  shape4: require("../../../../assets/shape4.png"),
+  shape5: require("../../../../assets/shape5.png"),
+  countdown: require("../../../../assets/countdown.png"),
+  copyright: require("../../../../assets/copyright.png"),
 };
 
 const DifficultySelection = () => {
@@ -64,40 +61,50 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   container: {
-    flex: 1,
+    flex: 1, // ✅ Allow container to fill screen naturally
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
+
   difficultyContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "70%",
-    marginTop: 100,
+    justifyContent: "center",
+    width: "50%", // ✅ Full width
+    height: "50%",
+    position: "absolute", // ✅ Position it explicitly
+    alignItems: "center",
   },
+
   option: {
     alignItems: "center",
-    flex: 1,
+    width: "50%", // ✅ Explicit width
+    height: "75%", // ✅ Explicit height
   },
+
   image: {
-    width: "95%",
-    height: "85%",
+    width: 450, // ✅ Explicit size to be visible
+    height: 350,
     resizeMode: "contain",
     borderRadius: 15,
   },
+
   backTouchable: {
     position: "absolute",
     top: 25,
     left: 35,
-    zIndex: 10,
+    zIndex: 5,
   },
+
   backButton: {
     width: 120,
     height: 120,
     resizeMode: "contain",
-    zIndex: 3,
+    zIndex: 5,
   },
+
   decorations: {
     position: "absolute",
     top: 0,
@@ -105,21 +112,20 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+
   absoluteShape: {
     position: "absolute",
     resizeMode: "contain",
   },
-  shape1: { top: 590, left: 100, width: 120, height: 150, zIndex: 2 },
-  shape2: { top: 170, right: -70, width: 200, height: 245 },
-  shape3: { bottom: 0, left: 1080, width: 200, height: 140 },
-  shape4: { top: 90, right: 990, width: 500, height: 500 },
-  shape5: { bottom: 310, left: 1, width: 110, height: 180 },
-  shape6: { top: 650, left: 5, width: 140, height: 140 },
-  shape7: { bottom: 655, right: 690, width: 130, height: 150 },
-  shape8: { bottom: 45, right: 100, width: 140, height: 90 },
-  shape9: { bottom: 670, right: 800, width: 100, height: 140 },
-  countdown: { top: -20, right: 90, width: 100, height: 140 },
-  copyright: { bottom: 20, alignSelf: "center", width: 200, height: 50 },
-  EasyFrame: { top: 120, alignSelf: "center", width: 250, height: 100, resizeMode: "contain", zIndex: 2 },
+
+  shape1: { position: 'absolute', top: 50, left: -360, width: 500, height: 500, zIndex: 2, resizeMode: 'contain' },
+  shape2: { position: 'absolute', top: -120, right: 600, width: 250, height: 250, resizeMode: 'contain' },
+  shape3: { position: 'absolute', bottom: 330, left: 1050, width: 500, height: 300, resizeMode: 'contain' },
+  shape4: { position: 'absolute', top: 590, right: -25, width: 300, height: 300, resizeMode: 'contain' },
+  shape5: { position: 'absolute', bottom: -45, left: 0, width: 250, height: 250, resizeMode: 'contain' },
+  countdown: { position: 'absolute', top: -20, right: 90, width: 100, height: 140, resizeMode: 'contain' },
+  copyright: { position: 'absolute', bottom: 20, alignSelf: "center", width: 250, height: 50, resizeMode: 'contain' },
+  EasyFrame: { position: 'absolute', top: 100, alignSelf: "center", width: 250, height: 150, resizeMode: "contain", zIndex: 2 },
+
 });
 

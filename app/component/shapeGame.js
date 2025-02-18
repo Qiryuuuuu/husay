@@ -27,7 +27,7 @@ const ShapeGame = ({ onGameComplete }) => {
     const [npcImage, setNpcImage] = useState(shaneIdleImg);
     const [isGameRunning, setIsGameRunning] = useState(true);
     const [correctFirstTry, setCorrectFirstTry] = useState(0);
-    const elapsedTimeRef = useRef(0); // ✅ Use ref to store elapsed time properly
+    const elapsedTimeRef = useRef(0); 
     const [hasTried, setHasTried] = useState(false);
 
     const fadeAnim = useState(new Animated.Value(1))[0];
@@ -45,7 +45,7 @@ const ShapeGame = ({ onGameComplete }) => {
         setNpcImage(shaneIdleImg);
         setIsGameRunning(true);
         setCorrectFirstTry(0);
-        elapsedTimeRef.current = 0; // ✅ Reset timer
+        elapsedTimeRef.current = 0; 
         setHasTried(false);
     }, []);
 
@@ -76,35 +76,40 @@ const ShapeGame = ({ onGameComplete }) => {
             fadeInAnimation();
             setIsClickable(false);
 
-            if (!hasTried) {
-                setCorrectFirstTry((prev) => prev + 1);
-            }
+            let updatedScore = correctFirstTry;
 
-            setTimeout(() => {
-                if (currentRound < rounds.length - 1) {
-                    setCurrentRound(currentRound + 1);
-                } else {
-                    setIsGameRunning(false); // ✅ Stop the stopwatch before retrieving the time
-
-                    setTimeout(() => {
-                        console.log("Final Time Captured:", elapsedTimeRef.current); // ✅ Debugging log
-                        if (onGameComplete) {
-                            onGameComplete(elapsedTimeRef.current, correctFirstTry);
-                        }
-                    }, 500);
-                }
-            }, 1500);
-        } else {
-            setIsCorrect(false);
-            setFeedbackText(dialogues.wrong[Math.floor(Math.random() * dialogues.wrong.length)]);
-            setNpcImage(shaneWrongImg);
-            fadeInAnimation();
-            animateNpcBounce();
-            triggerShake();
-            Vibration.vibrate(100);
-            setHasTried(true);
+        if (!hasTried) {
+            updatedScore += 1;
+            setCorrectFirstTry(updatedScore); 
         }
-    }, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
+
+        setTimeout(() => {
+            if (currentRound < rounds.length - 1) {
+                setCurrentRound(currentRound + 1);
+            } else {
+                setIsGameRunning(false); 
+
+                setTimeout(() => {
+                    console.log("Final Time Captured:", elapsedTimeRef.current); 
+                    console.log("Final Score Captured:", updatedScore); 
+
+                    if (onGameComplete) {
+                        onGameComplete(elapsedTimeRef.current, updatedScore);
+                    }
+                }, 500);
+            }
+        }, 1500);
+    } else {
+        setIsCorrect(false);
+        setFeedbackText(dialogues.wrong[Math.floor(Math.random() * dialogues.wrong.length)]);
+        setNpcImage(shaneWrongImg);
+        fadeInAnimation();
+        animateNpcBounce();
+        triggerShake();
+        Vibration.vibrate(100);
+        setHasTried(true);
+    }
+}, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
 
 
     const triggerShake = () => {

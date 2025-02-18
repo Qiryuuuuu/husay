@@ -1,5 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from "react-native";
+import axios from "axios";
+import { useFocusEffect } from "@react-navigation/native"; // ✅ Refresh data when screen is focused
+import StudentCard from "../../component/studentCard";
+
+const API_URL = "http://10.0.2.2:5000/api/class/get-students"; // ✅ Update with actual API
 
 const element1 = require("../../../assets/element1.png");
 const element3 = require("../../../assets/element3.png");
@@ -8,32 +13,32 @@ const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 const backIcon = require("../../../assets/back-icon.png");
 const starIcon = require("../../../assets/star-icon.png");
-import StudentCard from "../../component/studentCard";
-
-const students = [
-  { id: 1, name: "Superman", stars: 15 },
-  { id: 2, name: "Batman", stars: 17 },
-  { id: 3, name: "Wonder Woman", stars: 13 },
-  { id: 4, name: "Flash", stars: 12 },
-  { id: 5, name: "Aquaman", stars: 11 },
-  { id: 6, name: "Green Lantern", stars: 10 },
-  { id: 7, name: "Thor", stars: 9 },
-  { id: 8, name: "Iron Man", stars: 8 },
-  { id: 9, name: "Hulk", stars: 7 },
-  { id: 10, name: "Black Panther", stars: 6 },
-  { id: 11, name: "Captain America", stars: 5 },
-  { id: 12, name: "Doctor Strange", stars: 4 },
-  { id: 13, name: "Spider-Man", stars: 3 },
-  { id: 14, name: "Black Widow", stars: 2 },
-  { id: 15, name: "Scarlet Witch", stars: 1 }
-];
 
 export default function LeaderboardScreen({ navigation }) {
+  const [students, setStudents] = useState([]);
   const [showAll, setShowAll] = useState(false);
-  const sortedStudents = [...students].sort((a, b) => b.stars - a.stars);
-  const topThree = sortedStudents.slice(0, 3);
-  const displayedStudents = showAll ? sortedStudents : topThree;
-  const topStudent = sortedStudents[0];
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchStudents();
+    }, [])
+  );
+
+  const fetchStudents = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      if (response.data && response.data.students) {
+        const sortedStudents = response.data.students.sort((a, b) => b.stars - a.stars);
+        setStudents(sortedStudents);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching students:", error);
+    }
+  };
+
+  const topThree = students.slice(0, 3);
+  const displayedStudents = showAll ? students : topThree;
+  const topStudent = students.length > 0 ? students[0] : null;
 
   return (
     <View style={styles.container}>
@@ -56,63 +61,41 @@ export default function LeaderboardScreen({ navigation }) {
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Outstanding</Text>
         <Text style={styles.subtitle}>The more you learn, the higher you go!</Text>
-        <StudentCard student={topStudent} onPress={() => console.log("Top Student:", topStudent.name)} />
+        {topStudent && <StudentCard student={topStudent} onPress={() => console.log("Top Student:", topStudent.fullName)} />}
       </View>
 
-      {!showAll && (
-        <View style={styles.tableContainer}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.headerText, styles.centerText]}>Ranking</Text>
-            <Text style={[styles.headerText, styles.centerText]}>Name</Text>
-            <Text style={[styles.headerText, styles.centerText]}>Stars</Text>
-          </View>
-          {topThree.map((item, index) => (
-            <View key={item.id} style={styles.tableRow}>
+      <View style={styles.tableContainer}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.headerText, styles.centerText]}>Ranking</Text>
+          <Text style={[styles.headerText, styles.centerText]}>Name</Text>
+          <Text style={[styles.headerText, styles.centerText]}>Stars</Text>
+        </View>
+        <FlatList
+          data={displayedStudents}
+          keyExtractor={(item) => item._id.toString()}
+          renderItem={({ item, index }) => (
+            <View style={styles.tableRow}>
               <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
-              <Text style={[styles.cell, styles.centerText]}>{item.name}</Text>
+              <Text style={[styles.cell, styles.centerText]}>{item.fullName}</Text>
               <View style={[styles.cell, styles.centerText, styles.starContainer]}>
                 <Image source={starIcon} style={styles.starIcon} />
                 <Text style={styles.cell}>{item.stars}</Text>
               </View>
             </View>
-          ))}
-        </View>
-      )}
+          )}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={true}
+          style={{ flex: 1 }}
+        />
+      </View>
 
-      {showAll && (
-        <View style={[styles.tableContainer, { height: 500 }]}> 
-          <View style={styles.tableHeader}>
-            <Text style={[styles.headerText, styles.centerText]}>Ranking</Text>
-            <Text style={[styles.headerText, styles.centerText]}>Name</Text>
-            <Text style={[styles.headerText, styles.centerText]}>Stars</Text>
-          </View>
-          <FlatList
-            data={displayedStudents}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item, index }) => (
-              <View style={styles.tableRow}>
-                <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
-                <Text style={[styles.cell, styles.centerText]}>{item.name}</Text>
-                <View style={[styles.cell, styles.centerText, styles.starContainer]}>
-                  <Image source={starIcon} style={styles.starIcon} />
-                  <Text style={styles.cell}>{item.stars}</Text>
-                </View>
-              </View>
-            )}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            showsVerticalScrollIndicator={true}
-            style={{ flex: 1 }}
-          />
-        </View>
-      )}
-
-      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
       </View>
     </View>
   );
 }
+
 
 
 

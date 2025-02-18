@@ -12,14 +12,12 @@ const element6 = require("../../../assets/element6.png");
 const answerIcon = require("../../../assets/book-icon.png");
 
 export default function SecurityQuestionScreen({ navigation, route }) {
-  const { email, isRegistration } = route.params || {}; // Get email and mode from previous screen
+  const { email, isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
 
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
   const [answer1, setAnswer1] = useState("");
-
   const [selectedQuestion2, setSelectedQuestion2] = useState("");
   const [answer2, setAnswer2] = useState("");
-
   const [selectedQuestion3, setSelectedQuestion3] = useState("");
   const [answer3, setAnswer3] = useState("");
 
@@ -57,9 +55,9 @@ export default function SecurityQuestionScreen({ navigation, route }) {
       console.log("🔄 Server Response:", data);
 
       if (response.ok) {
-        console.log("✅ Security Questions Saved in DB!");
+        console.log("✅ Security Questions Saved!");
         Alert.alert("Success", "Security questions saved successfully!");
-        navigation.navigate("HomeScreen"); // Adjust based on next step
+        navigation.navigate("Login"); // Adjust based on next step
       } else {
         Alert.alert("Error", data.message);
       }
@@ -133,6 +131,7 @@ export default function SecurityQuestionScreen({ navigation, route }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },

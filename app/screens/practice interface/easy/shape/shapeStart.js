@@ -3,12 +3,12 @@ import { View, StyleSheet, ImageBackground, Animated, Easing } from 'react-nativ
 import PregameDialog from './PregameDialog';
 import Countdown from '../../../../component/countdown';
 import ShapeGame from '../../../../component/shapeGame';
-import StageCompletion from '../../../../component/stageCompletion'; // Import StageCompletion
+import StageCompletion from '../../../../component/stageCompletion'; 
 
 const backgroundImg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
 
 const GameScreen = () => {
-    const [gamePhase, setGamePhase] = useState("dialog"); // Track game state
+    const [gamePhase, setGamePhase] = useState("dialog"); 
     const [finalTime, setFinalTime] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
     const overlayOpacity = useRef(new Animated.Value(1)).current;
@@ -77,7 +77,7 @@ const GameScreen = () => {
                     <StageCompletion 
                         timeTaken={`${Math.floor(finalTime / 60)}:${finalTime % 60}`} 
                         correctAnswers={finalScore} 
-                        onRestart={() => setGamePhase("dialog")}
+                        onRestart={() => setGamePhase("countdown")}
                     />
                 </View>
             )}
