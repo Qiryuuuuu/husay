@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from "react-native";
 import axios from "axios";
+import { useFocusEffect } from "@react-navigation/native"; // ✅ Refresh data when screen is focused
+import StudentCard from "../../component/studentCard";
+
+const API_URL = "http://10.0.2.2:5000/api/class/get-students"; // ✅ Update with actual API
 
 const element1 = require("../../../assets/element1.png");
 const element3 = require("../../../assets/element3.png");
@@ -9,29 +13,32 @@ const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 const backIcon = require("../../../assets/back-icon.png");
 const starIcon = require("../../../assets/star-icon.png");
-import StudentCard from "../../component/studentCard";
 
 export default function LeaderboardScreen({ navigation }) {
   const [students, setStudents] = useState([]);
   const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchStudents();
+    }, [])
+  );
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get("YOUR_MONGODB_API_ENDPOINT");
-      const sortedStudents = response.data.sort((a, b) => b.stars - a.stars);
-      setStudents(sortedStudents);
+      const response = await axios.get(API_URL);
+      if (response.data && response.data.students) {
+        const sortedStudents = response.data.students.sort((a, b) => b.stars - a.stars);
+        setStudents(sortedStudents);
+      }
     } catch (error) {
-      console.error("Error fetching students:", error);
+      console.error("❌ Error fetching students:", error);
     }
   };
 
   const topThree = students.slice(0, 3);
   const displayedStudents = showAll ? students : topThree;
-  const topStudent = students[0];
+  const topStudent = students.length > 0 ? students[0] : null;
 
   return (
     <View style={styles.container}>
@@ -54,7 +61,7 @@ export default function LeaderboardScreen({ navigation }) {
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Outstanding</Text>
         <Text style={styles.subtitle}>The more you learn, the higher you go!</Text>
-        {topStudent && <StudentCard student={topStudent} onPress={() => console.log("Top Student:", topStudent.name)} />}
+        {topStudent && <StudentCard student={topStudent} onPress={() => console.log("Top Student:", topStudent.fullName)} />}
       </View>
 
       <View style={styles.tableContainer}>
@@ -69,7 +76,7 @@ export default function LeaderboardScreen({ navigation }) {
           renderItem={({ item, index }) => (
             <View style={styles.tableRow}>
               <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
-              <Text style={[styles.cell, styles.centerText]}>{item.name}</Text>
+              <Text style={[styles.cell, styles.centerText]}>{item.fullName}</Text>
               <View style={[styles.cell, styles.centerText, styles.starContainer]}>
                 <Image source={starIcon} style={styles.starIcon} />
                 <Text style={styles.cell}>{item.stars}</Text>
@@ -88,6 +95,7 @@ export default function LeaderboardScreen({ navigation }) {
     </View>
   );
 }
+
 
 
 
