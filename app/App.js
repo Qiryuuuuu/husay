@@ -25,6 +25,8 @@ import PracticeInterfaceScreenSelect from "./screens/practice interface/easy/mai
 
 import CountdownScreen from "./component/countdown"
 import ShapeGame from "./component/shapeGame"
+import StageCompletionScreen from "./component/stageCompletion"
+
 
 const Stack = createStackNavigator();
 
@@ -54,6 +56,8 @@ export default function App() {
       
         <Stack.Screen name="Countdown" component={CountdownScreen} />
         <Stack.Screen name="ShapeGame" component={ShapeGame} />
+        <Stack.Screen name="StageCompletion" component={StageCompletionScreen} />
+
 
 
       </Stack.Navigator>
