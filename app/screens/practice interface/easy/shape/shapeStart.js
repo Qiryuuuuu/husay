@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ImageBackground, Animated, Easing } from 'react-native';
 import PregameDialog from './PregameDialog';
 import Countdown from '../../../../component/countdown';
-import ShapeGame from '../../../../component/shapeGame';
+import ShapeGame from '../../../../component/game/shapeGame';
 import StageCompletion from '../../../../component/stageCompletion'; 
 
 const backgroundImg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
@@ -115,9 +115,9 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: "center",
         alignItems: "center",
-        width: "100%",  // Add this
-        height: "100%", // Add this
-        flex: 1,        // Add this
+        width: "100%",  
+        height: "100%", 
+        flex: 1,        
     }
 });
 
