@@ -34,7 +34,7 @@ export default function EnterCodeScreen({ navigation }) {
       {/* Title & Subtitle */}
       <View style={styles.textHeader}>
         <Text style={styles.title}>Enter Verification Code</Text>
-        <Text style={styles.subtitle}>We have sent a code to your email</Text>
+        <Text style={styles.subtitle}>We have sent a code to your phone number</Text>
         <TouchableOpacity>
           <Text style={styles.resend}>Click here to resend</Text>
         </TouchableOpacity>
