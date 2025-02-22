@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
         console.log("Token:", response.data.token);
 
         // ✅ Ensure the screen name matches Stack Navigator
-        navigation.navigate("Home"); 
+        navigation.navigate("StudentProfile"); 
       }
     } catch (error) {
       console.error("❌ Error:", error);
