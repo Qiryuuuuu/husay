@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-const backgroundImg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
 const evaExcited = require("../../../../../assets/eva/eva-excited.png");
 const shaneGreet = require("../../../../../assets/shane/shane-greet.png");
 const evaPointing = require("../../../../../assets/eva/eva-pointing.png");
@@ -25,7 +24,7 @@ const PregameDialog = ({ onDialogComplete }) => {
     const [displayedText, setDisplayedText] = useState(""); 
     const [isTyping, setIsTyping] = useState(true);
     const [messageCompleted, setMessageCompleted] = useState(false);
-    const typingSpeed = 40;
+    const typingSpeed = 10;
     
     useEffect(() => {
         let text = shapeDialog[currentMessageIndex];
@@ -83,22 +82,11 @@ const PregameDialog = ({ onDialogComplete }) => {
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "column",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   chatBubbleContainer: {
     width: "60%",

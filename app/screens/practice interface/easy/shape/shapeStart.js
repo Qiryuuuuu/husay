@@ -47,7 +47,7 @@ const GameScreen = () => {
                     styles.overlay,
                     gamePhase === "game"
                         ? styles.lightOverlay
-                        : gamePhase === "dialog"
+                        : gamePhase === "dialog" || gamePhase === "completed"
                         ? styles.darkOverlay
                         : styles.noOverlay, 
                     { opacity: overlayOpacity }, 
@@ -115,6 +115,9 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: "center",
         alignItems: "center",
+        width: "100%",  // Add this
+        height: "100%", // Add this
+        flex: 1,        // Add this
     }
 });
 
