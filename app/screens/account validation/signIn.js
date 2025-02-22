@@ -17,15 +17,15 @@ const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 
-export default function LoginScreen({ navigation }) {  // ✅ Use navigation from props
+export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSignIn = async () => {
     try {
       const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
-        email,
+        phoneNumber,
         password,
       });
 
@@ -33,8 +33,7 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
         Alert.alert("Success", response.data.message);
         console.log("Token:", response.data.token);
 
-        // ✅ Ensure the screen name matches Stack Navigator
-        navigation.navigate("StudentProfile"); 
+        navigation.navigate("StudentProfile");
       }
     } catch (error) {
       console.error("❌ Error:", error);
@@ -62,10 +61,10 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="Phone Number"
           placeholderTextColor="#BDBDBD"
-          value={email}
-          onChangeText={setEmail}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
         />
         <TextInput
           style={styles.input}
@@ -104,7 +103,6 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   element1: {

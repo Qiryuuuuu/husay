@@ -3,23 +3,23 @@ import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "reac
 
 const logoImg = require("../../../assets/logo.png");
 const backIcon = require("../../../assets/back-icon.png");
-const emailIcon = require("../../../assets/user-icon.png"); 
-const element1 = require("../../../assets/element1.png")
-const element2 = require("../../../assets/element2.png")
-const element3 = require("../../../assets/element3.png")
-const element4 = require("../../../assets/element4.png")
-const element5 = require("../../../assets/element5.png")
-const element6 = require("../../../assets/element6.png")
+const phoneIcon = require("../../../assets/user-icon.png");
+const element1 = require("../../../assets/element1.png");
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
+const element5 = require("../../../assets/element5.png");
+const element6 = require("../../../assets/element6.png");
 
 export default function ForgotPasswordScreen({ navigation }) {
   return (
     <View style={styles.container}>
-        <Image source={element1} style={styles.element1} />
-        <Image source={element2} style={styles.element2} />
-        <Image source={element3} style={styles.element3} />
-        <Image source={element4} style={styles.element4} />
-        <Image source={element5} style={styles.element5} />
-        <Image source={element6} style={styles.element6} />
+      <Image source={element1} style={styles.element1} />
+      <Image source={element2} style={styles.element2} />
+      <Image source={element3} style={styles.element3} />
+      <Image source={element4} style={styles.element4} />
+      <Image source={element5} style={styles.element5} />
+      <Image source={element6} style={styles.element6} />
 
       {/* Back Button */}
       <View style={styles.backHeader}>
@@ -43,10 +43,10 @@ export default function ForgotPasswordScreen({ navigation }) {
       {/* Form */}
       <View style={styles.inputContainer}>
         <View style={styles.inputWrapper}>
-          <Image source={emailIcon} style={styles.inputIcon} />
+          <Image source={phoneIcon} style={styles.inputIcon} />
           <TextInput 
             style={styles.input} 
-            placeholder="Email Address" 
+            placeholder="Phone Number" 
             placeholderTextColor="#BDBDBD"
           />
         </View>
@@ -73,35 +73,35 @@ export default function ForgotPasswordScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  element1:{position: "absolute", bottom: -180, left: -10, resizeMode: "contain",},
-  element2:{position: "absolute", top: -180, right: -70, resizeMode: "contain",},
-  element3:{position: "absolute", left: -50, resizeMode: "contain",},
-  element4:{position: "absolute", right: -180 , resizeMode: "contain", },
-  element5:{position: "absolute", bottom: -40, right: 40 , resizeMode: "contain", },
-  element6:{position: "absolute", top: -70, left: 400, resizeMode: "contain", },
+  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
+  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element3: { position: "absolute", left: -50, resizeMode: "contain" },
+  element4: { position: "absolute", right: -180, resizeMode: "contain" },
+  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
+  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
   
   backHeader: {
     position: "absolute",
-    top: 45,   
-    left: 30,  
-    zIndex: 10, 
+    top: 45,
+    left: 30,
+    zIndex: 10,
   },
   backButton: {
-    flexDirection: "row",  
-    alignItems: "center",  
+    flexDirection: "row",
+    alignItems: "center",
   },
   backIcon: {
-    width: 20, 
+    width: 20,
     height: 20,
-    marginRight: 5,  
+    marginRight: 5,
     resizeMode: "contain",
   },
   backText: {
     color: "#5A8EF4",
     fontSize: 16,
-  },  
+  },
   container: {
-    flex: 1,  
+    flex: 1,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
@@ -177,12 +177,12 @@ const styles = StyleSheet.create({
     borderColor: "white",
   },
   shadow: {
-    shadowColor: "#000",  
-    shadowOffset: { width: 2, height: 4 }, 
-    shadowOpacity: 0.3,  
-    shadowRadius: 4,  
-    elevation: 6, 
-    backgroundColor: "#4A90E2", 
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    backgroundColor: "#4A90E2",
   },
   buttonText: {
     color: "#fff",
