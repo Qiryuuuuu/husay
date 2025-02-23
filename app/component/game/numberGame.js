@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 15,
         borderRadius: 10,
-        width: 120,
+        width: 100,
         alignItems: "center",
         zIndex: 20
     },
