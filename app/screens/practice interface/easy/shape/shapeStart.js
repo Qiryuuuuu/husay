@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ImageBackground, Animated, Easing } from 'react-native';
-import PregameDialog from './PregameDialog';
+import PregameDialog from '../../../../component/game/PregameDialog';
 import Countdown from '../../../../component/countdown';
 import ShapeGame from '../../../../component/game/shapeGame';
 import StageCompletion from '../../../../component/stageCompletion'; 

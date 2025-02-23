@@ -1,56 +1,49 @@
+// StageCompletion.js
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import dialogues from "../data/shapeDialogues";
 
-const completionBg = require("../../assets/gameBackground/stage-completion-bg.png");
-const headerStage = require("../../assets/stageCompletion/completion-header.png");
-const retryBtn = require("../../assets/stageCompletion/retry-btn.png");
-const homeBtn = require("../../assets/stageCompletion/home-btn.png");
-const nextBtn = require("../../assets/stageCompletion/next-btn.png");
-const shaneCompletionImg = require("../../assets/shane/shane-greet.png");
-
-const StageCompletion = ({ timeTaken, correctAnswers, onRestart }) => {
+const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, completionNpc }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
-  const [currentMessage, setCurrentMessage] = useState("");
   const typingSpeed = 30; // milliseconds per character
 
   useEffect(() => {
-    // Reset states when component mounts
-    setDisplayedText("");
-    setIsTyping(true);
-
-    // Get completion messages and select a random one
-    const completeDialogues = dialogues.complete || [];
+    const completeDialogues = dialoguesData?.complete || [];
     if (!completeDialogues.length) {
       setIsTyping(false);
       return;
     }
 
+    // Pick a random message from the provided dialogues
     const randomIndex = Math.floor(Math.random() * completeDialogues.length);
     const message = completeDialogues[randomIndex] || "";
-    setCurrentMessage(message);
 
-    let charIndex = 0;
-    const intervalId = setInterval(() => {
-      if (charIndex < message.length) {
-        setDisplayedText((prev) => prev + message[charIndex]);
-        charIndex++;
+    const characters = Array.from(message);
+    let currentIndex = 0;
+
+    const typeNextChar = () => {
+      if (currentIndex < characters.length) {
+        setDisplayedText(message.slice(0, currentIndex + 1));
+        currentIndex++;
+        setTimeout(typeNextChar, typingSpeed);
       } else {
-        clearInterval(intervalId);
         setIsTyping(false);
       }
-    }, typingSpeed);
+    };
 
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
-  }, []);
+    typeNextChar();
+
+    return () => {
+      setDisplayedText("");
+      setIsTyping(false);
+    };
+  }, [dialoguesData]);
 
   return (
     <View style={styles.containerStage}>
       <View style={styles.containerContent}> 
-        <Image source={completionBg} style={styles.completionBg}/>
-        <Image source={headerStage} style={styles.headerStage}/>
+        <Image source={require("../../assets/gameBackground/stage-completion-bg.png")} style={styles.completionBg}/>
+        <Image source={require("../../assets/stageCompletion/completion-header.png")} style={styles.headerStage}/>
                 
         <View style={styles.scoreContainer}>
           <View style={[styles.resultContainer, styles.timeContainer]}>
@@ -65,32 +58,27 @@ const StageCompletion = ({ timeTaken, correctAnswers, onRestart }) => {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={onRestart}>
-            <Image source={retryBtn} style={styles.image}/>
+            <Image source={require("../../assets/stageCompletion/retry-btn.png")} style={styles.image}/>
           </TouchableOpacity>
-                    
           <TouchableOpacity style={styles.button}>
-            <Image source={homeBtn} style={styles.image}/>
+            <Image source={require("../../assets/stageCompletion/home-btn.png")} style={styles.image}/>
           </TouchableOpacity>
-                    
           <TouchableOpacity style={styles.button}>
-            <Image source={nextBtn} style={styles.image}/>
+            <Image source={require("../../assets/stageCompletion/next-btn.png")} style={styles.image}/>
           </TouchableOpacity>
         </View>
 
         <View style={styles.chatContainer}>
-          <Image source={shaneCompletionImg} style={styles.stageNpcImage} />
+          <Image source={completionNpc?.image} style={styles.stageNpcImage} />
           <View style={styles.chatBubble}>
-            <Text style={styles.npcName}>Shane</Text>
-            <Text style={styles.npcMessage}>
-              {isTyping ? displayedText : currentMessage}
-            </Text>
+            <Text style={styles.npcName}>{completionNpc?.name}</Text>
+            <Text style={styles.npcMessage}>{displayedText}</Text>
           </View>
         </View>
       </View>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
     containerStage: {
         flex: 1,
@@ -162,7 +150,7 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderWidth: 4,
         borderColor: "white",
-        maxWidth: 500,
+        maxWidth: 570,
         alignSelf: "center"
       },
       npcName: {

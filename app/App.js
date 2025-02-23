@@ -19,13 +19,16 @@ import HomeScreen from "./screens/home/home"
 import ClassScreen from "./screens/class/class"
 
 import PracticeInterfaceScreen from "./screens/practice interface/SelectDifficulty"
-import PregameDialogScreen from "./screens/practice interface/easy/shape/PregameDialog"
-import ShapeStartScreen from "./screens/practice interface/easy/shape/shapeStart"
+import PregameDialogScreen from "./component/game/PregameDialog"
 import PracticeEasyMenuIntefaceScreen from "./screens/practice interface/easy/main"
 
 import CountdownScreen from "./component/countdown"
 import ShapeGame from "./component/game/shapeGame"
 import StageCompletionScreen from "./component/stageCompletion"
+
+import ShapeModeScreen from "../app/screens/practice interface/easy/shape/ShapeModeScreen"
+import ColorModeScreem from "../app/screens/practice interface/easy/color/ColorModeScreen"
+
 
 
 const Stack = createStackNavigator();
@@ -33,7 +36,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="StageCompletion" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="ColorMode" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -54,11 +57,13 @@ export default function App() {
         <Stack.Screen name="EasyMenuInteface" component={PracticeEasyMenuIntefaceScreen} />
        
         <Stack.Screen name="PregameDialog" component={PregameDialogScreen} />
-        <Stack.Screen name="ShapeStart" component={ShapeStartScreen} />
       
         <Stack.Screen name="Countdown" component={CountdownScreen} />
         <Stack.Screen name="ShapeGame" component={ShapeGame} />
         <Stack.Screen name="StageCompletion" component={StageCompletionScreen} />
+
+        <Stack.Screen name="ShapeMode" component={ShapeModeScreen} />
+        <Stack.Screen name="ColorMode" component={ColorModeScreem} />
 
 
 
