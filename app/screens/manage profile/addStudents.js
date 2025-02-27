@@ -1,14 +1,14 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { 
+  View, Text, TextInput, Image, StyleSheet, TouchableOpacity, 
+  Alert, ActivityIndicator 
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage"; 
 
-const element1 = require("../../../assets/element1.png");
-const element2 = require("../../../assets/element2.png");
-const element3 = require("../../../assets/element3.png");
-const element4 = require("../../../assets/element4.png");
-const element5 = require("../../../assets/element5.png");
-const element6 = require("../../../assets/element6.png");
+const API_URL = "http://10.0.2.2:5000/api/class/add-student"; // ✅ Fixed API endpoint
 
 const backIcon = require("../../../assets/back-icon.png");
 const logoImg = require("../../../assets/logo.png");
@@ -18,11 +18,40 @@ const ageIcon = require("../../../assets/age-icon.png");
 const genderIcon = require("../../../assets/gender-icon.png");
 
 export default function AddStudentScreen({ navigation }) {
+  const [employeeNo, setEmployeeNo] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
+  // ✅ Fetch logged-in user's employeeNo from AsyncStorage
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const storedEmployeeNo = await AsyncStorage.getItem("employeeNo");
+
+        if (!token || !storedEmployeeNo) {
+          Alert.alert("Error", "Unauthorized: No token or employee number found.");
+          navigation.navigate("Login");
+          return;
+        }
+        setEmployeeNo(storedEmployeeNo);
+      } catch (error) {
+        console.error("❌ Error fetching user:", error);
+        Alert.alert("Error", "Could not fetch user data.");
+        navigation.navigate("Login");
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // ✅ Select and Upload Image
   const selectImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -42,44 +71,73 @@ export default function AddStudentScreen({ navigation }) {
     }
   };
 
+  // ✅ Add Student with Authentication Token
   const addStudent = async () => {
-    if (!name || !age || !gender) {
+    if (!employeeNo) {
+      Alert.alert("Error", "Unauthorized: Employee number is missing.");
+      return;
+    }
+    if (!fullName || !age || !gender) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
+    if (isNaN(age) || age <= 0) {
+      Alert.alert("Error", "Please enter a valid age.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
+      const token = await AsyncStorage.getItem("authToken"); // ✅ Retrieve the token
+
       const newStudent = {
-        name,
-        age,
+        employeeNo,  // ✅ Only logged-in teacher can add students
+        fullName,
+        age: parseInt(age),
         gender,
         profileImage,
         stars: 0,
       };
 
-      await axios.post("YOUR_MONGODB_API_ENDPOINT", newStudent);
-      Alert.alert("Success", "Student added successfully!");
-      
-      // Reset form
-      setName("");
-      setAge("");
-      setGender("");
-      setProfileImage(null);
+      const response = await axios.post(API_URL, newStudent, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Send token for authentication
+        },
+      });
+
+      if (response.status === 201) {
+        Alert.alert("Success", "Student added successfully!");
+
+        // ✅ Reset form fields
+        setFullName("");
+        setAge("");
+        setGender("");
+        setProfileImage(null);
+
+        // ✅ Redirect back to Student Profile
+        navigation.navigate("StudentProfile");
+      }
     } catch (error) {
-      console.error("Error adding student:", error);
-      Alert.alert("Error", "Failed to add student.");
+      console.error("❌ Error adding student:", error);
+      Alert.alert("Error", error.response?.data?.message || "Failed to add student.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ✅ Show a loading screen while fetching user data
+  if (authLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Image source={element1} style={styles.element1} />
-      <Image source={element2} style={styles.element2} />
-      <Image source={element3} style={styles.element3} />
-      <Image source={element4} style={styles.element4} />
-      <Image source={element5} style={styles.element5} />
-      <Image source={element6} style={styles.element6} />
-
       <View style={styles.backHeader}>
         <TouchableOpacity onPress={() => navigation.navigate("StudentProfile")} style={styles.backButton}>
           <Image source={backIcon} style={styles.backIcon} />
@@ -104,22 +162,45 @@ export default function AddStudentScreen({ navigation }) {
 
           <View style={styles.inputWrapper}>
             <Image source={userIcon} style={styles.inputIcon} />
-            <TextInput style={styles.input} placeholder="Student name" placeholderTextColor="#BDBDBD" value={name} onChangeText={setName} />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Student name" 
+              placeholderTextColor="#BDBDBD" 
+              value={fullName} 
+              onChangeText={setFullName} 
+            />
           </View>
 
           <View style={styles.inputRow}>
             <View style={styles.inputWrapper}>
               <Image source={ageIcon} style={styles.inputIcon} />
-              <TextInput style={styles.input} placeholder="Age" placeholderTextColor="#BDBDBD" value={age} onChangeText={setAge} keyboardType="numeric" />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Age" 
+                placeholderTextColor="#BDBDBD" 
+                value={age} 
+                onChangeText={setAge} 
+                keyboardType="numeric" 
+              />
             </View>
+
             <View style={styles.inputWrapper}>
               <Image source={genderIcon} style={styles.inputIcon} />
-              <TextInput style={styles.input} placeholder="Gender" placeholderTextColor="#BDBDBD" value={gender} onChangeText={setGender} />
+              <Picker
+                selectedValue={gender}
+                style={styles.input}
+                onValueChange={(itemValue) => setGender(itemValue)}
+              >
+                <Picker.Item label="Select Gender" value="" />
+                <Picker.Item label="Male" value="Male" />
+                <Picker.Item label="Female" value="Female" />
+                <Picker.Item label="Other" value="Other" />
+              </Picker>
             </View>
           </View>
 
-          <TouchableOpacity style={[styles.button, styles.shadow]} onPress={addStudent}>
-            <Text style={styles.buttonText}>Add student</Text>
+          <TouchableOpacity style={[styles.button, styles.shadow]} onPress={addStudent} disabled={loading}>
+            {loading ? <ActivityIndicator color="#000000" /> : <Text style={styles.buttonText}>Add Student</Text>}
           </TouchableOpacity>
         </View>
       </View>
@@ -130,6 +211,7 @@ export default function AddStudentScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1:{position: "absolute", bottom: -180, left: -10, resizeMode: "contain",},

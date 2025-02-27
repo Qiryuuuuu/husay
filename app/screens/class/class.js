@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet, FlatList } from "react-native";
+import { 
+  View, Text, TouchableOpacity, Image, StyleSheet, FlatList, 
+  Alert, ActivityIndicator, Dimensions
+} from "react-native";
 import axios from "axios";
-import { useFocusEffect } from "@react-navigation/native"; // ✅ Refresh data when screen is focused
-import StudentCard from "../../component/studentCard";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 
-const API_URL = "http://10.0.2.2:5000/api/class/get-students"; // ✅ Update with actual API
+const API_URL = "http://10.0.2.2:5000/api/class/get-students";
+const ADD_STUDENT_URL = "http://10.0.2.2:5000/api/class/add-student";
 
 const element1 = require("../../../assets/element1.png");
 const element3 = require("../../../assets/element3.png");
@@ -13,10 +17,13 @@ const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 const backIcon = require("../../../assets/back-icon.png");
 const starIcon = require("../../../assets/star-icon.png");
+const defaultProfile = require("../../../assets/default-profile.png");
 
 export default function LeaderboardScreen({ navigation }) {
   const [students, setStudents] = useState([]);
   const [showAll, setShowAll] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -26,19 +33,81 @@ export default function LeaderboardScreen({ navigation }) {
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get(API_URL);
-      if (response.data && response.data.students) {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        Alert.alert("Error", "Unauthorized: No token found.");
+        navigation.navigate("Login");
+        return;
+      }
+
+      const response = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
         const sortedStudents = response.data.students.sort((a, b) => b.stars - a.stars);
         setStudents(sortedStudents);
+        setSelectedStudent(sortedStudents[0]);
+      } else {
+        Alert.alert("Error", "Failed to fetch students.");
       }
     } catch (error) {
       console.error("❌ Error fetching students:", error);
+      Alert.alert("Error", error.response?.data?.message || "Could not fetch student data.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const topThree = students.slice(0, 3);
-  const displayedStudents = showAll ? students : topThree;
-  const topStudent = students.length > 0 ? students[0] : null;
+  // Function to add a new student and update the list in real-time
+  const addStudent = async (newStudent) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        Alert.alert("Error", "Unauthorized: No token found.");
+        navigation.navigate("Login");
+        return;
+      }
+
+      const response = await axios.post(ADD_STUDENT_URL, newStudent, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 201) {
+        const addedStudent = response.data.student;
+        setStudents((prevStudents) => {
+          const updatedStudents = [...prevStudents, addedStudent];
+          updatedStudents.sort((a, b) => b.stars - a.stars);
+          return updatedStudents;
+        });
+      } else {
+        Alert.alert("Error", "Failed to add student.");
+      }
+    } catch (error) {
+      console.error("❌ Error adding student:", error);
+      Alert.alert("Error", error.response?.data?.message || "Could not add student.");
+    }
+  };
+
+  const handleStudentPress = (student) => {
+    setSelectedStudent(student);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text>Loading students...</Text>
+      </View>
+    );
+  }
+
+  const displayedStudents = showAll ? students : students.slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -61,7 +130,20 @@ export default function LeaderboardScreen({ navigation }) {
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Outstanding</Text>
         <Text style={styles.subtitle}>The more you learn, the higher you go!</Text>
-        {topStudent && <StudentCard student={topStudent} onPress={() => console.log("Top Student:", topStudent.fullName)} />}
+        {selectedStudent && (
+          <TouchableOpacity 
+            style={styles.topStudentContainer} 
+            onPress={() => handleStudentPress(selectedStudent)}
+          >
+            <View style={styles.squareProfileContainer}>
+              <Image
+                source={selectedStudent.profileImage ? { uri: selectedStudent.profileImage } : defaultProfile}
+                style={styles.squareProfileImage}
+              />
+            </View>
+            <Text style={styles.topStudentName}>{selectedStudent.fullName}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.tableContainer}>
@@ -70,6 +152,7 @@ export default function LeaderboardScreen({ navigation }) {
           <Text style={[styles.headerText, styles.centerText]}>Name</Text>
           <Text style={[styles.headerText, styles.centerText]}>Stars</Text>
         </View>
+
         <FlatList
           data={displayedStudents}
           keyExtractor={(item) => item._id.toString()}
@@ -83,9 +166,11 @@ export default function LeaderboardScreen({ navigation }) {
               </View>
             </View>
           )}
+          ListEmptyComponent={
+            <Text style={styles.noResults}>No students found. Add some students to get started!</Text>
+          }
           contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator={true}
-          style={{ flex: 1 }}
         />
       </View>
 
@@ -95,6 +180,8 @@ export default function LeaderboardScreen({ navigation }) {
     </View>
   );
 }
+
+
 
 
 

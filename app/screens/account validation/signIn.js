@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // ✅ Store auth token securely
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -17,12 +18,20 @@ const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 
-export default function LoginScreen({ navigation }) {  // ✅ Use navigation from props
+export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ Added loading state
 
   const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+
+    setLoading(true); // ✅ Show loading indicator
+
     try {
       const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
         email,
@@ -30,15 +39,28 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
       });
 
       if (response.status === 200) {
-        Alert.alert("Success", response.data.message);
-        console.log("Token:", response.data.token);
+        const { token, employeeNo } = response.data;
 
-        // ✅ Ensure the screen name matches Stack Navigator
-        navigation.navigate("Home"); 
+        // ✅ Store token & employeeNo in AsyncStorage
+        await AsyncStorage.setItem("authToken", token);
+        await AsyncStorage.setItem("employeeNo", employeeNo);
+
+        console.log("✅ Token Stored:", token);
+        console.log("✅ Employee Number:", employeeNo);
+
+        Alert.alert("Success", "Login successful!");
+
+        // ✅ Redirect to Home (or AddStudent for testing)
+        navigation.navigate("AddStudent");
       }
     } catch (error) {
       console.error("❌ Error:", error);
-      Alert.alert("Error", error.response?.data?.message || "Something went wrong");
+
+      const errorMessage =
+        error.response?.data?.message || "Invalid credentials. Please try again.";
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setLoading(false); // ✅ Hide loading indicator
     }
   };
 
@@ -76,7 +98,7 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
           onChangeText={setPassword}
         />
       </View>
-      
+
       <View style={styles.forgotContainer}>
         <TouchableOpacity>
           <Text
@@ -88,8 +110,16 @@ export default function LoginScreen({ navigation }) {  // ✅ Use navigation fro
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>Sign in</Text>
+      <TouchableOpacity
+        style={[styles.button, styles.shadow]}
+        onPress={handleSignIn}
+        disabled={loading} // ✅ Disable button while loading
+      >
+        {loading ? (
+          <Text style={styles.buttonText}>Signing in...</Text>
+        ) : (
+          <Text style={styles.buttonText}>Sign in</Text>
+        )}
       </TouchableOpacity>
 
       <Text style={styles.signupText}>

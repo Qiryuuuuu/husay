@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
-
 const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
@@ -22,6 +21,7 @@ export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [employeeNo, setEmployeeNo] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // ✅ Added state for phone number
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -38,7 +38,7 @@ export default function SignUpScreen({ navigation }) {
 
   // Function to handle Sign-Up
   const handleSignUp = async () => {
-    if (!email || !fullName || !employeeNo || !password || !confirmPassword) {
+    if (!email || !fullName || !employeeNo || !phoneNumber || !password || !confirmPassword) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
@@ -52,7 +52,7 @@ export default function SignUpScreen({ navigation }) {
       const response = await fetch("http://10.0.2.2:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, fullName, employeeNo, password, securityQuestions: [] }),
+        body: JSON.stringify({ email, fullName, employeeNo, phoneNumber, password, securityQuestions: [] }),
       });
 
       const data = await response.json();
@@ -124,6 +124,18 @@ export default function SignUpScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Phone Number Input */}
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            placeholderTextColor="#BDBDBD"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+          />
+        </View>
+
         {/* Password Input with Icon & Show/Hide */}
         <View style={styles.inputWrapper}>
           <Image source={keyIcon} style={styles.inputIcon} />
@@ -140,27 +152,6 @@ export default function SignUpScreen({ navigation }) {
             <Image source={passwordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
           </TouchableOpacity>
         </View>
-
-        {/* Password Requirements Message */}
-        {showPasswordRequirements && (
-          <View style={styles.passwordRequirements}>
-            <Text style={[styles.requirementText, isLengthValid && styles.validRequirement]}>
-              • At least 8 characters long
-            </Text>
-            <Text style={[styles.requirementText, hasLowercase && styles.validRequirement]}>
-              • Contains at least one lowercase letter (a-z)
-            </Text>
-            <Text style={[styles.requirementText, hasUppercase && styles.validRequirement]}>
-              • Contains at least one uppercase letter (A-Z)
-            </Text>
-            <Text style={[styles.requirementText, hasNumber && styles.validRequirement]}>
-              • Includes a number (0-9)
-            </Text>
-            <Text style={[styles.requirementText, hasSpecialChar && styles.validRequirement]}>
-              • Includes a special character (!@#$%^&*?/.,)
-            </Text>
-          </View>
-        )}
 
         {/* Confirm Password Input */}
         <View style={styles.inputWrapper}>
@@ -198,6 +189,8 @@ export default function SignUpScreen({ navigation }) {
     </View>
   );
 }
+
+
 
 
 const styles = StyleSheet.create({
