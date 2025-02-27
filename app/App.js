@@ -16,11 +16,20 @@ import AddStudentScreen from "./screens/manage profile/addStudents"
 
 import HomeScreen from "./screens/home/home"
 
-import  ClassScreen from "./screens/class/class"
+import ClassScreen from "./screens/class/class"
 
-import  PracticeInterfaceScreen from "./screens/practice interface/SelectDifficulty"
-import  ShapeGameScreen from "./screens/practice interface/easy/shape/shapeGame"
-import PracticeInterfaceScreenSelect from "./screens/practice interface/easy/main"
+import PracticeInterfaceScreen from "./screens/practice interface/SelectDifficulty"
+import PregameDialogScreen from "./component/game/PregameDialog"
+import PracticeEasyMenuIntefaceScreen from "./screens/practice interface/easy/main"
+
+import CountdownScreen from "./component/countdown"
+import ShapeGame from "./component/game/shapeGame"
+import StageCompletionScreen from "./component/stageCompletion"
+
+import ShapeModeScreen from "../app/screens/practice interface/easy/shape/ShapeModeScreen"
+import ColorModeScreem from "../app/screens/practice interface/easy/color/ColorModeScreen"
+import NumberModeScreen from "../app/screens/practice interface/easy/number/NumberModeScreen"
+
 
 
 
@@ -29,7 +38,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="NumberMode" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -47,7 +56,21 @@ export default function App() {
         <Stack.Screen name="Class" component={ClassScreen} />
 
         <Stack.Screen name="PracticeInterface" component={PracticeInterfaceScreen} />
-        <Stack.Screen name="ShapeGameScreen" component={ShapeGameScreen} />
+        <Stack.Screen name="EasyMenuInteface" component={PracticeEasyMenuIntefaceScreen} />
+       
+        <Stack.Screen name="PregameDialog" component={PregameDialogScreen} />
+      
+        <Stack.Screen name="Countdown" component={CountdownScreen} />
+        <Stack.Screen name="ShapeGame" component={ShapeGame} />
+        <Stack.Screen name="StageCompletion" component={StageCompletionScreen} />
+
+        <Stack.Screen name="ShapeMode" component={ShapeModeScreen} />
+        <Stack.Screen name="ColorMode" component={ColorModeScreem} />
+        <Stack.Screen name="NumberMode" component={NumberModeScreen} />
+
+
+
+
       </Stack.Navigator>
     </NavigationContainer>
   );

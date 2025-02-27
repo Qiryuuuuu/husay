@@ -18,7 +18,7 @@ const emplNum = require("../../../assets/employee-icon.png");
 
 export default function SignUpScreen({ navigation }) {
   // State variables
-  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [fullName, setFullName] = useState("");
   const [employeeNo, setEmployeeNo] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // ✅ Added state for phone number
@@ -38,7 +38,7 @@ export default function SignUpScreen({ navigation }) {
 
   // Function to handle Sign-Up
   const handleSignUp = async () => {
-    if (!email || !fullName || !employeeNo || !phoneNumber || !password || !confirmPassword) {
+    if (!phoneNumber || !fullName || !employeeNo || !password || !confirmPassword) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
@@ -52,14 +52,14 @@ export default function SignUpScreen({ navigation }) {
       const response = await fetch("http://10.0.2.2:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, fullName, employeeNo, phoneNumber, password, securityQuestions: [] }),
+        body: JSON.stringify({ phoneNumber, fullName, employeeNo, password, securityQuestions: [] }),
       });
 
       const data = await response.json();
       if (response.ok) {
         console.log("✅ Sign-up Successful:", data);
         Alert.alert("Success", "Account created successfully!");
-        navigation.navigate("SecurityQuestion", { email }); 
+        navigation.navigate("SecurityQuestion", { phoneNumber });
       } else {
         Alert.alert("Error", data.message);
       }
@@ -88,15 +88,15 @@ export default function SignUpScreen({ navigation }) {
       </View>
 
       <View style={styles.inputContainer}>
-        {/* Email Input with Icon */}
+        {/* Phone Number Input with Icon */}
         <View style={styles.inputWrapper}>
           <Image source={userIcon} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Phone Number"
             placeholderTextColor="#BDBDBD"
-            value={email}
-            onChangeText={setEmail}
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
           />
         </View>
 
@@ -189,9 +189,6 @@ export default function SignUpScreen({ navigation }) {
     </View>
   );
 }
-
-
-
 
 const styles = StyleSheet.create({
   element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },

@@ -46,14 +46,14 @@ router.get("/user", authenticateUser, async (req, res) => {
 // ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
   try {
-    const { email, fullName, employeeNo, password, securityQuestions } = req.body;
+    const { phoneNumber, fullName, employeeNo, password, securityQuestions } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email already in use." });
+    const existingUser = await User.findOne({ phoneNumber });
+    if (existingUser) return res.status(400).json({ message: "Phone number already in use." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
-      email,
+      phoneNumber,
       fullName,
       employeeNo,
       password: hashedPassword,
@@ -70,18 +70,61 @@ router.post("/signup", async (req, res) => {
 // ✅ User Login (Sign In) - Now Returns `employeeNo`
 router.post("/signin", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { phoneNumber, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ phoneNumber });
     if (!user) return res.status(400).json({ message: "Invalid credentials." });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials." });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.json({ token, userId: user._id });
+  } catch (error) {
+    res.status(500).json({ message: "Server error." });
+  }
+});
 
-    // ✅ Return `employeeNo` along with token
-    res.json({ token, userId: user._id, employeeNo: user.employeeNo });
+// Save security questions on first sign-in
+router.post("/save-security", async (req, res) => {
+  try {
+    const { phoneNumber, securityQuestions } = req.body;
+  
+    // Check if the user exists
+    const user = await User.findOne({ phoneNumber });
+    if (!user) return res.status(400).json({ message: "User not found." });
+  
+    // If security questions are already set, prevent overwriting
+    if (user.securityQuestions && user.securityQuestions.length > 0) {
+      return res.status(400).json({ message: "Security questions are already set." });
+    }
+  
+    // Save security questions for the first time
+    user.securityQuestions = securityQuestions;
+    await user.save();
+  
+    res.json({ message: "Security questions saved successfully!" });
+  } catch (error) {
+    console.error("❌ Error saving security questions:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+// Validate security questions
+router.post("/validate-security", async (req, res) => {
+  try {
+    const { phoneNumber, securityAnswers } = req.body;
+  
+    const user = await User.findOne({ phoneNumber });
+    if (!user) return res.status(400).json({ message: "User not found." });
+  
+    let isValid = user.securityQuestions.every(
+      (sq, index) => sq.answer.toLowerCase() === securityAnswers[index].answer.toLowerCase()
+    );
+  
+    if (!isValid) return res.status(400).json({ message: "Security answers incorrect." });
+  
+    res.json({ message: "Security questions verified successfully." });
   } catch (error) {
     res.status(500).json({ message: "Server error." });
   }

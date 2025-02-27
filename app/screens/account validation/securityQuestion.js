@@ -12,7 +12,7 @@ const element6 = require("../../../assets/element6.png");
 const answerIcon = require("../../../assets/book-icon.png");
 
 export default function SecurityQuestionScreen({ navigation, route }) {
-  const { email, isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
+  const { phoneNumber , isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
 
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
   const [answer1, setAnswer1] = useState("");
@@ -48,7 +48,7 @@ export default function SecurityQuestionScreen({ navigation, route }) {
       const response = await fetch("http://10.0.2.2:5000/api/auth/save-security", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, securityQuestions: securityAnswers }),
+        body: JSON.stringify({ phoneNumber, securityQuestions: securityAnswers }),
       });
 
       const data = await response.json();

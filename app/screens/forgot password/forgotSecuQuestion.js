@@ -126,7 +126,7 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("NextStep")}>
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("StudentProfile")}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
 

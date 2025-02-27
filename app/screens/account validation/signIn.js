@@ -20,7 +20,7 @@ const element4 = require("../../../assets/element4.png");
 
 export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); // ✅ Added loading state
 
@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
-        email,
+        phoneNumber,
         password,
       });
 
@@ -50,8 +50,7 @@ export default function LoginScreen({ navigation }) {
 
         Alert.alert("Success", "Login successful!");
 
-        // ✅ Redirect to Home (or AddStudent for testing)
-        navigation.navigate("AddStudent");
+        navigation.navigate("StudentProfile");
       }
     } catch (error) {
       console.error("❌ Error:", error);
@@ -84,10 +83,10 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="Phone Number"
           placeholderTextColor="#BDBDBD"
-          value={email}
-          onChangeText={setEmail}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
         />
         <TextInput
           style={styles.input}
@@ -134,7 +133,6 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   element1: {
