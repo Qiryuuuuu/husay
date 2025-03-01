@@ -1,4 +1,4 @@
-// ShapeModeScreen.js (with dialog data)
+// ShapeModeScreen.js 
 import React from "react";
 import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
@@ -6,6 +6,7 @@ import Countdown from "../../../../component/countdown";
 import ShapeGame from "../../../../component/game/shapeGame";
 import StageCompletion from "../../../../component/stageCompletion";
 import shapeDialogues from "../../../../data/shapeDialogues";
+import { useNavigation } from '@react-navigation/native';
 
 
 const shapeBg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
@@ -29,20 +30,25 @@ const shapeCompletionNpc = {
   image: require("../../../../../assets/shane/shane-greet.png")
 };
 
-const ShapeModeScreen = () => (
-  <GameFlows
-    backgroundImg={shapeBg}
-    DialogComponent={(props) => <PregameDialog {...props} dialogData={shapeDialogData} />}
-    CountdownComponent={Countdown}
-    GameComponent={ShapeGame}
-    StageCompletionComponent={(props) => (
-      <StageCompletion 
-        {...props} 
-        dialoguesData={shapeDialogues} 
-        completionNpc={shapeCompletionNpc} 
-      />
-    )}
-  />
-);
+const ShapeModeScreen = () => {
+  const navigation = useNavigation(); 
 
+  return (
+    <GameFlows
+      backgroundImg={shapeBg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={shapeDialogData} />}
+      CountdownComponent={Countdown}
+      GameComponent={ShapeGame}
+      navigation={navigation} 
+      StageCompletionComponent={(props) => (
+        <StageCompletion 
+          {...props} 
+          dialoguesData={shapeDialogues} 
+          completionNpc={shapeCompletionNpc} 
+          navigation={navigation} 
+        />
+      )}
+    />
+  );
+};
 export default ShapeModeScreen;

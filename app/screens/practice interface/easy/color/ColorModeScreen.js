@@ -1,11 +1,13 @@
 // ColorModeScreen.js
 import React from "react";
-import GameFlow from "../../../../component/game/GameFlows";
+import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
 import ColorGame from "../../../../component/game/colorGame";
 import StageCompletion from "../../../../component/stageCompletion";
 import colorDialogues from "../../../../data/colorDialogues";
+import { useNavigation } from '@react-navigation/native';
+
 
 const colorBg = require("../../../../../assets/gameBackground/practice-color-bg.png");
 
@@ -28,20 +30,25 @@ const colorCompletionNpc = {
   image: require("../../../../../assets/dolor/dolor-greet.png")
 };
 
-const ColorModeScreen = () => (
-  <GameFlow
-    backgroundImg={colorBg}
-    DialogComponent={(props) => <PregameDialog {...props} dialogData={colorDialogData} />}
-    CountdownComponent={Countdown}
-    GameComponent={ColorGame}
-    StageCompletionComponent={(props) => (
-      <StageCompletion 
-        {...props} 
-        dialoguesData={colorDialogues} 
-        completionNpc={colorCompletionNpc} 
-      />
-    )}
-  />
-);
+const ColorModeScreen = () => {
+  const navigation = useNavigation(); 
 
+  return (
+    <GameFlows
+      backgroundImg={colorBg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={colorDialogData} />}
+      CountdownComponent={Countdown}
+      GameComponent={ColorGame}
+      navigation={navigation} 
+      StageCompletionComponent={(props) => (
+        <StageCompletion 
+          {...props} 
+          dialoguesData={colorDialogues} 
+          completionNpc={colorCompletionNpc} 
+          navigation={navigation}
+        />
+      )}
+    />
+  );
+};
 export default ColorModeScreen;
