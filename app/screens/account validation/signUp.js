@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
-
 const element1 = require("../../../assets/element1.png");
 const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
@@ -22,6 +21,7 @@ export default function SignUpScreen({ navigation }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fullName, setFullName] = useState("");
   const [employeeNo, setEmployeeNo] = useState("");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 

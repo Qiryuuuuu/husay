@@ -6,7 +6,44 @@ require("dotenv").config();
 
 const router = express.Router();
 
-// User Registration (Sign Up)
+// ✅ Middleware to Verify Token and Fetch User
+const authenticateUser = async (req, res, next) => {
+  try {
+    let token = req.headers.authorization;
+
+    if (!token || !token.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized: Token is missing or invalid." });
+    }
+
+    token = token.split(" ")[1]; // Remove "Bearer " from token
+    console.log("🔹 Decoding Token:", token); // ✅ Debugging output
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    req.user = user; // Store user data in request
+    next();
+  } catch (error) {
+    console.error("❌ Token Verification Failed:", error);
+    return res.status(403).json({ message: "Invalid token." });
+  }
+};
+
+// ✅ Fetch the Logged-in User's Data
+router.get("/user", authenticateUser, async (req, res) => {
+  try {
+    res.status(200).json(req.user); // Send user data
+  } catch (error) {
+    console.error("❌ Error fetching user:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+// ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
   try {
     const { phoneNumber, fullName, employeeNo, password, securityQuestions } = req.body;
@@ -30,7 +67,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// User Login (Sign In)
+// ✅ User Login (Sign In) - Now Returns `employeeNo`
 router.post("/signin", async (req, res) => {
   try {
     const { phoneNumber, password } = req.body;

@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
-  View, Text, FlatList, Image, StyleSheet, useWindowDimensions, TouchableOpacity, Alert 
+  View, Text, FlatList, Image, StyleSheet, 
+  useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator 
 } from "react-native";
 import { Searchbar } from "react-native-paper";
-import * as ImagePicker from "expo-image-picker";
-import StudentCard from "../../component/studentCard";
+import { useFocusEffect } from "@react-navigation/native"; 
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FontAwesome, Feather } from "@expo/vector-icons";
+
+const API_URL = "http://10.0.2.2:5000/api/class/get-students";
 
 const logoImg = require("../../../assets/logo.png");
 const defaultProfile = require("../../../assets/default-profile.png");
@@ -12,104 +17,111 @@ const defaultProfile = require("../../../assets/default-profile.png");
 export default function StudentProfileScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const [searchQuery, setSearchQuery] = useState("");
-  const [profileImage, setProfileImage] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const students = [
-    { id: 1, name: "Superman", stars: 15 },
-    { id: 2, name: "Batman", stars: 17 },
-    { id: 3, name: "Wonder Woman", stars: 13 },
-    { id: 4, name: "Flash", stars: 12 },
-    { id: 5, name: "Aquaman", stars: 11 },
-    { id: 6, name: "Green Lantern", stars: 10 },
-    { id: 7, name: "Thor", stars: 9 },
-    { id: 8, name: "Iron Man", stars: 8 },
-    { id: 9, name: "Hulk", stars: 7 },
-    { id: 10, name: "Black Panther", stars: 6 },
-    { id: 11, name: "Captain America", stars: 5 },
-    { id: 12, name: "Doctor Strange", stars: 4 },
-    { id: 13, name: "Spider-Man", stars: 3 },
-    { id: 14, name: "Black Widow", stars: 2 },
-    { id: 15, name: "Scarlet Witch", stars: 1 }
-  ];
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchStudents();
+    }, [])
+  );
 
-  // Function to handle image selection
-  const selectImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission Denied", "You need to allow access to your photos.");
-      return;
-    }
+  const fetchStudents = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        Alert.alert("Error", "Unauthorized: No token found.");
+        navigation.navigate("Login");
+        return;
+      }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+      const response = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      if (response.status === 200) {
+        setStudents(response.data.students);
+      } else {
+        Alert.alert("Error", "Failed to fetch students.");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching students:", error);
+      Alert.alert("Error", "Could not fetch student data.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase())
+    student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text>Loading students...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Centered Header */}
+      {/* Header and Search Bar */}
       <View style={styles.headerContainer}>
         <Image source={logoImg} style={styles.logo} />
         <View style={styles.textHeader}>
           <Text style={styles.title}>Husay</Text>
           <Text style={styles.subtitle}>Hugis, Bilang, at Kulay, Aalalay!</Text>
-          <Searchbar
-            placeholder="Search students..."
-            placeholderTextColor="#BDBDBD"
-            style={styles.searchBar}
-            inputStyle={styles.inputStyle}
-            onChangeText={(text) => setSearchQuery(text)} // 🔹 Ensures search query updates
-            value={searchQuery}
-          />
+          <View style={styles.searchWrapper}>
+            <Searchbar
+              placeholder="Search students..."
+              placeholderTextColor="#BDBDBD"
+              style={styles.searchBar}
+              inputStyle={styles.inputStyle}
+              onChangeText={(text) => setSearchQuery(text)}
+              value={searchQuery}
+            />
+            <Feather name="filter" size={24} color="#5A8EF4" style={styles.filterIcon} />
+          </View>
         </View>
-        <TouchableOpacity onPress={selectImage} style={styles.profileImgContainer}>
-          <Image source={profileImage ? { uri: profileImage } : defaultProfile} style={styles.profileImg} />
-          <Text style={styles.changeText}>Tap to change</Text>
-        </TouchableOpacity>
       </View>
 
-      {/* Centered Buttons */}
+      {/* Buttons */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.button, styles.shadow, styles.dashboard]}>
+          <Feather name="menu" size={20} color="#5A8EF4" style={styles.buttonIcon} />
           <Text style={[styles.buttonText, styles.buttonTextDashboard]}>View Dashboard</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("AddStudent")}>
+        <TouchableOpacity 
+          style={[styles.button, styles.shadow]} 
+          onPress={() => navigation.navigate("AddStudent")}
+        >
+          <Feather name="plus-circle" size={20} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Add Students</Text>
         </TouchableOpacity>
       </View>
 
-      {filteredStudents.length === 0 ? (
-        <Text style={styles.noResults}>No students found. Try searching with a different name.</Text>
-      ) : (
-        <FlatList
-          data={filteredStudents} 
-          keyExtractor={(item) => item.id}
-          numColumns={5}
-          contentContainerStyle={styles.grid}
-          columnWrapperStyle={styles.row}
-          renderItem={({ item }) => (
-            <View style={styles.cardWrapper}>
-              <StudentCard 
-                student={item} 
-                onPress={() => navigation.navigate("Home", { student: item })} 
-              />
+      {/* Student Cards */}
+      <FlatList
+        data={filteredStudents} 
+        keyExtractor={(item) => item._id.toString()}
+        numColumns={4}
+        contentContainerStyle={styles.grid}
+        columnWrapperStyle={styles.row}
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
+            <View style={styles.studentCard}>
+              <Image source={item.profileImage ? { uri: item.profileImage } : defaultProfile} style={styles.studentImg} />
+              <Text style={styles.studentName}>{item.fullName}</Text>
             </View>
-          )}
-          showsVerticalScrollIndicator={false} 
-        />
-      )}
+          </View>
+        )}
+        showsVerticalScrollIndicator={false} 
+      />
     </View>
   );
 }
@@ -118,84 +130,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingHorizontal: 30,
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 100, 
-    paddingTop: 20,
+    justifyContent: "center",
+    paddingVertical: 20,
     width: "100%",
   },
   logo: {
-    width: 65,
-    height: 65,
+    width: 70,
+    height: 70,
     resizeMode: "contain",
+    marginRight: 20,
   },
   textHeader: {
     alignItems: "center",
-    flex: 1,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "black",
+    color: "#333",
   },
   subtitle: {
     fontSize: 16,
     color: "#555",
     marginBottom: 10,
   },
+  searchWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   searchBar: {
-    borderRadius: 10,
+    borderRadius: 50,
     backgroundColor: "white",
-    borderWidth: 0.5,
+    borderWidth: 1,
+    borderColor: "#5A8EF4",
     height: 45,
     width: "90%",
     maxWidth: 400,
   },
-  inputStyle: {
-    fontSize: 14,
-  },
-  profileImgContainer: {
-    alignItems: "center",
-  },
-  profileImg: {
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-  },
-  changeText: {
-    fontSize: 12,
-    color: "#007BFF",
+  filterIcon: {
+    marginLeft: -35,
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 15,
+    marginVertical: 15,
     gap: 10,
   },
   button: {
-    width: 180,
-    backgroundColor: "#5A8EF4",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 12,
     borderRadius: 10,
-    alignItems: "center",
     borderWidth: 2,
-    borderColor: "white",
-  },
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
-    backgroundColor: "#4A90E2",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
+    borderColor: "#428bca",
+    width: 180,
+    backgroundColor: "blue",
   },
   dashboard: {
     backgroundColor: "white",
@@ -203,25 +197,50 @@ const styles = StyleSheet.create({
     borderColor: "#5A8EF4",
   },
   buttonTextDashboard: {
-    color: "black",
+    color: "#5A8EF4",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   grid: {
     justifyContent: "center",
-    alignItems: "center",
-    flexGrow: 1
+    paddingHorizontal: 20,
   },
   row: {
     flex: 1,
-    justifyContent: "space-evenly",
+    justifyContent: "space-between",
   },
   cardWrapper: {
     flex: 1,
     alignItems: "center",
+    margin: 10,
   },
-  noResults: {
+  studentCard: {
+    width: 150,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  studentImg: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  studentName: {
     textAlign: "center",
-    fontSize: 18,
-    color: "#888",
-    marginTop: 50,
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
