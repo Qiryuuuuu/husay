@@ -40,7 +40,7 @@ export default function PracMainScreen({ navigation }) {
             <Image source={easyCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PracticeMedium')}>
             <Image source={mediumCard} style={styles.cards} />
           </TouchableOpacity>
 

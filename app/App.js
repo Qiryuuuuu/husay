@@ -25,9 +25,9 @@ import ShapeModeScreen from "../app/screens/practice interface/easy/shape/ShapeM
 import ColorModeScreem from "../app/screens/practice interface/easy/color/ColorModeScreen"
 import NumberModeScreen from "../app/screens/practice interface/easy/number/NumberModeScreen"
 
+import PracticeMediumScreen from "../app/screens/practice interface/medium/PracticeMediumScreen"
 
-import setting from "../app/component/setting"
-import ShapeGame from "../app/component/game/shapeGame"
+
 
 
 const Stack = createStackNavigator();
@@ -35,7 +35,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="ShapeMode" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="PracticeMedium" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -57,9 +57,7 @@ export default function App() {
         <Stack.Screen name="ColorMode" component={ColorModeScreem} />
         <Stack.Screen name="NumberMode" component={NumberModeScreen} />
 
-        <Stack.Screen name="setting" component={setting} />
-        <Stack.Screen name="ShapeGame" component={ShapeGame} />
-
+        <Stack.Screen name="PracticeMedium" component={PracticeMediumScreen} />
 
 
       </Stack.Navigator>
