@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, completionNpc }) => {
+const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, completionNpc, navigation }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const typingSpeed = 30; // milliseconds per character
@@ -60,7 +60,7 @@ const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, 
           <TouchableOpacity style={styles.button} onPress={onRestart}>
             <Image source={require("../../assets/stageCompletion/retry-btn.png")} style={styles.image}/>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => { if (navigation) {navigation.navigate('Home')}}}>
             <Image source={require("../../assets/stageCompletion/home-btn.png")} style={styles.image}/>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
