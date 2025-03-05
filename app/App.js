@@ -14,6 +14,8 @@ import SetPasswordScreen from "./screens/forgot password/setPassword"
 
 import StudentProfileScreen from "./screens/manage profile/studentProfile"
 import AddStudentScreen from "./screens/manage profile/addStudents"
+import DashboardScreen from "./screens/dashboard/dashboard"
+import AccountSettingsScreen from "./screens/dashboard/accountSettings"
 
 import HomeScreen from "./screens/home/home"
 import ClassScreen from "./screens/class/class"
@@ -35,7 +37,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="PracticeMedium" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName= "AccountSettings" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -47,6 +49,9 @@ export default function App() {
 
         <Stack.Screen name="AddStudent" component={AddStudentScreen} />
         <Stack.Screen name="StudentProfile" component={StudentProfileScreen} />
+
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+        <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
 
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Class" component={ClassScreen} />

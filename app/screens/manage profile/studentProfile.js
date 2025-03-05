@@ -93,7 +93,7 @@ export default function StudentProfileScreen({ navigation }) {
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.button, styles.shadow, styles.dashboard]}>
           <Feather name="menu" size={20} color="#5A8EF4" style={styles.buttonIcon} />
-          <Text style={[styles.buttonText, styles.buttonTextDashboard]}>View Dashboard</Text>
+          <Text style={[styles.buttonText, styles.buttonTextDashboard]} onPress={() => navigation.navigate("Dashboard")} >View Dashboard</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
