@@ -1,7 +1,12 @@
+//colorGame.js
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
 import dialogues from "../../data/colorDialogues";
 import Stopwatch from "../../component/stopWatch";
+import SettingsModal from "../setting"; 
+
+const pauseBtn = require("../../../assets/buttons/pause.png");
+const pauseHeader = require("../../../assets/headerText/pause-header.png");
 
 const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
@@ -20,7 +25,9 @@ const color = [
     { name: "White", image: require("../../../assets/color/white.png") }
 ];
 
-const ColorGame = ({ onGameComplete }) => {
+const ColorGame = ({ onGameComplete, navigation }) => {
+    const [isPaused, setIsPaused] = useState(false);
+
     const [rounds, setRounds] = useState([]);
     const [currentRound, setCurrentRound] = useState(0);
     const [options, setOptions] = useState([]);
@@ -140,6 +147,16 @@ const ColorGame = ({ onGameComplete }) => {
 
     return (
         <View style={styles.container}>
+            {/* Pause Button */}
+            <TouchableOpacity 
+                style={styles.pauseContainer} 
+                onPress={() => {
+                    setIsPaused(true);
+                    setIsGameRunning(false); // Pause the stopwatch
+                }}>
+                <Image source={pauseBtn} style={styles.pause} />
+            </TouchableOpacity>
+
             <View style={styles.contentContainer}>
                 <View style={styles.validationContainer}>
                     {isCorrect !== null && (
@@ -151,7 +168,7 @@ const ColorGame = ({ onGameComplete }) => {
                 <Stopwatch 
                     isRunning={isGameRunning} 
                     onStop={(finalTime) => { 
-                        elapsedTimeRef.current = finalTime; // ✅ Store elapsed time correctly 
+                        elapsedTimeRef.current = finalTime;
                     }} 
                 />                
                 <Text style={styles.roundText}>Round {currentRound + 1} of 5</Text>
@@ -195,11 +212,38 @@ const ColorGame = ({ onGameComplete }) => {
                     <Text style={styles.npcDialogue}>{feedbackText}</Text>
                 </View>
             </Animated.View>
+
+            {/* Pause Modal */}
+            <SettingsModal 
+                visible={isPaused} 
+                onClose={() => {
+                    setIsPaused(false);
+                    setIsGameRunning(true); 
+                }}
+                headerImage={pauseHeader}
+                buttonOneText="Resume"
+                buttonTwoText="Quit"
+                onButtonOnePress={() => {
+                    setIsPaused(false);
+                    setIsGameRunning(true);
+                }}
+                onButtonTwoPress={() => {
+                    // Navigate to Home screen
+                    navigation.navigate('Home');
+                    setIsPaused(false);
+                }}
+            />
         </View>
     );
 };
 
 const styles = StyleSheet.create({
+    pauseContainer:{
+        zIndex: 100,
+        position: "absolute",
+        top: 40,
+        left: 50
+    },
     container: {
         flex: 1,
         justifyContent: "center",

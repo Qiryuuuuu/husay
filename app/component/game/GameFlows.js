@@ -8,6 +8,7 @@ const GameFlows = ({
   CountdownComponent,
   GameComponent,
   StageCompletionComponent,
+  navigation
 }) => {
   const [gamePhase, setGamePhase] = useState("dialog");
   const [finalTime, setFinalTime] = useState(0);
@@ -23,7 +24,7 @@ const GameFlows = ({
       duration = 2000;
     }
     if (gamePhase === "game") {
-      toValue = 0.7;
+      toValue = 0.9;
     }
 
     Animated.timing(overlayOpacity, {
@@ -68,7 +69,10 @@ const GameFlows = ({
 
       {gamePhase === "game" && (
         <View style={styles.fullscreenContainer}>
-          <GameComponent onGameComplete={handleGameComplete} />
+          <GameComponent 
+            onGameComplete={handleGameComplete} 
+            navigation={navigation}
+          />
         </View>
       )}
 
@@ -78,6 +82,7 @@ const GameFlows = ({
             timeTaken={`${Math.floor(finalTime / 60)}:${finalTime % 60}`}
             correctAnswers={finalScore}
             onRestart={() => setGamePhase("countdown")}
+            navigation={navigation}
           />
         </View>
       )}
@@ -99,10 +104,10 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   darkOverlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
   },
   lightOverlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   noOverlay: {
     backgroundColor: "transparent",
@@ -113,8 +118,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
     width: "100%",
     height: "100%",
     flex: 1,

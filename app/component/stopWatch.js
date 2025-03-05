@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 const Stopwatch = ({ isRunning, onStop }) => {
     const [elapsedTime, setElapsedTime] = useState(0);
+    const intervalRef = useRef(null); // Store timer reference
 
     useEffect(() => {
-        let timer;
         if (isRunning) {
-            timer = setInterval(() => {
+            intervalRef.current = setInterval(() => {
                 setElapsedTime(prevTime => prevTime + 1);
             }, 1000);
         } else {
-            clearInterval(timer);
+            clearInterval(intervalRef.current);
             if (elapsedTime > 0 && onStop) {
-                onStop(elapsedTime); 
+                onStop(elapsedTime);
             }
         }
-        return () => clearInterval(timer);
+
+        return () => clearInterval(intervalRef.current);
     }, [isRunning]);
 
     // Format time (mm:ss)

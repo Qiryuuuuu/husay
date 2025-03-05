@@ -1,11 +1,13 @@
 // ColorModeScreen.js
 import React from "react";
-import GameFlow from "../../../../component/game/GameFlows";
+import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
 import NumberGame from "../../../../component/game/numberGame";
 import StageCompletion from "../../../../component/stageCompletion";
 import numberDialogues from "../../../../data/numberDialogues";
+import { useNavigation } from '@react-navigation/native';
+
 
 const numberBg = require("../../../../../assets/gameBackground/practice-number-bg.png");
 
@@ -28,20 +30,26 @@ const numberCompletionNpc = {
   image: require("../../../../../assets/amber/amber-greet.png")
 };
 
-const NumberModeScreen = () => (
-  <GameFlow
-    backgroundImg={numberBg}
-    DialogComponent={(props) => <PregameDialog {...props} dialogData={numberDialogData} />}
-    CountdownComponent={Countdown}
-    GameComponent={NumberGame}
-    StageCompletionComponent={(props) => (
-      <StageCompletion 
-        {...props} 
-        dialoguesData={numberDialogues} 
-        completionNpc={numberCompletionNpc} 
-      />
-    )}
-  />
-);
+const NumberModeScreen = () => {
+  const navigation = useNavigation(); 
+
+  return (
+    <GameFlows
+      backgroundImg={numberBg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={numberDialogData} />}
+      CountdownComponent={Countdown}
+      GameComponent={NumberGame}
+      navigation={navigation} 
+      StageCompletionComponent={(props) => (
+        <StageCompletion 
+          {...props} 
+          dialoguesData={numberDialogues} 
+          completionNpc={numberCompletionNpc} 
+          navigation={navigation}  
+        />
+      )}
+    />
+  );
+}
 
 export default NumberModeScreen;
