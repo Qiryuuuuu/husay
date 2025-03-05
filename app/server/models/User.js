@@ -5,7 +5,6 @@ const UserSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   employeeNo: { type: String, required: true, unique: true }, // ✅ Ensure employeeNo is unique
   password: { type: String, required: true },
-  phoneNumber: { type: String, required: true, unique: true }, // ✅ Added phone number
   securityQuestions: [
     {
       question: String,
