@@ -21,7 +21,7 @@ export default function SignUpScreen({ navigation }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fullName, setFullName] = useState("");
   const [employeeNo, setEmployeeNo] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState(""); // ✅ Added state for phone number
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -124,18 +124,6 @@ export default function SignUpScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Phone Number Input */}
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            placeholderTextColor="#BDBDBD"
-            keyboardType="phone-pad"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-          />
-        </View>
-
         {/* Password Input with Icon & Show/Hide */}
         <View style={styles.inputWrapper}>
           <Image source={keyIcon} style={styles.inputIcon} />
@@ -152,6 +140,27 @@ export default function SignUpScreen({ navigation }) {
             <Image source={passwordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
           </TouchableOpacity>
         </View>
+
+        {/* Password Requirements Message */}
+        {showPasswordRequirements && (
+          <View style={styles.passwordRequirements}>
+            <Text style={[styles.requirementText, isLengthValid && styles.validRequirement]}>
+              • At least 8 characters long
+            </Text>
+            <Text style={[styles.requirementText, hasLowercase && styles.validRequirement]}>
+              • Contains at least one lowercase letter (a-z)
+            </Text>
+            <Text style={[styles.requirementText, hasUppercase && styles.validRequirement]}>
+              • Contains at least one uppercase letter (A-Z)
+            </Text>
+            <Text style={[styles.requirementText, hasNumber && styles.validRequirement]}>
+              • Includes a number (0-9)
+            </Text>
+            <Text style={[styles.requirementText, hasSpecialChar && styles.validRequirement]}>
+              • Includes a special character (!@#$%^&*?/.,)
+            </Text>
+          </View>
+        )}
 
         {/* Confirm Password Input */}
         <View style={styles.inputWrapper}>
