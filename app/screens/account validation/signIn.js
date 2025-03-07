@@ -21,12 +21,12 @@ const element4 = require("../../../assets/element4.png");
 
 export default function LoginScreen({ navigation }) { 
   const { width, height } = useWindowDimensions();
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); // ✅ Added loading state
 
   const handleSignIn = async () => {
-    if (!phoneNumber || !password) {  // ✅ Check if fields are empty
+    if (!email || !password) {  // ✅ Check if fields are empty
       Alert.alert("Error", "Please enter both phone number and password.");
       return;
     }
@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
-        phoneNumber,
+        email,
         password,
       });
   
@@ -49,6 +49,7 @@ export default function LoginScreen({ navigation }) {
       console.log("✅ Employee Number:", employeeNo ?? "Not provided");
   
       Alert.alert("Success", "Login successful!");
+      // navigation.navigate("Home");
       navigation.navigate("StudentProfile");
     } catch (error) {
       console.error("❌ Error:", error);
@@ -78,10 +79,10 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Phone Number"
+          placeholder="Email Address"
           placeholderTextColor="#BDBDBD"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}

@@ -44,6 +44,7 @@ export default function StudentProfileScreen({ navigation }) {
       if (response.status === 200) {
         setStudents(response.data.students);
       } else {
+        setStudents([]);
         Alert.alert("Error", "Failed to fetch students.");
       }
     } catch (error) {
@@ -53,10 +54,12 @@ export default function StudentProfileScreen({ navigation }) {
       setLoading(false);
     }
   };
-
-  const filteredStudents = students.filter(student =>
+const filteredStudents = [];
+ if(students > 0){
+  filteredStudents = students.filter(student =>
     student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+ }
 
   if (loading) {
     return (
@@ -106,22 +109,27 @@ export default function StudentProfileScreen({ navigation }) {
       </View>
 
       {/* Student Cards */}
-      <FlatList
-        data={filteredStudents} 
-        keyExtractor={(item) => item._id.toString()}
-        numColumns={4}
-        contentContainerStyle={styles.grid}
-        columnWrapperStyle={styles.row}
-        renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
-            <View style={styles.studentCard}>
-              <Image source={item.profileImage ? { uri: item.profileImage } : defaultProfile} style={styles.studentImg} />
-              <Text style={styles.studentName}>{item.fullName}</Text>
+      {filteredStudents && filteredStudents.length > 0 ? (
+        <FlatList
+          data={filteredStudents} 
+          keyExtractor={(item) => item._id.toString()}
+          numColumns={4}
+          contentContainerStyle={styles.grid}
+          columnWrapperStyle={styles.row}
+          renderItem={({ item }) => (
+            <View style={styles.cardWrapper}>
+              <View style={styles.studentCard}>
+                <Image source={item.profileImage ? { uri: item.profileImage } : defaultProfile} style={styles.studentImg} />
+                <Text style={styles.studentName}>{item.fullName}</Text>
+              </View>
             </View>
-          </View>
-        )}
-        showsVerticalScrollIndicator={false} 
-      />
+          )}
+          showsVerticalScrollIndicator={false} 
+        />
+      ) : (
+        <Text>No students added yet</Text>
+      )}
+
     </View>
   );
 }

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
+  email: {type: String, required: true, unique: true},
   phoneNumber: { type: String, required: true, unique: true },
   fullName: { type: String, required: true },
   employeeNo: { type: String, required: true, unique: true }, // ✅ Ensure employeeNo is unique
