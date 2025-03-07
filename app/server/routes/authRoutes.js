@@ -46,13 +46,14 @@ router.get("/user", authenticateUser, async (req, res) => {
 // ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
   try {
-    const { phoneNumber, fullName, employeeNo, password, securityQuestions } = req.body;
+    const { email, phoneNumber, fullName, employeeNo, password, securityQuestions } = req.body;
 
-    const existingUser = await User.findOne({ phoneNumber });
-    if (existingUser) return res.status(400).json({ message: "Phone number already in use." });
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "Email Address already in use." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
+      email,
       phoneNumber,
       fullName,
       employeeNo,
@@ -70,9 +71,9 @@ router.post("/signup", async (req, res) => {
 // ✅ User Login (Sign In) - Now Returns `employeeNo`
 router.post("/signin", async (req, res) => {
   try {
-    const { phoneNumber, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials." });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -88,10 +89,10 @@ router.post("/signin", async (req, res) => {
 // Save security questions on first sign-in
 router.post("/save-security", async (req, res) => {
   try {
-    const { phoneNumber, securityQuestions } = req.body;
+    const { email, securityQuestions } = req.body;
   
     // Check if the user exists
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User not found." });
   
     // If security questions are already set, prevent overwriting
@@ -113,9 +114,9 @@ router.post("/save-security", async (req, res) => {
 // Validate security questions
 router.post("/validate-security", async (req, res) => {
   try {
-    const { phoneNumber, securityAnswers } = req.body;
+    const { email, securityAnswers } = req.body;
   
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User not found." });
   
     let isValid = user.securityQuestions.every(

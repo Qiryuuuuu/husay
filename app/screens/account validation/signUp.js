@@ -18,6 +18,7 @@ const emplNum = require("../../../assets/employee-icon.png");
 
 export default function SignUpScreen({ navigation }) {
   // State variables
+  const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fullName, setFullName] = useState("");
   const [employeeNo, setEmployeeNo] = useState("");
@@ -38,7 +39,7 @@ export default function SignUpScreen({ navigation }) {
 
   // Function to handle Sign-Up
   const handleSignUp = async () => {
-    if (!phoneNumber || !fullName || !employeeNo || !password || !confirmPassword) {
+    if (!email || !phoneNumber || !fullName || !employeeNo || !password || !confirmPassword) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
@@ -52,14 +53,14 @@ export default function SignUpScreen({ navigation }) {
       const response = await fetch("http://10.0.2.2:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber, fullName, employeeNo, password, securityQuestions: [] }),
+        body: JSON.stringify({ email, phoneNumber, fullName, employeeNo, password, securityQuestions: [] }),
       });
 
       const data = await response.json();
       if (response.ok) {
         console.log("✅ Sign-up Successful:", data);
         Alert.alert("Success", "Account created successfully!");
-        navigation.navigate("SecurityQuestion", { phoneNumber });
+        navigation.navigate("SecurityQuestion", { email });
       } else {
         Alert.alert("Error", data.message);
       }
@@ -88,6 +89,18 @@ export default function SignUpScreen({ navigation }) {
       </View>
 
       <View style={styles.inputContainer}>
+        {/* Phone Number Input with Icon */}
+        <View style={styles.inputWrapper}>
+            <Image source={userIcon} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email Address"
+              placeholderTextColor="#BDBDBD"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+
         {/* Phone Number Input with Icon */}
         <View style={styles.inputWrapper}>
           <Image source={userIcon} style={styles.inputIcon} />
