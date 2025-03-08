@@ -23,10 +23,10 @@ export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ Added loading state
+  const [loading, setLoading] = useState(false);
 
   const handleSignIn = async () => {
-    if (!email || !password) {  // ✅ Check if fields are empty
+    if (!email || !password) {
       Alert.alert("Error", "Please enter both phone number and password.");
       return;
     }
@@ -38,19 +38,21 @@ export default function LoginScreen({ navigation }) {
         password,
       });
   
-      console.log("🧐 Response Data:", response.data); // Debug API response
-  
-      const { token, employeeNo } = response.data;
+      // Log the raw response data first
+      console.log("🧐 Raw Response:", response.data);
+      
+      // Check if the employee number is nested in a data property
+      const employeeNo = response.data.data?.employeeNo || response.data.employeeNo;
+      const token = response.data.data?.token || response.data.token;
   
       if (token) await AsyncStorage.setItem("authToken", token);
-      if (employeeNo) await AsyncStorage.setItem("employeeNo", employeeNo); // ✅ Store only if defined
+      if (employeeNo) await AsyncStorage.setItem("employeeNo", employeeNo.toString());
   
       console.log("✅ Token Stored:", token);
-      console.log("✅ Employee Number:", employeeNo ?? "Not provided");
+      console.log("✅ Employee Number:", employeeNo);
   
       Alert.alert("Success", "Login successful!");
-      // navigation.navigate("Home");
-      navigation.navigate("StudentProfile");
+      navigation.navigate("Home");
     } catch (error) {
       console.error("❌ Error:", error);
       Alert.alert("Error", error.response?.data?.message || "Something went wrong");
@@ -71,7 +73,7 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.textHeader}>
           <Text style={styles.title}>Empower Young Minds</Text>
           <Text style={styles.subtitle}>
-            Your pupil’s first step into fun and creative learning!
+            Your pupil's first step into fun and creative learning!
           </Text>
         </View>
       </View>
@@ -106,19 +108,19 @@ export default function LoginScreen({ navigation }) {
       </View>
 
       <TouchableOpacity
-        style={[styles.button, styles.shadow, loading && styles.disabledButton]} // ✅ Disable when loading
+        style={[styles.button, styles.shadow, loading && styles.disabledButton]}
         onPress={handleSignIn}
-        disabled={loading} // ✅ Prevent multiple clicks
+        disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" /> // ✅ Show loading spinner
+          <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.buttonText}>Sign in</Text>
         )}
       </TouchableOpacity>
 
       <Text style={styles.signupText}>
-        Don’t have an account yet?{" "}
+        Don't have an account yet?{" "}
         <Text
           style={styles.signupLink}
           onPress={() => navigation.navigate("SignUp")}

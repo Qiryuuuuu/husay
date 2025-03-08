@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   View, Text, FlatList, Image, StyleSheet, 
   useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator 
@@ -54,12 +54,13 @@ export default function StudentProfileScreen({ navigation }) {
       setLoading(false);
     }
   };
-const filteredStudents = [];
- if(students > 0){
-  filteredStudents = students.filter(student =>
-    student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
- }
+
+  // ✅ Corrected logic for filtering students
+  const filteredStudents = students.length > 0
+    ? students.filter(student =>
+        student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   if (loading) {
     return (
@@ -109,7 +110,7 @@ const filteredStudents = [];
       </View>
 
       {/* Student Cards */}
-      {filteredStudents && filteredStudents.length > 0 ? (
+      {filteredStudents.length > 0 ? (
         <FlatList
           data={filteredStudents} 
           keyExtractor={(item) => item._id.toString()}
@@ -127,7 +128,7 @@ const filteredStudents = [];
           showsVerticalScrollIndicator={false} 
         />
       ) : (
-        <Text>No students added yet</Text>
+        <Text style={styles.noStudentsText}>No students added yet</Text>
       )}
 
     </View>
