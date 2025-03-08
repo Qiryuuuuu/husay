@@ -14,7 +14,7 @@ import {
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [studentName, setStudentName] = useState("Nestor Navarro");
-  const [fullName, setFullName] = useState("Jastine");
+  const [fullName, setFullName] = useState("Harold");
   const [menuOpen, setMenuOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
