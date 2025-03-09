@@ -7,10 +7,11 @@ import {
   Image,
   StyleSheet,
   Alert,
+  ActivityIndicator,
   useWindowDimensions,
 } from "react-native";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // ✅ Store auth token securely
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -18,51 +19,48 @@ const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation }) { 
   const { width, height } = useWindowDimensions();
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ Added loading state
+  const [loading, setLoading] = useState(false);
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      Alert.alert("Error", "Please enter both phone number and password.");
       return;
     }
-
-    setLoading(true); // ✅ Show loading indicator
-
+  
+    setLoading(true);
     try {
       const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
-        phoneNumber,
+        email,
         password,
       });
-
-      if (response.status === 200) {
-        const { token, employeeNo } = response.data;
-
-        // ✅ Store token & employeeNo in AsyncStorage
-        await AsyncStorage.setItem("authToken", token);
-        await AsyncStorage.setItem("employeeNo", employeeNo);
-
-        console.log("✅ Token Stored:", token);
-        console.log("✅ Employee Number:", employeeNo);
-
-        Alert.alert("Success", "Login successful!");
-
-        navigation.navigate("StudentProfile");
-      }
+  
+      // Log the raw response data first
+      console.log("🧐 Raw Response:", response.data);
+      
+      // Check if the employee number is nested in a data property
+      const employeeNo = response.data.data?.employeeNo || response.data.employeeNo;
+      const token = response.data.data?.token || response.data.token;
+  
+      if (token) await AsyncStorage.setItem("authToken", token);
+      if (employeeNo) await AsyncStorage.setItem("employeeNo", employeeNo.toString());
+  
+      console.log("✅ Token Stored:", token);
+      console.log("✅ Employee Number:", employeeNo);
+  
+      Alert.alert("Success", "Login successful!");
+      navigation.navigate("Home");
     } catch (error) {
       console.error("❌ Error:", error);
-
-      const errorMessage =
-        error.response?.data?.message || "Invalid credentials. Please try again.";
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error", error.response?.data?.message || "Something went wrong");
     } finally {
-      setLoading(false); // ✅ Hide loading indicator
+      setLoading(false);
     }
   };
-
+  
   return (
     <View style={styles.container}>
       <Image source={element1} style={styles.element1} />
@@ -75,7 +73,7 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.textHeader}>
           <Text style={styles.title}>Empower Young Minds</Text>
           <Text style={styles.subtitle}>
-            Your pupil’s first step into fun and creative learning!
+            Your pupil's first step into fun and creative learning!
           </Text>
         </View>
       </View>
@@ -83,10 +81,10 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Phone Number"
+          placeholder="Email Address"
           placeholderTextColor="#BDBDBD"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}
@@ -97,7 +95,7 @@ export default function LoginScreen({ navigation }) {
           onChangeText={setPassword}
         />
       </View>
-
+      
       <View style={styles.forgotContainer}>
         <TouchableOpacity>
           <Text
@@ -110,19 +108,19 @@ export default function LoginScreen({ navigation }) {
       </View>
 
       <TouchableOpacity
-        style={[styles.button, styles.shadow]}
+        style={[styles.button, styles.shadow, loading && styles.disabledButton]}
         onPress={handleSignIn}
-        disabled={loading} // ✅ Disable button while loading
+        disabled={loading}
       >
         {loading ? (
-          <Text style={styles.buttonText}>Signing in...</Text>
+          <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.buttonText}>Sign in</Text>
         )}
       </TouchableOpacity>
 
       <Text style={styles.signupText}>
-        Don’t have an account yet?{" "}
+        Don't have an account yet?{" "}
         <Text
           style={styles.signupLink}
           onPress={() => navigation.navigate("SignUp")}
@@ -133,6 +131,7 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   element1: {
@@ -224,6 +223,9 @@ const styles = StyleSheet.create({
     elevation: 6,
     backgroundColor: "#4A90E2",
   },
+  disabledButton: { 
+    opacity: 0.7 
+  }, // ✅ Style for disabled button
   buttonText: {
     color: "#fff",
     fontSize: 16,

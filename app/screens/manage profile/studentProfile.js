@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   View, Text, FlatList, Image, StyleSheet, 
   useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator 
@@ -44,6 +44,7 @@ export default function StudentProfileScreen({ navigation }) {
       if (response.status === 200) {
         setStudents(response.data.students);
       } else {
+        setStudents([]);
         Alert.alert("Error", "Failed to fetch students.");
       }
     } catch (error) {
@@ -54,9 +55,12 @@ export default function StudentProfileScreen({ navigation }) {
     }
   };
 
-  const filteredStudents = students.filter(student =>
-    student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ✅ Corrected logic for filtering students
+  const filteredStudents = students.length > 0
+    ? students.filter(student =>
+        student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   if (loading) {
     return (
@@ -93,7 +97,7 @@ export default function StudentProfileScreen({ navigation }) {
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={[styles.button, styles.shadow, styles.dashboard]}>
           <Feather name="menu" size={20} color="#5A8EF4" style={styles.buttonIcon} />
-          <Text style={[styles.buttonText, styles.buttonTextDashboard]}>View Dashboard</Text>
+          <Text style={[styles.buttonText, styles.buttonTextDashboard]} onPress={() => navigation.navigate("Dashboard")} >View Dashboard</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -106,22 +110,27 @@ export default function StudentProfileScreen({ navigation }) {
       </View>
 
       {/* Student Cards */}
-      <FlatList
-        data={filteredStudents} 
-        keyExtractor={(item) => item._id.toString()}
-        numColumns={4}
-        contentContainerStyle={styles.grid}
-        columnWrapperStyle={styles.row}
-        renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
-            <View style={styles.studentCard}>
-              <Image source={item.profileImage ? { uri: item.profileImage } : defaultProfile} style={styles.studentImg} />
-              <Text style={styles.studentName}>{item.fullName}</Text>
+      {filteredStudents.length > 0 ? (
+        <FlatList
+          data={filteredStudents} 
+          keyExtractor={(item) => item._id.toString()}
+          numColumns={4}
+          contentContainerStyle={styles.grid}
+          columnWrapperStyle={styles.row}
+          renderItem={({ item }) => (
+            <View style={styles.cardWrapper}>
+              <View style={styles.studentCard}>
+                <Image source={item.profileImage ? { uri: item.profileImage } : defaultProfile} style={styles.studentImg} />
+                <Text style={styles.studentName}>{item.fullName}</Text>
+              </View>
             </View>
-          </View>
-        )}
-        showsVerticalScrollIndicator={false} 
-      />
+          )}
+          showsVerticalScrollIndicator={false} 
+        />
+      ) : (
+        <Text style={styles.noStudentsText}>No students added yet</Text>
+      )}
+
     </View>
   );
 }
