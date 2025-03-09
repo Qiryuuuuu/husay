@@ -1,4 +1,4 @@
-// PregameDialog.js (refactored version)
+// PregameDialog.js 
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 

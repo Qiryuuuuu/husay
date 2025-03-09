@@ -1,11 +1,10 @@
-// StageCompletion.js
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
-const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, completionNpc, navigation }) => {
+const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, dialoguesData, completionNpc, navigation, isChallengeMode }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
-  const typingSpeed = 30; // milliseconds per character
+  const typingSpeed = 30;
 
   useEffect(() => {
     const completeDialogues = dialoguesData?.complete || [];
@@ -14,7 +13,6 @@ const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, 
       return;
     }
 
-    // Pick a random message from the provided dialogues
     const randomIndex = Math.floor(Math.random() * completeDialogues.length);
     const message = completeDialogues[randomIndex] || "";
 
@@ -39,12 +37,32 @@ const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, 
     };
   }, [dialoguesData]);
 
+  // Calculate mistakes
+  const mistakes = totalRounds - correctAnswers;
+
+  // Determine star count
+  let starCount = 1; // Default: 1 star
+  if (mistakes === 0) {
+    starCount = 3;
+  } else if (mistakes <= 3) {
+    starCount = 2;
+  }
+
   return (
     <View style={styles.containerStage}>
-      <View style={styles.containerContent}> 
-        <Image source={require("../../assets/gameBackground/stage-completion-bg.png")} style={styles.completionBg}/>
-        <Image source={require("../../assets/stageCompletion/completion-header.png")} style={styles.headerStage}/>
-                
+      <View style={styles.containerContent}>
+        <Image source={require("../../assets/gameBackground/stage-completion-bg.png")} style={styles.completionBg} />
+        <Image source={require("../../assets/stageCompletion/completion-header.png")} style={styles.headerStage} />
+
+        {/* Star Display */}
+        {isChallengeMode && (
+          <View style={styles.starContainer}>
+            {[...Array(starCount)].map((_, index) => (
+              <Image key={index} source={require("../../assets/stageCompletion/star.png")} style={styles.starImage} />
+            ))}
+          </View>
+        )}
+
         <View style={styles.scoreContainer}>
           <View style={[styles.resultContainer, styles.timeContainer]}>
             <Text style={styles.stat}>Time Taken: </Text>
@@ -52,19 +70,19 @@ const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, 
           </View>
           <View style={[styles.resultContainer, styles.scoreDetails]}>
             <Text style={styles.stat}>Correct Answers: </Text>
-            <Text style={styles.stat}>{correctAnswers} / 5</Text>
+            <Text style={styles.stat}>{correctAnswers}</Text>
           </View>
         </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={onRestart}>
-            <Image source={require("../../assets/stageCompletion/retry-btn.png")} style={styles.image}/>
+            <Image source={require("../../assets/stageCompletion/retry-btn.png")} style={styles.image} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => { if (navigation) {navigation.navigate('Home')}}}>
-            <Image source={require("../../assets/stageCompletion/home-btn.png")} style={styles.image}/>
+          <TouchableOpacity style={styles.button} onPress={() => { if (navigation) { navigation.navigate("Home") } }}>
+            <Image source={require("../../assets/stageCompletion/home-btn.png")} style={styles.image} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Image source={require("../../assets/stageCompletion/next-btn.png")} style={styles.image}/>
+            <Image source={require("../../assets/stageCompletion/next-btn.png")} style={styles.image} />
           </TouchableOpacity>
         </View>
 
@@ -79,88 +97,99 @@ const StageCompletion = ({ timeTaken, correctAnswers, onRestart, dialoguesData, 
     </View>
   );
 };
-const styles = StyleSheet.create({
-    containerStage: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%"
-    },
-    containerContent:{
-        flex: 1,
-        width: "100%",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    headerStage: {
-        position: "absolute",  
-        top: 50,              
-        width: "70%",        
-        resizeMode: "contain", 
-        zIndex: 10             
-    },
-    completionBg:{
-        position: "absolute",
-        width: "100%",
-        height: "60%",
-        resizeMode: "cover",
-    },
-    scoreContainer:{
-        gap: 25,
-    },
-    resultContainer:{
-        paddingVertical: 10,
-        paddingHorizontal: 100,
-        flexDirection: "row",
-        justifyContent: "center",
-        backgroundColor: "#E1F1FF",
-        borderWidth: 5,
-        borderColor: "#69D4E7",
-        borderRadius: 20
-    },
-    stat:{
-        fontSize: 24,
-        fontWeight: "bold",
-    },
-    buttonContainer:{
-        position: "absolute",
-        bottom: 180,
-        flexDirection: "row",
-        gap: 15
-    },
 
-    chatContainer: {
-        position: "absolute",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        flexDirection: "row-reverse",
-        alignItems: "flex-start",
-      },
-      stageNpcImage: {
-        width: 170,
-        height: 170,
-        resizeMode: "contain",
-        marginRight: 10,
-      },
-      chatBubble: {
-        flex: 1,
-        backgroundColor: "#E1F1FF",
-        padding: 15,
-        borderRadius: 15,
-        borderWidth: 4,
-        borderColor: "white",
-        maxWidth: 570,
-        alignSelf: "center"
-      },
-      npcName: {
-        fontWeight: "bold",
-        marginBottom: 5,
-        fontSize: 18,
-      },
-      npcMessage: {
-        fontSize: 16,
-      },
+const styles = StyleSheet.create({
+  containerStage: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+  },
+  containerContent: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerStage: {
+    position: "absolute",
+    top: 50,
+    width: "70%",
+    resizeMode: "contain",
+    zIndex: 10,
+  },
+  completionBg: {
+    position: "absolute",
+    width: "100%",
+    height: "60%",
+    resizeMode: "cover",
+  },
+  starContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 20,
+  },
+  starImage: {
+    width: 80,
+    height: 80,
+    resizeMode: "contain",
+    marginHorizontal: 5,
+  },
+  scoreContainer: {
+    gap: 25,
+  },
+  resultContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 100,
+    flexDirection: "row",
+    justifyContent: "center",
+    backgroundColor: "#E1F1FF",
+    borderWidth: 5,
+    borderColor: "#69D4E7",
+    borderRadius: 20,
+  },
+  stat: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 160,
+    flexDirection: "row",
+    gap: 15,
+  },
+  chatContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: "35%",
+    transform: [{ translateX: -50 }],
+    flexDirection: "row-reverse",
+    alignItems: "flex-start",
+  },
+  stageNpcImage: {
+    width: 170,
+    height: 170,
+    resizeMode: "contain",
+    marginRight: 10,
+  },
+  chatBubble: {
+    flex: 1,
+    backgroundColor: "#E1F1FF",
+    padding: 15,
+    borderRadius: 15,
+    borderWidth: 4,
+    borderColor: "white",
+    maxWidth: 570,
+    alignSelf: "center",
+  },
+  npcName: {
+    fontWeight: "bold",
+    marginBottom: 5,
+    fontSize: 18,
+  },
+  npcMessage: {
+    fontSize: 16,
+  },
 });
 
 export default StageCompletion;

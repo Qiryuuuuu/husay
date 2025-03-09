@@ -44,7 +44,7 @@ export default function PracMainScreen({ navigation }) {
             <Image source={mediumCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PracticeHard')}>
             <Image source={hardCard} style={styles.cards} />
           </TouchableOpacity>
         </View>
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     position: "absolute",
-    left: "40%",  
+    left: "37%",  
     top: 30,
     transform: [{ translateX: -100 }], // Offset by half of its width (adjust accordingly)
   },

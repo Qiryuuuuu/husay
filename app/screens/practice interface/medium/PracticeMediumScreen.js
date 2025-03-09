@@ -3,9 +3,9 @@ import React from "react";
 import GameFlows from "../../../component/game/GameFlows";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
-import PracticeMedium from "../../../component/PracticeMedium/game";
+import PracticeMedium from "../../../component/game/Practice/MediumMode/PracticeMedium";
 import StageCompletion from "../../../component/stageCompletion";
-import PracticeMediumDialogues from "../../../component/PracticeMedium/data/gameData";
+import PracticeMediumDialogues from "../../../data/evaDialogues";
 import { useNavigation } from '@react-navigation/native';
 
 

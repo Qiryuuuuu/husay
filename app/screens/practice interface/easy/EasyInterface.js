@@ -36,15 +36,15 @@ export default function EasyInterface({ navigation }) {
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('ShapeMode')}>
+          <TouchableOpacity onPress={() => navigation.navigate('PracticeShape')}>
             <Image source={shapeCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ColorMode')}>
+          <TouchableOpacity onPress={() => navigation.navigate('PracticeColor')}>
             <Image source={colorCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('NumberMode')}>
+          <TouchableOpacity onPress={() => navigation.navigate('PracticeNumber')}>
             <Image source={numberCard} style={styles.cards} />
           </TouchableOpacity>
         </View>
@@ -80,8 +80,8 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     position: "absolute",
-    left: "45%",  
-    top: 30,
+    left: "47%",  
+    top: 15,
     transform: [{ translateX: -100 }], 
   },
 
@@ -104,4 +104,3 @@ const styles = StyleSheet.create({
   },
 
 });
-
