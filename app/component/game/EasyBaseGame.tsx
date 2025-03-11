@@ -1,14 +1,20 @@
 //EasyBaseGame.tsx
+// Import the AudioPlayer component
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
+import AudioPlayer from "../../component/audio/AudioPlayer"; // Add this import
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
 const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
+
+// Import sound files
+const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
+const wrongSound = require("../../../assets/voiceOver/misc/answerValidation/wrong.mp3");
 
 interface GameItem {
   name: string;
@@ -54,6 +60,10 @@ export const BaseGame: React.FC<GameProps> = ({
   const [isGameRunning, setIsGameRunning] = useState(true);
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
+  
+  // Add state for audio playback
+  const [currentSound, setCurrentSound] = useState<any>(null);
+  const [playSound, setPlaySound] = useState(false);
 
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
@@ -91,6 +101,12 @@ export const BaseGame: React.FC<GameProps> = ({
     setHasTried(false);
   };
   
+  // Audio playback status handler
+  const handlePlaybackStatusUpdate = useCallback((status) => {
+    if (status.didJustFinish) {
+      setPlaySound(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (dialogues && items) {
@@ -128,6 +144,10 @@ export const BaseGame: React.FC<GameProps> = ({
     setNpcImage(npcConfig.correct);
     fadeInAnimation();
     setIsClickable(false);
+    
+    // Play correct sound
+    setCurrentSound(correctSound);
+    setPlaySound(true);
   
     let updatedScore = correctFirstTry;
     if (!hasTried) {
@@ -149,7 +169,6 @@ export const BaseGame: React.FC<GameProps> = ({
     }, 1500);
   };
   
-
   const handleWrongAnswer = () => {
     setIsCorrect(false);
     const randomWrongDialogue = dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] || "Try again!";
@@ -160,9 +179,12 @@ export const BaseGame: React.FC<GameProps> = ({
     triggerShake();
     Vibration.vibrate(100);
     setHasTried(true);
+    
+    // Play wrong sound
+    setCurrentSound(wrongSound);
+    setPlaySound(true);
   };
   
-
   const triggerShake = () => {
     Animated.sequence([
       Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
@@ -198,6 +220,15 @@ export const BaseGame: React.FC<GameProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Include AudioPlayer component */}
+      {playSound && currentSound && (
+        <AudioPlayer 
+          audioSource={currentSound}
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          autoPlay={true}
+        />
+      )}
+
       <TouchableOpacity 
         style={styles.pauseContainer} 
         onPress={() => {

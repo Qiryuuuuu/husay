@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     zIndex: 1,
     position: "absolute",
-    top: 40,
+    top: 50,
   },
   closeButton: {
     position: "absolute",

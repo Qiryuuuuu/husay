@@ -1,12 +1,28 @@
+// stageCompletion.js
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import AudioPlayer from "../component/audio/AudioPlayer"; // Import AudioPlayer component
+
+// Import the completion sound effect
+const completionSound = require("../../assets/voiceOver/misc/stage-complete.wav"); // Update this path to match your sound file location
 
 const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, dialoguesData, completionNpc, navigation, isChallengeMode }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const typingSpeed = 30;
+  const [playCompletionSound, setPlayCompletionSound] = useState(true);
+
+  // Handle audio playback status
+  const handlePlaybackStatusUpdate = (status) => {
+    if (status.didJustFinish) {
+      setPlayCompletionSound(false);
+    }
+  };
 
   useEffect(() => {
+    // Play completion sound when component mounts
+    setPlayCompletionSound(true);
+    
     const completeDialogues = dialoguesData?.complete || [];
     if (!completeDialogues.length) {
       setIsTyping(false);
@@ -34,6 +50,7 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
     return () => {
       setDisplayedText("");
       setIsTyping(false);
+      setPlayCompletionSound(false);
     };
   }, [dialoguesData]);
 
@@ -50,6 +67,15 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
 
   return (
     <View style={styles.containerStage}>
+      {/* Add AudioPlayer component */}
+      {playCompletionSound && (
+        <AudioPlayer 
+          audioSource={completionSound}
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          autoPlay={true}
+        />
+      )}
+      
       <View style={styles.containerContent}>
         <Image source={require("../../assets/gameBackground/stage-completion-bg.png")} style={styles.completionBg} />
         <Image source={require("../../assets/stageCompletion/completion-header.png")} style={styles.headerStage} />
@@ -99,6 +125,7 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
 };
 
 const styles = StyleSheet.create({
+  // Styles remain unchanged
   containerStage: {
     flex: 1,
     justifyContent: "center",

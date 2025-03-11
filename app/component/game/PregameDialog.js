@@ -1,5 +1,5 @@
 //PregameDialog.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import AudioPlayer from "../audio/AudioPlayer";
 
@@ -11,10 +11,16 @@ const PregameDialog = ({ onDialogComplete, dialogData }) => {
   const [isTyping, setIsTyping] = useState(true);
   const [messageCompleted, setMessageCompleted] = useState(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const typingSpeed = 10;
+  
+  // Use a ref to track if component is mounted
+  const isMounted = useRef(true);
 
   // Handle audio playback status updates
   const handlePlaybackStatusUpdate = (status) => {
+    if (!isMounted.current) return;
+    
     if (status.didJustFinish) {
       const currentAudioFile = audioFiles?.[currentMessageIndex];
       
@@ -22,20 +28,37 @@ const PregameDialog = ({ onDialogComplete, dialogData }) => {
       if (Array.isArray(currentAudioFile) && currentAudioIndex < currentAudioFile.length - 1) {
         // Move to the next audio in the sequence
         setCurrentAudioIndex(prevIndex => prevIndex + 1);
+        // Set a small delay to prevent overlap
+        setTimeout(() => {
+          if (isMounted.current) setIsPlayingAudio(true);
+        }, 300);
       } else {
         // Either there's no more audio to play or it wasn't an array
+        setIsPlayingAudio(false);
         setMessageCompleted(true);
       }
     }
   };
 
+  // Cleanup effect and track mounted state
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   // Reset audio index when changing messages
   useEffect(() => {
+    if (!isMounted.current) return;
+    
     setCurrentAudioIndex(0);
+    setIsPlayingAudio(true);
   }, [currentMessageIndex]);
 
   // Typing effect
   useEffect(() => {
+    if (!isMounted.current) return;
+    
     let text = dialogues[currentMessageIndex];
     let index = 0;
     setDisplayedText("");
@@ -43,6 +66,11 @@ const PregameDialog = ({ onDialogComplete, dialogData }) => {
     setMessageCompleted(false);
 
     const interval = setInterval(() => {
+      if (!isMounted.current) {
+        clearInterval(interval);
+        return;
+      }
+      
       if (index < text.length) {
         setDisplayedText(text.slice(0, index + 1));
         index++;
@@ -61,14 +89,27 @@ const PregameDialog = ({ onDialogComplete, dialogData }) => {
   }, [currentMessageIndex, dialogues]);
 
   const handlePress = () => {
-    // Prevent advancing if message isn't completed yet
-    if (!messageCompleted) return;
+    // If still typing, complete the text immediately
+    if (isTyping) {
+      setDisplayedText(dialogues[currentMessageIndex]);
+      setIsTyping(false);
+      return;
+    }
     
-    // Move to next message or complete dialog
-    if (currentMessageIndex < dialogues.length - 1) {
-      setCurrentMessageIndex((prev) => prev + 1);
-    } else {
-      onDialogComplete && onDialogComplete();
+    // If audio is playing but the text is complete, allow skipping the audio
+    if (isPlayingAudio && !isTyping) {
+      setIsPlayingAudio(false);
+      setMessageCompleted(true);
+      return;
+    }
+    
+    // Move to next message or complete dialog if message is completed
+    if (messageCompleted) {
+      if (currentMessageIndex < dialogues.length - 1) {
+        setCurrentMessageIndex((prev) => prev + 1);
+      } else {
+        onDialogComplete && onDialogComplete();
+      }
     }
   };
 
@@ -91,8 +132,8 @@ const PregameDialog = ({ onDialogComplete, dialogData }) => {
   return (
     <TouchableOpacity style={{ flex: 1, width: "100%" }} activeOpacity={1} onPress={handlePress}>
       <View style={styles.container}>
-        {/* Render AudioPlayer only if there's an audio to play */}
-        {getCurrentAudioSource() && (
+        {/* Render AudioPlayer only if there's an audio to play and we should be playing it */}
+        {getCurrentAudioSource() && isPlayingAudio && (
           <AudioPlayer
             audioSource={getCurrentAudioSource()}
             onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
@@ -120,6 +161,10 @@ const PregameDialog = ({ onDialogComplete, dialogData }) => {
         {/* "Tap to continue" prompt */}
         {messageCompleted && (
           <Text style={styles.nextTriggerText}>Tap anywhere to continue</Text>
+        )}
+        {/* Show skipping message when audio is playing but text is finished */}
+        {!isTyping && isPlayingAudio && !messageCompleted && (
+          <Text style={styles.nextTriggerText}>Tap to skip audio</Text>
         )}
       </View>
     </TouchableOpacity>
