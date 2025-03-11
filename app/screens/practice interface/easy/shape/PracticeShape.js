@@ -8,20 +8,27 @@ import StageCompletion from "../../../../component/stageCompletion";
 import shapeDialogues from "../../../../data/shapeDialogues";
 import { useNavigation } from '@react-navigation/native';
 
-
 const shapeBg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
+
+console.log("Eva Audio 4:", require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-4.mp3'));
+console.log("Eva Audio 5:", require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-5.mp3'));
+console.log("Practice Intro Audio:", require('../../../../../assets/voiceOver/eva/practiceIntro/eva-narrative-2.mp3'));
 
 const shapeDialogData = {
   dialogues: [
-    "Hey there, superstar! 🌟 Today, we’re playing a fun game all about SHAPES! Can you find circles, squares, rectangles, and triangles? Let’s see if you’re a shape expert.",
-    "That’s right! I’m Shane, and I LOVE shapes! 😆 Get ready to match, sort, and play with all kinds of shapes. It’s easy-peasy, so don’t worry—I’ll guide you!",
-    "Awesome! I know you’ll do great! 🎉 Let’s jump in and have some shape-tastic fun! Go, go, go!",
+    "Good morning, Shane! Hey kid, learn from this guy. He's sporty and cool and loves playing with kids like you. But most of all, he's your go-to guy if you wanna learn about shapes.",
+    "Come on, EVA. You're making me blush hihi. Ahemmm, attention! Grab the cards EVA gave you and tap them on Husay. It will help you. What shape is this?",
   ],
-  npcNames: ["Eva", "Shane", "Eva"],
+  npcNames: ["Eva", "Shane"],
   npcImages: [
     { image: require("../../../../../assets/eva/eva-excited.png"), width: 340, height: 480 },
     { image: require("../../../../../assets/shane/shane-greet.png"), width: 460, height: 500 },
-    { image: require("../../../../../assets/eva/eva-pointing.png"), width: 601, height: 493 },
+  ],
+  audioFiles: [
+    [require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-4.mp3'), 
+      require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-5.mp3')],
+    [require('../../../../../assets/voiceOver/shane/practiceEasy/1_easy-shape.mp3'), 
+      require('../../../../../assets/voiceOver/shane/practiceEasy/2_easy-shape.mp3')],
   ],
 };
 
@@ -51,4 +58,5 @@ const ShapeModeScreen = () => {
     />
   );
 };
+
 export default ShapeModeScreen;
