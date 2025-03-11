@@ -10,10 +10,6 @@ import { useNavigation } from '@react-navigation/native';
 
 const shapeBg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
 
-console.log("Eva Audio 4:", require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-4.mp3'));
-console.log("Eva Audio 5:", require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-5.mp3'));
-console.log("Practice Intro Audio:", require('../../../../../assets/voiceOver/eva/practiceIntro/eva-narrative-2.mp3'));
-
 const shapeDialogData = {
   dialogues: [
     "Good morning, Shane! Hey kid, learn from this guy. He's sporty and cool and loves playing with kids like you. But most of all, he's your go-to guy if you wanna learn about shapes.",
@@ -25,8 +21,8 @@ const shapeDialogData = {
     { image: require("../../../../../assets/shane/shane-greet.png"), width: 460, height: 500 },
   ],
   audioFiles: [
-    [require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-4.mp3'), 
-      require('../../../../../assets/voiceOver/eva/practiceEasy/eva-narrative-5.mp3')],
+    [require('../../../../../assets/voiceOver/eva/practiceEasy/shape/eva-narrative-4.mp3'), 
+      require('../../../../../assets/voiceOver/eva/practiceEasy/shape/eva-narrative-5.mp3')],
     [require('../../../../../assets/voiceOver/shane/practiceEasy/1_easy-shape.mp3'), 
       require('../../../../../assets/voiceOver/shane/practiceEasy/2_easy-shape.mp3')],
   ],

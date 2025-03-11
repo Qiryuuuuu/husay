@@ -13,15 +13,23 @@ const colorBg = require("../../../../../assets/gameBackground/practice-color-bg.
 
 const colorDialogData = {
   dialogues: [
-    "Hey there, superstar! 🌟 Today, we’re diving into a world of COLORS! Can you name all the colors you see?",
-    "That’s right! I’m Shane, and I LOVE colors! 😆 Get ready to match, sort, and play with vibrant hues. Let’s light up the screen!",
-    "Awesome! I know you’ll do great! 🎉 Let’s jump in and have some colorful fun! Go, go, go!",
+    "Hi, Dolor! You’re looking as beautiful as ever. Seriously, how do you always manage to look so radiant?",
+    "Oh, you flatter me! That’s so kind of you to say. But tell me, who’s this little one you’ve brought with you today?",  
+    "Ah, this is my new companion! I thought it would be wonderful if they could learn a bit about colors from you. After all, you’re an artist, and there’s no one better to teach them than you.",
+    "Oh, how delightful! I’d be more than happy to help. Alright, dear, let’s make learning fun! Just tap the tools and say their names out loud. It will help you remember them better. Now, let’s start—what color is this?"
   ],
-  npcNames: ["Eva", "Dolor", "Eva"],
+  npcNames: ["Eva", "Dolor", "Eva", "Dolor"],
   npcImages: [
-    { image: require("../../../../../assets/eva/eva-excited.png"), width: 340, height: 480 },
+    { image: require("../../../../../assets/eva/eva-love.png"), width: 340, height: 550 },
+    { image: require("../../../../../assets/dolor/dolor-casual.png"), width: 345, height: 525 },
+    { image: require("../../../../../assets/eva/eva-loud.png"), width: 601, height: 493 },
     { image: require("../../../../../assets/dolor/dolor-greet.png"), width: 460, height: 500 },
-    { image: require("../../../../../assets/eva/eva-pointing.png"), width: 601, height: 493 },
+  ],
+  audioFiles: [
+    [require('../../../../../assets/voiceOver/eva/practiceEasy/color/eva-narrative-6.mp3')], 
+    [require('../../../../../assets/voiceOver/dolor/practiceEasy/1_easy-color.mp3')], 
+    [require('../../../../../assets/voiceOver/eva/practiceEasy/color/eva-narrative-7.mp3')],
+    [require('../../../../../assets/voiceOver/dolor/practiceEasy/2_easy-color.mp3')],
   ],
 };
 
