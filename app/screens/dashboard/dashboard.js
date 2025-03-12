@@ -623,7 +623,7 @@ export default function DashboardScreen({ navigation }) {
                 ].map((item, index) => (
                   <View key={`shape-${index}`} style={styles.chartBarGroup}>
                     <Text style={styles.percentageLabel}>{item.percentage}%</Text>
-                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#4DD0E1' }]} />
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
                     <Text style={styles.chartLabel}>{item.label}</Text>
                   </View>
                 ))}
@@ -647,7 +647,7 @@ export default function DashboardScreen({ navigation }) {
                 ].map((item, index) => (
                   <View key={`color-${index}`} style={styles.chartBarGroup}>
                     <Text style={styles.percentageLabel}>{item.percentage}%</Text>
-                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#4DD0E1' }]} />
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
                     <Text style={styles.chartLabel}>{item.label}</Text>
                   </View>
                 ))}
@@ -674,7 +674,7 @@ export default function DashboardScreen({ navigation }) {
                 ].map((item, index) => (
                   <View key={`number-${index}`} style={styles.chartBarGroup}>
                     <Text style={styles.percentageLabel}>{item.percentage}%</Text>
-                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#4DD0E1' }]} />
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
                     <Text style={styles.chartLabel}>{item.label}</Text>
                   </View>
                 ))}
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   studentNameButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#5A8EF4',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 15,
