@@ -11,6 +11,8 @@ import {
   TextInput
 } from "react-native";
 
+import moment from 'moment';
+
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [studentName, setStudentName] = useState("Nestor Navarro");
@@ -24,6 +26,58 @@ export default function DashboardScreen({ navigation }) {
   const [editAge, setEditAge] = useState("3");
   const [editGender, setEditGender] = useState("Male");
   const [timeRange, setTimeRange] = useState("Today");
+  
+
+  const [currentQuarter, setCurrentQuarter] = useState(1);
+  const [currentYear, setCurrentYear] = useState(moment().year());
+
+  // Sample data generator for demonstration
+  const generateAttendanceData = (year) => {
+    const data = {};
+    for (let month = 0; month < 12; month++) {
+      const daysInMonth = moment(`${year}-${month + 1}`, 'YYYY-MM').daysInMonth();
+      data[month] = Array(daysInMonth).fill().map(() => (Math.random() > 0.2 ? 'present' : 'absent'));
+    }
+    return data;
+  };
+
+  const attendanceData = generateAttendanceData(currentYear);
+
+// Quarter handling logic
+const quarters = {
+  1: [0, 1, 2],    // Jan-Mar
+  2: [3, 4, 5],    // Apr-Jun
+  3: [6, 7, 8],    // Jul-Sep
+  4: [9, 10, 11],  // Oct-Dec
+};
+
+const handleNextQuarter = () => {
+  if (currentQuarter === 4) {
+    setCurrentQuarter(1);
+    setCurrentYear(currentYear + 1);
+  } else {
+    setCurrentQuarter(currentQuarter + 1);
+  }
+};
+
+const handlePrevQuarter = () => {
+  if (currentQuarter === 1) {
+    setCurrentQuarter(4);
+    setCurrentYear(currentYear - 1);
+  } else {
+    setCurrentQuarter(currentQuarter - 1);
+  }
+};
+
+// Render Calendar Day
+const renderDay = (day, status) => {
+  let backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
+  return (
+    <View key={day} style={[styles.dayItem, { backgroundColor }]}>
+      <Text style={styles.dayText}>{day}</Text>
+    </View>
+  );
+};
   
   // Toggle menu function
   const toggleMenu = () => {
@@ -101,17 +155,7 @@ export default function DashboardScreen({ navigation }) {
     setShowDeleteModal(false);
   };
   
-  // Sample data for attendance grid
-  const attendanceData = [
-    // Row 1
-    ['present', 'present', 'present', 'present', 'absent', 'absent', 'present', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-    // Row 2
-    ['present', 'present', 'present', 'present', 'present', 'present', 'absent', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-    // Row 3
-    ['present', 'present', 'present', 'present', 'absent', 'present', 'present', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-    // Row 4
-    ['present', 'present', 'present', 'present', 'present', 'absent', 'absent', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-  ];
+  
 
   // Sample data for time chart
   const timeData = [
@@ -374,35 +418,112 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Attendance Section */}
+        {/* Attendance Container */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Attendance</Text>
-          
-          {/* Attendance Grid */}
-          <View style={styles.attendanceGrid}>
-            {attendanceData.map((row, rowIndex) => (
-              <View key={`row-${rowIndex}`} style={styles.attendanceRow}>
-                {row.map((status, colIndex) => (
-                  <View key={`cell-${rowIndex}-${colIndex}`}>
-                    {renderAttendanceItem(status)}
-                  </View>
-                ))}
-              </View>
-            ))}
+          <View style={styles.attendanceHeader}>
+            <Text style={styles.sectionTitle}>Attendance</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity style={styles.paginationButton} onPress={handlePrevQuarter}>
+                <Text style={styles.paginationButtonText}>◀︎</Text>
+              </TouchableOpacity>
+              <Text style={styles.quarterLabel}>Q{currentQuarter} {currentYear}</Text>
+              <TouchableOpacity style={styles.paginationButton} onPress={handleNextQuarter}>
+                <Text style={styles.paginationButtonText}>▶︎</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Legend */}
+          <View style={styles.calendarContainer}>
+            {quarters[currentQuarter].map((month) => {
+              const firstDayOfMonth = moment(`${currentYear}-${month + 1}-01`, 'YYYY-MM-DD').day();
+              const daysInMonth = moment(`${currentYear}-${month + 1}`, 'YYYY-MM').daysInMonth();
+
+              // Generate empty slots before the first day of the month
+              const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
+                key: `empty-${month}-${i}`,  // Unique key for each empty slot before the month starts
+                day: null
+              }));
+
+              // Generate actual days with attendance status
+              const daysArray = Array.from({ length: daysInMonth }, (_, i) => ({
+                key: `day-${month}-${i + 1}`, // Unique key for each day
+                day: i + 1,
+                status: attendanceData[month][i]
+              }));
+
+              // Combine empty slots and days into one array
+              const totalSlots = [...blanks, ...daysArray];
+
+              // Ensure every row has exactly 7 elements
+              const rows = [];
+              let currentWeek = [];
+
+              totalSlots.forEach((item, index) => {
+                currentWeek.push(item);
+                if ((index + 1) % 7 === 0) {
+                  rows.push(currentWeek);
+                  currentWeek = [];
+                }
+              });
+
+              // Push the remaining days in the last row
+              if (currentWeek.length > 0) {
+                const missingDays = 7 - currentWeek.length;
+                for (let i = 0; i < missingDays; i++) {
+                  currentWeek.push({ key: `empty-${month}-extra-${i}`, day: null }); // Ensure unique keys for extra empty slots
+                }
+                rows.push(currentWeek);
+              }
+
+              return (
+                <View key={`month-${month}`} style={styles.monthContainer}>
+                  <Text style={styles.monthTitle}>{moment(month + 1, 'M').format('MMMM')}</Text>
+
+                  {/* Weekday Labels */}
+                  <View style={styles.weekdaysContainer}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <Text key={`label-${month}-${day}`} style={styles.weekdayLabel}>{day}</Text>
+                    ))}
+                  </View>
+
+                  {/* Days Grid (Fixed to always display 7 per row) */}
+                  {rows.map((row, rowIndex) => (
+                    <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
+                      {row.map(({ key, day, status }) => {
+                        let backgroundColor = 'transparent'; // Default blank spaces
+
+                        if (day) {
+                          backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
+                        }
+
+                        return (
+                          <View key={key} style={[styles.dayItem, { backgroundColor }]}>
+                            <Text style={styles.dayText}>{day || ''}</Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
+          </View>
+
+
+          {/* Legend at Bottom-left */}
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
               <Text style={styles.legendText}>Present</Text>
             </View>
-            <View style={styles.legendItem}>
+
+            <View style={[styles.legendItem, { marginLeft: 20 }]}>
               <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
               <Text style={styles.legendText}>Absent</Text>
             </View>
           </View>
         </View>
+
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
@@ -449,7 +570,6 @@ export default function DashboardScreen({ navigation }) {
               </View>
             )}
           </View>  
-        
         </View>
 
         {/* Charts Section */}
@@ -488,31 +608,32 @@ export default function DashboardScreen({ navigation }) {
               <View style={styles.chartBarsContainer}>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 90, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#FF3B30' }]} />
+                  <Text style={styles.chartLabel}>Red</Text>
+                  
                 </View>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 70, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#FFCC00' }]} />
+                  <Text style={styles.chartLabel}>Yellow</Text>
                 </View>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 100, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#007AFF' }]} />
+                  <Text style={styles.chartLabel}>Blue</Text>
                 </View>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 120, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#4CD964' }]} />
+                  <Text style={styles.chartLabel}>Green</Text>
                 </View>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 50, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#000000' }]} />
+                  <Text style={styles.chartLabel}>Black</Text>
                 </View>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 80, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#8E8E93' }]} />
+                  <Text style={styles.chartLabel}>Gray</Text>
                 </View>
                 <View style={styles.chartBarGroup}>
                   <View style={[styles.chartBar, { height: 95, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#8E8E93' }]} />
+                  <Text style={styles.chartLabel}>White</Text>
                 </View>
               </View>
             </View>
@@ -870,38 +991,111 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
   },
-  attendanceGrid: {
-    marginBottom: 10,
-  },
-  attendanceRow: {
+
+  //Attendance Container Style
+  attendanceHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+
+  quarterLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 10,
+  },
+  
+  paginationButton: {
+    paddingHorizontal: 10,
+  },
+  
+  paginationButtonText: {
+    fontSize: 18,
+    color: '#000',
+  },
+
+  calendarContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  
+  monthContainer: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+
+  monthTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
     marginBottom: 10,
   },
-  attendanceItem: {
-    width: 25,
-    height: 25,
-    borderRadius: 5,
-    marginRight: 10,
+
+  weekdaysContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
+
+  weekdayLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'center',
+    flex: 1,
+  },
+
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  daysContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+
+  dayItem: {
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dayText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+
   legend: {
     flexDirection: 'row',
-    marginTop: 10,
+    alignItems: 'center',
+    marginTop: 15,
+    alignSelf: 'flex-start',
   },
+
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 20,
   },
+
   legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
+    width: 15,
+    height: 15,
+    borderRadius: 4,
     marginRight: 5,
   },
+
   legendText: {
-    fontSize: 12,
-    color: '#8E8E93',
+    fontSize: 14,
+    color: '#1E1E1E',
   },
+  // End
+
+  
   actionButtonsContainer: {
     flexDirection: 'row',
     marginBottom: 20,
