@@ -74,39 +74,35 @@ export default function DashboardScreen({ navigation }) {
 
   // Render Calendar Day
   const renderDay = (day, status, month, year) => {
-    if (!day) return <View key={`empty-${month}-${day}`} style={[styles.dayItem]} />;
-  
-    const date = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
     const today = moment();
-    
-    let backgroundColor = 'transparent'; // Default background
-    let todayStyle = {}; // Default empty style
+    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
+    const isToday = currentDay.isSame(today, 'day');
+    const isFuture = currentDay.isAfter(today, 'day');
+    const weekday = currentDay.day(); // 0 (Sunday) - 6 (Saturday)
   
-    if (year < 2025) {
-      backgroundColor = '#E5E5EA'; // Light gray for past years
-    } else if (year > today.year() || date.isAfter(today, 'day')) {
-      backgroundColor = '#E5E5EA'; // Light gray for future years & future days
-    } else if (date.day() === 0 || date.day() === 6) {
-      backgroundColor = '#D3D3D3'; // Light gray for Saturdays & Sundays
+    let backgroundColor;
+  
+    if (isFuture || weekday === 0 || weekday === 6) {
+      backgroundColor = '#D3D3D3'; // Light gray for weekends and future days
     } else {
-      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30'; // Present or Absent
-    }
-  
-    // Highlight the current day with a blue border
-    if (date.isSame(today, 'day')) {
-      todayStyle = { borderWidth: 2, borderColor: '#007AFF' };
+      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
     }
   
     return (
-      <View key={`${year}-${month}-${day}`} style={[styles.dayItem, { backgroundColor }, todayStyle]}>
-        <Text style={[styles.dayText, date.isSame(today, 'day') && { fontWeight: 'bold' }]}>{day}</Text>
+      <View
+        key={`${year}-${month}-${day}`}
+        style={[
+          styles.dayItem,
+          { backgroundColor },
+          isToday && { borderWidth: 2, borderColor: '#007AFF' },
+        ]}
+      >
+        <Text style={styles.dayText}>{day}</Text>
       </View>
     );
   };
   
   
-
-
   //Pie Chart
   const LabelsPie = ({ slices }) => {
     return slices.map((slice, index) => {
@@ -489,7 +485,7 @@ export default function DashboardScreen({ navigation }) {
 
               // Generate empty slots before the first day of the month
               const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
-                key: `empty-${month}-${currentYear}-${i}`,  // Unique key for each empty slot before the month starts
+                key: `empty-${month}-${i}`,  // Unique key for each empty slot before the month starts
                 day: null
               }));
 
@@ -519,7 +515,7 @@ export default function DashboardScreen({ navigation }) {
               if (currentWeek.length > 0) {
                 const missingDays = 7 - currentWeek.length;
                 for (let i = 0; i < missingDays; i++) {
-                  currentWeek.push({ key: `empty-${month}-${currentYear}-extra-${i}`, day: null }); // ✅ Ensures uniqueness
+                  currentWeek.push({ key: `empty-${month}-extra-${i}`, day: null }); // Ensure unique keys for extra empty slots
                 }
                 rows.push(currentWeek);
               }
@@ -538,16 +534,17 @@ export default function DashboardScreen({ navigation }) {
                   {/* Days Grid (Fixed to always display 7 per row) */}
                   {rows.map((row, rowIndex) => (
                     <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
-                      {row.map(({ key, day, status }) => (
-                        renderDay(day, status, month, currentYear)
-                      ))}
+                      {row.map(({ key, day, status }) => {
+                        return day ? renderDay(day, status, month, currentYear) : (
+                          <View key={key} style={[styles.dayItem, { backgroundColor: 'transparent' }]} />
+                        );
+                      })}
                     </View>
                   ))}
                 </View>
               );
             })}
           </View>
-
 
           {/* Legend at Bottom-left */}
           <View style={styles.legend}>
