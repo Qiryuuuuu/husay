@@ -18,14 +18,14 @@ import moment from 'moment';
 
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [studentName, setStudentName] = useState("Nestor Navarro");
+  const [studentName, setStudentName] = useState("Prof. Snape");
   const [fullName, setFullName] = useState("Harold");
   const [menuOpen, setMenuOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editName, setEditName] = useState("Nestor Navarro");
+  const [editName, setEditName] = useState("Harry Potter");
   const [editAge, setEditAge] = useState("3");
   const [editGender, setEditGender] = useState("Male");
   const [timeRange, setTimeRange] = useState("Today");
@@ -838,6 +838,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 15,
+    borderWidth: 4,
+    borderColor: '#FFFFFF', 
+    shadowColor: '#000',  
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 4, 
   },
   dropdownIcon: {
     width: 16,
