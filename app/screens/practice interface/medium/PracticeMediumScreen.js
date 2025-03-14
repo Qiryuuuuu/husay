@@ -21,6 +21,10 @@ const practiceMediumDialogData = {
     { image: require("../../../../assets/eva/eva-love.png"), width: 260, height: 400 },
     { image: require("../../../../assets/eva/eva-happy.png"), width: 430, height: 470 },
   ],
+  audioFiles: [
+    [require('../../../../assets/voiceOver/eva/practiceMedium/eva-medium-1.mp3')], 
+    [require('../../../../assets/voiceOver/eva/practiceMedium/eva-medium-2.mp3')], 
+  ],
 };
 
 const practiceMediumCompletionNpc = {

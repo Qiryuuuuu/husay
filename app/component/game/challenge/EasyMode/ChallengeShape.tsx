@@ -1,10 +1,10 @@
+//ChallengeShape.tsx
 import React from 'react';
-import { BaseGame } from '../../EasyBaseGame';
-import shapeDialogues from "../../../../data/shapeDialogues";
+import { BaseGame } from '../../ChallBaseGame';
 
-const shaneIdleImg = require("../../../../../assets/shane/shane-guess.png");
-const shaneCorrectImg = require("../../../../../assets/shane/shane-correct.png");
-const shaneWrongImg = require("../../../../../assets/shane/shane-wrong.png");
+const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
+const evaCorrectImg = require("../../../../../assets/eva/eva-correct.png");
+const evaWrongImg = require("../../../../../assets/eva/eva-wrong.png");
 
 const shapes = [
   { name: "Rectangle", image: require("../../../../../assets/shapes/rectangle.png") },
@@ -13,6 +13,22 @@ const shapes = [
   { name: "Circle", image: require("../../../../../assets/shapes/circle.png") }
 ];
 
+const challengeDialogues = {
+  idle: [
+    "Now where should I begin?", // First question
+    "Which stone should I pick next?", // Second question
+    "Which stone should I pick next?", // Third question
+    "Which stone should I pick next?", // Fourth question
+    "Yeyyy, I think we’re almost at the edge of the river. Help me one last time, will you? Which is it?"  // Fifth question
+  ],
+  correct: [
+    "Gee, thanks for helping me find a good stone to stand on to."
+  ],
+  wrong: [
+    "I’m not sure I can stand there."
+  ]
+};
+
 const ShapeGame = ({ onGameComplete, navigation }) => {
   return (
     <BaseGame
@@ -20,12 +36,12 @@ const ShapeGame = ({ onGameComplete, navigation }) => {
       onGameComplete={onGameComplete}
       navigation={navigation}
       npcConfig={{
-        idle: shaneIdleImg,
-        correct: shaneCorrectImg,
-        wrong: shaneWrongImg,
-        name: "Shane"
+        idle: evaIdleImg,
+        correct: evaCorrectImg,
+        wrong: evaWrongImg,
+        name: "Eva"
       }}
-      dialogues={shapeDialogues}
+      dialogues={challengeDialogues}
     />
   );
 };

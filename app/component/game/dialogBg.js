@@ -1,13 +1,11 @@
 //pregameDialog.js
-
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import AudioPlayer from "../audio/AudioPlayer";
 
-const PregameDialog = ({ onDialogComplete, dialogData, background }) => {
+const PregameDialog = ({ onDialogComplete, dialogData, onDialogNext, currentDialogIndex }) => {
   const { dialogues, npcNames, npcImages, audioFiles } = dialogData;
   
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [messageCompleted, setMessageCompleted] = useState(false);
@@ -23,18 +21,14 @@ const PregameDialog = ({ onDialogComplete, dialogData, background }) => {
     if (!isMounted.current) return;
     
     if (status.didJustFinish) {
-      const currentAudioFile = audioFiles?.[currentMessageIndex];
+      const currentAudioFile = audioFiles?.[currentDialogIndex];
       
-      // Check if the current audio is an array and if there are more to play
       if (Array.isArray(currentAudioFile) && currentAudioIndex < currentAudioFile.length - 1) {
-        // Move to the next audio in the sequence
         setCurrentAudioIndex(prevIndex => prevIndex + 1);
-        // Set a small delay to prevent overlap
         setTimeout(() => {
           if (isMounted.current) setIsPlayingAudio(true);
         }, 300);
       } else {
-        // Either there's no more audio to play or it wasn't an array
         setIsPlayingAudio(false);
         setMessageCompleted(true);
       }
@@ -54,13 +48,18 @@ const PregameDialog = ({ onDialogComplete, dialogData, background }) => {
     
     setCurrentAudioIndex(0);
     setIsPlayingAudio(true);
-  }, [currentMessageIndex]);
+    
+    // Reset state for new dialog
+    setIsTyping(true);
+    setMessageCompleted(false);
+    setDisplayedText("");
+  }, [currentDialogIndex]);
 
   // Typing effect
   useEffect(() => {
     if (!isMounted.current) return;
     
-    let text = dialogues[currentMessageIndex];
+    let text = dialogues[currentDialogIndex];
     let index = 0;
     setDisplayedText("");
     setIsTyping(true);
@@ -79,102 +78,91 @@ const PregameDialog = ({ onDialogComplete, dialogData, background }) => {
         clearInterval(interval);
         setIsTyping(false);
         
-        // If there's no audio file, mark message as completed immediately
-        if (!audioFiles || !audioFiles[currentMessageIndex]) {
+        if (!audioFiles || !audioFiles[currentDialogIndex]) {
           setMessageCompleted(true);
         }
       }
     }, typingSpeed);
 
     return () => clearInterval(interval);
-  }, [currentMessageIndex, dialogues]);
+  }, [currentDialogIndex, dialogues]);
 
   const handlePress = () => {
-    // If still typing, complete the text immediately
     if (isTyping) {
-      setDisplayedText(dialogues[currentMessageIndex]);
+      setDisplayedText(dialogues[currentDialogIndex]);
       setIsTyping(false);
       return;
     }
     
-    // If audio is playing but the text is complete, allow skipping the audio
     if (isPlayingAudio && !isTyping) {
       setIsPlayingAudio(false);
       setMessageCompleted(true);
       return;
     }
     
-    // Move to next message or complete dialog if message is completed
     if (messageCompleted) {
-      if (currentMessageIndex < dialogues.length - 1) {
-        setCurrentMessageIndex((prev) => prev + 1);
+      if (currentDialogIndex < dialogues.length - 1) {
+        onDialogNext(currentDialogIndex);
       } else {
-        onDialogComplete && onDialogComplete();
+        onDialogComplete();
       }
     }
   };
 
-  // Get the current audio source to play
   const getCurrentAudioSource = () => {
-    const currentAudioFile = audioFiles?.[currentMessageIndex];
+    const currentAudioFile = audioFiles?.[currentDialogIndex];
     
-    // If no audio file exists for this message
     if (!currentAudioFile) return null;
     
-    // If the current audio entry is an array, get the current one
     if (Array.isArray(currentAudioFile)) {
       return currentAudioFile[currentAudioIndex];
     }
     
-    // Otherwise return the audio file directly
     return currentAudioFile;
   };
 
   return (
-    <ImageBackground source={background} style={{ flex: 1, width: "100%", height: "100%" }}>
-      <TouchableOpacity style={{ flex: 1, width: "100%" }} activeOpacity={1} onPress={handlePress}>
-        <View style={styles.container}>
-          {/* Render AudioPlayer only if there's an audio to play and we should be playing it */}
-          {getCurrentAudioSource() && isPlayingAudio && (
-            <AudioPlayer
-              audioSource={getCurrentAudioSource()}
-              onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-              autoPlay={true}
-            />
-          )}
-          
-          {/* Character image */}
-          <Image
-            source={npcImages[currentMessageIndex].image}
-            style={{
-              width: npcImages[currentMessageIndex].width,
-              height: npcImages[currentMessageIndex].height,
-            }}
+    <TouchableOpacity style={styles.fullScreen} activeOpacity={1} onPress={handlePress}>
+      <View style={styles.container}>
+        {getCurrentAudioSource() && isPlayingAudio && (
+          <AudioPlayer
+            audioSource={getCurrentAudioSource()}
+            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+            autoPlay={true}
           />
-          
-          {/* Dialog bubble */}
-          <View style={styles.chatBubbleContainer}>
-            <View style={styles.chatContent}>
-              <Text style={styles.npcName}>{npcNames[currentMessageIndex]}</Text>
-              <Text style={styles.npcMessage}>{displayedText}</Text>
-            </View>
+        )}
+        
+        <Image
+          source={npcImages[currentDialogIndex].image}
+          style={{
+            width: npcImages[currentDialogIndex].width,
+            height: npcImages[currentDialogIndex].height,
+          }}
+        />
+        
+        <View style={styles.chatBubbleContainer}>
+          <View style={styles.chatContent}>
+            <Text style={styles.npcName}>{npcNames[currentDialogIndex]}</Text>
+            <Text style={styles.npcMessage}>{displayedText}</Text>
           </View>
-          
-          {/* "Tap to continue" prompt */}
-          {messageCompleted && (
-            <Text style={styles.nextTriggerText}>Tap anywhere to continue</Text>
-          )}
-          {/* Show skipping message when audio is playing but text is finished */}
-          {!isTyping && isPlayingAudio && !messageCompleted && (
-            <Text style={styles.nextTriggerText}>Tap to skip audio</Text>
-          )}
         </View>
-      </TouchableOpacity>
-    </ImageBackground>
+        
+        {messageCompleted && (
+          <Text style={styles.nextTriggerText}>Tap anywhere to continue</Text>
+        )}
+        {!isTyping && isPlayingAudio && !messageCompleted && (
+          <Text style={styles.nextTriggerText}>Tap to skip audio</Text>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
+  fullScreen: {
+    flex: 1,
+    width: "100%",
+  },
   container: {
     flex: 1,
     justifyContent: "center",

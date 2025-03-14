@@ -1,10 +1,9 @@
 //EasyBaseGame.tsx
-// Import the AudioPlayer component
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
-import AudioPlayer from "../../component/audio/AudioPlayer"; // Add this import
+import AudioPlayer from "../../component/audio/AudioPlayer"; 
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");

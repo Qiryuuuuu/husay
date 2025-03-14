@@ -43,7 +43,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="EasyMenuInteface" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -65,7 +65,7 @@ export default function App() {
         <Stack.Screen name="ChallMainScreen" component={ChallMainScreen}  />
 
         <Stack.Screen name="EasyMenuInteface" component={PracticeEasyIntefaceScreen} />
-        <Stack.Screen name="ChallengeEasyInteface" component={ChallengeEasyIntefaceScreen} />
+        <Stack.Screen name="ChallengeEasyInterface" component={ChallengeEasyIntefaceScreen} />
 
         <Stack.Screen name="PracticeShape" component={PracticeShape} />
         <Stack.Screen name="PracticeColor" component={PracticeColor} />
