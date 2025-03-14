@@ -8,7 +8,7 @@ const app = express();
 
 // ✅ Middleware
 app.use(cors());
-app.use(bodyParser.json()); 
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ✅ MongoDB Connection
@@ -19,11 +19,13 @@ mongoose
 
 // ✅ Import Routes
 const authRoutes = require("./routes/authRoutes");
-const classRoutes = require("./routes/classRoutes"); 
+const classRoutes = require("./routes/classRoutes");
+const studentRoutes = require("./routes/studentRoutes"); // ✅ Import Student Routes
 
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/class", classRoutes); 
+app.use("/api/class", classRoutes);
+app.use("/api/students", studentRoutes); // ✅ Register Student Routes
 
 // ✅ Server Listening
 const PORT = process.env.PORT || 5000;

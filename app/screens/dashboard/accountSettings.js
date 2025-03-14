@@ -64,19 +64,18 @@ export default function AccountSettingsScreen({ navigation }) {
   const fetchStudentCount = async (employeeNo) => {
     try {
       const token = await AsyncStorage.getItem("authToken");
-      
       if (!token || !employeeNo) {
         console.error("❌ No token or employeeNo found.");
         return;
       }
   
-      console.log("🔹 Using Token:", token); // ✅ Debugging Token
+      console.log("🔹 Fetching student count with token:", token);
   
       const response = await fetch(`http://10.0.2.2:5000/api/students/count`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // ✅ Ensure "Bearer " is included
+          "Authorization": `Bearer ${token}`,
         },
       });
   
@@ -97,6 +96,7 @@ export default function AccountSettingsScreen({ navigation }) {
       console.error("❌ Network error fetching students:", error);
     }
   };
+  
   
   //✅ Update User Info
   const updateUserInfo = async () => {
