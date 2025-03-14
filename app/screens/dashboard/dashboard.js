@@ -15,7 +15,6 @@ import { Text as SVGText } from 'react-native-svg';
 
 import moment from 'moment';
 
-
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [studentName, setStudentName] = useState("Prof. Snape");
@@ -661,16 +660,16 @@ export default function DashboardScreen({ navigation }) {
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
                 {[
-                  { label: "One", percentage: 80, height: 100 },
-                  { label: "Two", percentage: 88, height: 110 },
-                  { label: "Three", percentage: 72, height: 90 },
-                  { label: "Four", percentage: 64, height: 80 },
-                  { label: "Five", percentage: 76, height: 95 },
-                  { label: "Six", percentage: 56, height: 70 },
-                  { label: "Seven", percentage: 68, height: 85 },
-                  { label: "Eight", percentage: 76, height: 95 },
-                  { label: "Nine", percentage: 60, height: 75 },
-                  { label: "Ten", percentage: 52, height: 65 },
+                  { label: "One (1)", percentage: 80, height: 100 },
+                  { label: "Two (2)", percentage: 88, height: 110 },
+                  { label: "Three (3)", percentage: 72, height: 90 },
+                  { label: "Four (4)", percentage: 64, height: 80 },
+                  { label: "Five (5)", percentage: 76, height: 95 },
+                  { label: "Six (6)", percentage: 56, height: 70 },
+                  { label: "Seven (7)", percentage: 68, height: 85 },
+                  { label: "Eight (8)", percentage: 76, height: 95 },
+                  { label: "Nine (9)", percentage: 60, height: 75 },
+                  { label: "Ten (10)", percentage: 52, height: 65 },
                 ].map((item, index) => (
                   <View key={`number-${index}`} style={styles.chartBarGroup}>
                     <Text style={styles.percentageLabel}>{item.percentage}%</Text>
@@ -700,7 +699,7 @@ export default function DashboardScreen({ navigation }) {
                   <LabelsPie />
                 </PieChart>
 
-                <View style={styles.pieLegend}>
+                <View style={styles.legend}>
                   <View style={[styles.legendItem, {marginTop: 15}]}>
                     <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
                     <Text style={styles.legendText}>Correct</Text>
@@ -719,7 +718,7 @@ export default function DashboardScreen({ navigation }) {
                   style={{ height: 250 }}
                   valueAccessor={({ item }) => item.value}
                   data={[
-                    { key: 1, value: 35, label: '35 mins', svg: { fill: '#4CD964' } }, 
+                    { key: 1, value: 45, label: '45 mins', svg: { fill: '#4CD964' } }, 
                     { key: 2, value: 15, label: '15 mins', svg: { fill: '#FF3B30' } },
                   ]}
                   spacing={0}
@@ -728,7 +727,7 @@ export default function DashboardScreen({ navigation }) {
                   <LabelsPie />
                 </PieChart>
 
-                <View style={styles.pieLegend}>
+                <View style={styles.legend}>
                   <View style={[styles.legendItem, {marginTop: 15}]}>
                     <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
                     <Text style={styles.legendText}>Spent</Text>
@@ -1052,13 +1051,15 @@ const styles = StyleSheet.create({
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: "center",
     marginTop: 15,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
   },
 
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginHorizontal: 10,
   },
 
   legendColor: {
@@ -1071,6 +1072,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 14,
     color: '#1E1E1E',
+    textAlign: 'center',
   },
   // End
 
@@ -1197,10 +1199,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
   },
-  pieLegend: {
-    flexDirection: 'row',
-    marginTop: 10,
-  },
+  
   footer: {
     marginTop: 0,
     marginBottom: 75,

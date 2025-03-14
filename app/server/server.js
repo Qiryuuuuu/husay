@@ -21,9 +21,11 @@ mongoose
 const authRoutes = require("./routes/authRoutes");
 const classRoutes = require("./routes/classRoutes"); 
 
+
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/class", classRoutes); 
+app.use("/api/class", classRoutes);
+
 
 // ✅ Server Listening
 const PORT = process.env.PORT || 5000;
