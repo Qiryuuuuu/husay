@@ -10,150 +10,120 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { PieChart } from 'react-native-svg-charts';
+import { Text as SVGText } from 'react-native-svg';
+
+import moment from 'moment';
+
 
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-
+  const [studentName, setStudentName] = useState("Prof. Snape");
+  const [fullName, setFullName] = useState("Harold");
   const [menuOpen, setMenuOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editName, setEditName] = useState("Nestor Navarro");
+  const [editName, setEditName] = useState("Harry Potter");
   const [editAge, setEditAge] = useState("3");
   const [editGender, setEditGender] = useState("Male");
   const [timeRange, setTimeRange] = useState("Today");
+  
 
-  const [fullName, setFullName] = useState(""); // Ensure it starts empty
-  const [students, setStudents] = useState([]); // Ensure students start as an empty array
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [currentQuarter, setCurrentQuarter] = useState(1);
+  const [currentYear, setCurrentYear] = useState(moment().year());
 
-  const [employeeNo, setEmployeeNo] = useState(null); // Store employee number
-
-  // ✅ Get Token Function
-  const getToken = async () => {
-    try {
-      const token = await AsyncStorage.getItem("authToken"); 
-      console.log("🔍 Retrieved Token:", token); // Debugging log
-      return token ? `Bearer ${token}` : null;
-    } catch (error) {
-      console.error("Error retrieving token:", error);
-      return null;
+  // Sample data generator for demonstration
+  const generateAttendanceData = (year) => {
+    const data = {};
+    for (let month = 0; month < 12; month++) {
+      const daysInMonth = moment(`${year}-${month + 1}`, 'YYYY-MM').daysInMonth();
+      data[month] = Array(daysInMonth).fill().map(() => (Math.random() > 0.2 ? 'present' : 'absent'));
     }
+    return data;
   };
-    
 
-  // ✅ Fetch User and Store employeeNo
-  const fetchUser = async () => {
-    try {
-      const token = await AsyncStorage.getItem("authToken");
-      if (!token) {
-        console.error("❌ No token found, user might be logged out.");
-        return;
-      }
-  
-      const controller = new AbortController(); // ✅ Create timeout controller
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-  
-      const response = await fetch("http://10.0.2.2:5000/api/auth/user", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        signal: controller.signal, // ✅ Attach timeout controller
-      });
-  
-      clearTimeout(timeoutId); // ✅ Clear timeout if request succeeds
-  
-      if (!response.ok) {
-        throw new Error("❌ Server returned an error");
-      }
-  
-      const data = await response.json();
-      console.log("✅ User Data:", data);
-  
-      setFullName(data.fullName || "User");
-      setEmployeeNo(data.employeeNo);
-      setLoading(false); // ✅ Ensure loading stops
-    } catch (error) {
-      console.error("❌ Error fetching user:", error);
-      setLoading(false); // ✅ Stop loading on error
-    }
+  const attendanceData = generateAttendanceData(currentYear);
+
+  // Quarter handling logic
+  const quarters = {
+    1: [0, 1, 2],    // Jan-Mar
+    2: [3, 4, 5],    // Apr-Jun
+    3: [6, 7, 8],    // Jul-Sep
+    4: [9, 10, 11],  // Oct-Dec
   };
-  
-  // ✅ Fetch Students After Employee Number is Set
-  const fetchStudents = async (employeeNumber) => {
-    try {
-      const token = await AsyncStorage.getItem("authToken"); // ✅ Match key
-      if (!token) {
-        console.error("No token found, user might be logged out.");
-        return;
-      }
 
-      if (!employeeNumber) {
-        console.error("Employee number not available yet. Waiting...");
-        return;
-      }
-
-      const response = fetch("http://10.0.2.2:5000/api/students/all", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token,
-        },
-      });
-      
-
-      const data = await response.json();
-      console.log("🔹 Students API Response:", data);
-
-      if (response.ok && data.students.length > 0) {
-        setStudents(data.students);
-        setSelectedStudent(data.students[0]); // Default to first student
-      } else {
-        console.error("Error fetching students:", data.message);
-      }
-    } catch (error) {
-      console.error("Server error fetching students:", error);
-    }
-  };
-  
-
-   // ✅ Ensure `fetchUser()` Completes Before `fetchStudents()`
-   useEffect(() => {
-    const loadData = async () => {
-      const token = await getToken();
-      if (token) {
-        await fetchUser(); // ✅ Fetch user first
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // ✅ Wait for `employeeNo` before fetching students
-  useEffect(() => {
-    if (employeeNo) {
-      fetchStudents(employeeNo);
-    }
-  }, [employeeNo]); // ✅ Runs when employeeNo updates
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem("userToken"); // ✅ Remove token
-      await AsyncStorage.removeItem("employeeNo"); // ✅ Remove employee number if stored
-      console.log("✅ User logged out successfully");
-
-      // Navigate to login screen (adjust as per your navigation setup)
-      navigation.replace("Login");
-    } catch (error) {
-      console.error("❌ Error logging out:", error);
+  const handleNextQuarter = () => {
+    if (currentQuarter === 4) {
+      setCurrentQuarter(1);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentQuarter(currentQuarter + 1);
     }
   };
 
+  const handlePrevQuarter = () => {
+    if (currentQuarter === 1) {
+      setCurrentQuarter(4);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentQuarter(currentQuarter - 1);
+    }
+  };
+
+  // Render Calendar Day
+  const renderDay = (day, status, month, year) => {
+    const today = moment();
+    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
+    const isToday = currentDay.isSame(today, 'day');
+    const isFuture = currentDay.isAfter(today, 'day');
+    const weekday = currentDay.day(); // 0 (Sunday) - 6 (Saturday)
+  
+    let backgroundColor;
+  
+    if (isFuture || weekday === 0 || weekday === 6) {
+      backgroundColor = '#D3D3D3'; // Light gray for weekends and future days
+    } else {
+      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
+    }
+  
+    return (
+      <View
+        key={`${year}-${month}-${day}`}
+        style={[
+          styles.dayItem,
+          { backgroundColor },
+          isToday && { borderWidth: 2, borderColor: '#007AFF' },
+        ]}
+      >
+        <Text style={styles.dayText}>{day}</Text>
+      </View>
+    );
+  };
+  
+  
+  //Pie Chart
+  const LabelsPie = ({ slices }) => {
+    return slices.map((slice, index) => {
+      const { pieCentroid, data } = slice;
+      return (
+        <SVGText
+          key={index}
+          x={pieCentroid[0]}
+          y={pieCentroid[1]}
+          fill="black"
+          textAnchor="middle"
+          alignmentBaseline="middle"
+          fontSize={15}
+          strokeWidth={0.2}
+        >
+          {data.label}
+        </SVGText>
+      );
+    });
+  };
+  
   // Toggle menu function
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -229,6 +199,8 @@ export default function DashboardScreen({ navigation }) {
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
   };
+  
+  
 
   // Sample data for time chart
   const timeData = [
@@ -520,35 +492,102 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Attendance Section */}
+        {/* Attendance Container */}
         <View style={styles.sectionContainer}>
-  <Text style={styles.sectionTitle}>Attendance</Text>
-
-  <View style={styles.attendanceGrid}>
-    {students.map((student, rowIndex) => (
-      <View key={`row-${rowIndex}`} style={styles.attendanceRow}>
-        <Text style={styles.studentName}>{student.fullName}</Text>
-        {student.gamesPlayed.map((games, colIndex) => (
-          <View key={`cell-${rowIndex}-${colIndex}`}>
-            {renderAttendanceItem(games)}
+          <View style={styles.attendanceHeader}>
+            <Text style={styles.sectionTitle}>Attendance</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity style={styles.paginationButton} onPress={handlePrevQuarter}>
+                <Text style={styles.paginationButtonText}>◀︎</Text>
+              </TouchableOpacity>
+              <Text style={styles.quarterLabel}>Q{currentQuarter} {currentYear}</Text>
+              <TouchableOpacity style={styles.paginationButton} onPress={handleNextQuarter}>
+                <Text style={styles.paginationButtonText}>▶︎</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        ))}
-      </View>
-    ))}
-  </View>
 
-  {/* Legend */}
-  <View style={styles.legend}>
-    <View style={styles.legendItem}>
-      <View style={[styles.legendColor, { backgroundColor: "#4CD964" }]} />
-      <Text style={styles.legendText}>Present</Text>
-    </View>
-    <View style={styles.legendItem}>
-      <View style={[styles.legendColor, { backgroundColor: "#FF3B30" }]} />
-      <Text style={styles.legendText}>Absent</Text>
-    </View>
-  </View>
-</View>
+          <View style={styles.calendarContainer}>
+            {quarters[currentQuarter].map((month) => {
+              const firstDayOfMonth = moment(`${currentYear}-${month + 1}-01`, 'YYYY-MM-DD').day();
+              const daysInMonth = moment(`${currentYear}-${month + 1}`, 'YYYY-MM').daysInMonth();
+
+              // Generate empty slots before the first day of the month
+              const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
+                key: `empty-${month}-${i}`,  // Unique key for each empty slot before the month starts
+                day: null
+              }));
+
+              // Generate actual days with attendance status
+              const daysArray = Array.from({ length: daysInMonth }, (_, i) => ({
+                key: `day-${month}-${i + 1}`, // Unique key for each day
+                day: i + 1,
+                status: attendanceData[month][i]
+              }));
+
+              // Combine empty slots and days into one array
+              const totalSlots = [...blanks, ...daysArray];
+
+              // Ensure every row has exactly 7 elements
+              const rows = [];
+              let currentWeek = [];
+
+              totalSlots.forEach((item, index) => {
+                currentWeek.push(item);
+                if ((index + 1) % 7 === 0) {
+                  rows.push(currentWeek);
+                  currentWeek = [];
+                }
+              });
+
+              // Push the remaining days in the last row
+              if (currentWeek.length > 0) {
+                const missingDays = 7 - currentWeek.length;
+                for (let i = 0; i < missingDays; i++) {
+                  currentWeek.push({ key: `empty-${month}-extra-${i}`, day: null }); // Ensure unique keys for extra empty slots
+                }
+                rows.push(currentWeek);
+              }
+
+              return (
+                <View key={`month-${month}`} style={styles.monthContainer}>
+                  <Text style={styles.monthTitle}>{moment(month + 1, 'M').format('MMMM')}</Text>
+
+                  {/* Weekday Labels */}
+                  <View style={styles.weekdaysContainer}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <Text key={`label-${month}-${day}`} style={styles.weekdayLabel}>{day}</Text>
+                    ))}
+                  </View>
+
+                  {/* Days Grid (Fixed to always display 7 per row) */}
+                  {rows.map((row, rowIndex) => (
+                    <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
+                      {row.map(({ key, day, status }) => {
+                        return day ? renderDay(day, status, month, currentYear) : (
+                          <View key={key} style={[styles.dayItem, { backgroundColor: 'transparent' }]} />
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Legend at Bottom-left */}
+          <View style={styles.legend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
+              <Text style={styles.legendText}>Present</Text>
+            </View>
+
+            <View style={[styles.legendItem, { marginLeft: 20 }]}>
+              <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+              <Text style={styles.legendText}>Absent</Text>
+            </View>
+          </View>
+        </View>
 
 
         {/* Action Buttons */}
@@ -603,7 +642,7 @@ export default function DashboardScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             )}
-          </View>
+          </View>  
         </View>
 
         {/* Charts Section */}
@@ -612,44 +651,19 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Shape Familiarity</Text>
             <View style={styles.shapeChart}>
-              {/* This would be replaced with an actual chart component */}
               <View style={styles.chartBarsContainer}>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 100, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Square</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 120, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Circle</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 80, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Triangle</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 110, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Rectangle</Text>
-                </View>
+                {[
+                  { label: "Square", percentage: 80, height: 100 },
+                  { label: "Circle", percentage: 90, height: 120 },
+                  { label: "Triangle", percentage: 60, height: 80 },
+                  { label: "Rectangle", percentage: 85, height: 110 },
+                ].map((item, index) => (
+                  <View key={`shape-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{item.label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -658,92 +672,22 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Color Familiarity</Text>
             <View style={styles.colorChart}>
-              {/* This would be replaced with an actual chart component */}
               <View style={styles.chartBarsContainer}>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 90, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[styles.colorLabel, { backgroundColor: "#FF3B30" }]}
-                  />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 70, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[styles.colorLabel, { backgroundColor: "#FFCC00" }]}
-                  />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 100, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[styles.colorLabel, { backgroundColor: "#007AFF" }]}
-                  />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 120, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[styles.colorLabel, { backgroundColor: "#4CD964" }]}
-                  />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 50, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[styles.colorLabel, { backgroundColor: "#000000" }]}
-                  />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 80, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[styles.colorLabel, { backgroundColor: "#8E8E93" }]}
-                  />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 95, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.colorLabel,
-                      {
-                        backgroundColor: "#FFFFFF",
-                        borderWidth: 1,
-                        borderColor: "#8E8E93",
-                      },
-                    ]}
-                  />
-                </View>
+                {[
+                  { label: "Red", percentage: 75, height: 90 },
+                  { label: "Yellow", percentage: 58, height: 70 },
+                  { label: "Blue", percentage: 83, height: 100 },
+                  { label: "Green", percentage: 100, height: 120 },
+                  { label: "Black", percentage: 42, height: 50 },
+                  { label: "Gray", percentage: 67, height: 80 },
+                  { label: "White", percentage: 79, height: 95 },
+                ].map((item, index) => (
+                  <View key={`color-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{item.label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -753,186 +697,87 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Number Familiarity</Text>
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 100, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>One</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 110, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Two</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 90, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Three</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 80, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Four</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 95, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Five</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 70, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Six</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 85, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Seven</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 95, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Eight</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 75, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Nine</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View
-                    style={[
-                      styles.chartBar,
-                      { height: 65, backgroundColor: "#4DD0E1" },
-                    ]}
-                  />
-                  <Text style={styles.chartLabel}>Ten</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Accuracy Chart */}
-          <View style={[styles.chartCard, styles.fullWidthChart]}>
-            <View style={styles.accuracyHeader}>
-              <Text style={styles.chartTitle}>Accuracy</Text>
-              <TouchableOpacity
-                style={styles.todayButton}
-                onPress={toggleTimeRange}
-              >
-                <Image
-                  source={require("../../../assets/menu.png")}
-                  style={styles.upArrowIcon}
-                />
-                <Text style={styles.todayText}>{timeRange}</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.accuracyChart}>
-              {/* This would be replaced with an actual chart component */}
-              <View style={styles.areaChart}>
-                {/* Placeholder for area chart */}
-                <View style={styles.areaChartPlaceholder} />
-              </View>
-
-              {/* Legend */}
-              <View style={styles.accuracyLegend}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[styles.legendColor, { backgroundColor: "#4CD964" }]}
-                  />
-                  <Text style={styles.legendText}>Correct</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[styles.legendColor, { backgroundColor: "#FF3B30" }]}
-                  />
-                  <Text style={styles.legendText}>Mistakes</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Time Chart */}
-          <View style={[styles.chartCard, styles.fullWidthChart]}>
-            <View style={styles.timeHeader}>
-              <Text style={styles.chartTitle}>Time Spent Learning</Text>
-              <TouchableOpacity
-                style={styles.todayButton}
-                onPress={toggleTimeRange}
-              >
-                <Image
-                  source={require("../../../assets/menu.png")}
-                  style={styles.upArrowIcon}
-                />
-                <Text style={styles.todayText}>{timeRange}</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.timeChart}>
-              <View style={styles.chartBarsContainer}>
-                {timeData.map((item, index) => (
-                  <View key={`time-${index}`} style={styles.chartBarGroup}>
-                    <View
-                      style={[
-                        styles.timeBar,
-                        {
-                          height: item.duration * 2,
-                          backgroundColor: "#7986CB",
-                        },
-                      ]}
-                    />
-                    <Text style={styles.chartLabel}>{item.time}</Text>
+                {[
+                  { label: "One", percentage: 80, height: 100 },
+                  { label: "Two", percentage: 88, height: 110 },
+                  { label: "Three", percentage: 72, height: 90 },
+                  { label: "Four", percentage: 64, height: 80 },
+                  { label: "Five", percentage: 76, height: 95 },
+                  { label: "Six", percentage: 56, height: 70 },
+                  { label: "Seven", percentage: 68, height: 85 },
+                  { label: "Eight", percentage: 76, height: 95 },
+                  { label: "Nine", percentage: 60, height: 75 },
+                  { label: "Ten", percentage: 52, height: 65 },
+                ].map((item, index) => (
+                  <View key={`number-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{item.label}</Text>
                   </View>
                 ))}
               </View>
-
-              {/* Time Legend */}
-              <View style={styles.timeLegend}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[styles.legendColor, { backgroundColor: "#7986CB" }]}
-                  />
-                  <Text style={styles.legendText}>Minutes Spent</Text>
-                </View>
-              </View>
             </View>
           </View>
+
+          {/* Accuracy and Time Spent Pie Chart */}
+          <View style={styles.accuracyTimeContainer}>
+              {/* Accuracy Pie Chart */}
+              <View style={styles.pieChartContainer}>
+                <Text style={styles.chartTitle}>Accuracy</Text>
+                <PieChart
+                  style={{ height: 250 }}
+                  valueAccessor={({ item }) => item.value}
+                  data={[
+                    { key: 1, value: 8, label: '8', svg: { fill: '#4CD964' } },
+                    { key: 2, value: 2, label: '2', svg: { fill: '#FF3B30' } },
+                  ]}
+                  spacing={0}
+                  outerRadius={'100%'}
+                >
+                  <LabelsPie />
+                </PieChart>
+
+                <View style={styles.pieLegend}>
+                  <View style={[styles.legendItem, {marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
+                    <Text style={styles.legendText}>Correct</Text>
+                  </View>
+                  <View style={[styles.legendItem, { marginLeft: 15, marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+                    <Text style={styles.legendText}>Incorrect</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Time Spent Pie Chart */}
+              <View style={styles.pieChartContainer}>
+                <Text style={styles.chartTitle}>Time Spent (Today)</Text>
+                <PieChart
+                  style={{ height: 250 }}
+                  valueAccessor={({ item }) => item.value}
+                  data={[
+                    { key: 1, value: 35, label: '35 mins', svg: { fill: '#4CD964' } }, 
+                    { key: 2, value: 15, label: '15 mins', svg: { fill: '#FF3B30' } },
+                  ]}
+                  spacing={0}
+                  outerRadius={'100%'}
+                >
+                  <LabelsPie />
+                </PieChart>
+
+                <View style={styles.pieLegend}>
+                  <View style={[styles.legendItem, {marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
+                    <Text style={styles.legendText}>Spent</Text>
+                  </View>
+                  <View style={[styles.legendItem, { marginLeft: 15, marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+                    <Text style={styles.legendText}>Left</Text>
+                  </View>
+                </View>
+              </View>
+          </View>
+
         </View>
 
         {/* Footer */}
@@ -1026,12 +871,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   studentNameButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#007AFF",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#5A8EF4',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 15,
+    borderWidth: 4,
+    borderColor: '#FFFFFF', 
+    shadowColor: '#000',  
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 4, 
   },
   dropdownIcon: {
     width: 16,
@@ -1082,8 +934,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   modeContainer: {
-    position: "relative",
-    marginRight: 15,
+    position: 'relative',
   },
   modeButton: {
     padding: 5,
@@ -1118,8 +969,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   difficultyContainer: {
-    position: "relative",
-    marginRight: 15,
+    position: 'relative',
   },
   difficultyButton: {
     padding: 5,
@@ -1164,66 +1014,120 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 15,
   },
-  attendanceGrid: {
+
+  //Attendance Container Style
+  attendanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+
+  quarterLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 10,
+  },
+  
+  paginationButton: {
+    paddingHorizontal: 10,
+  },
+  
+  paginationButtonText: {
+    fontSize: 18,
+    color: '#000',
+  },
+
+  calendarContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  
+  monthContainer: {
+    flex: 1,
+    marginHorizontal: 10,
+  },
+
+  monthTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
     marginBottom: 10,
   },
-  attendanceRow: {
-    flexDirection: "row",
-    marginBottom: 10,
+
+  weekdaysContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
-  attendanceItem: {
-    width: 25,
-    height: 25,
-    borderRadius: 5,
-    marginRight: 10,
+
+  weekdayLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'center',
+    flex: 1,
   },
+
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  dayItem: {
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dayText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+
   legend: {
-    flexDirection: "row",
-    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 15,
+    alignSelf: 'flex-start',
   },
+
   legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
+
   legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
+    width: 15,
+    height: 15,
+    borderRadius: 4,
     marginRight: 5,
   },
+
   legendText: {
-    fontSize: 12,
-    color: "#8E8E93",
+    fontSize: 14,
+    color: '#1E1E1E',
   },
+  // End
+
   actionButtonsContainer: {
     flexDirection: "row",
     marginBottom: 20,
   },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginRight: 15,
-  },
-  actionIcon: {
-    width: 16,
-    height: 16,
-    tintColor: "#FFFFFF",
-    marginRight: 5,
-  },
-  actionText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "500",
-  },
   chartsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    
+  },
+
+  percentageLabel: {
+    fontSize: 12,
+    color: '#000',
+    marginBottom: 4,
   },
   chartCard: {
     backgroundColor: "#FFFFFF",
@@ -1272,11 +1176,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#8E8E93",
   },
-  colorLabel: {
-    width: 20,
-    height: 8,
-    borderRadius: 2,
-  },
   accuracyHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1324,6 +1223,22 @@ const styles = StyleSheet.create({
   timeLegend: {
     flexDirection: "row",
     marginTop: 0,
+  },
+  accuracyTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    width: '100%'
+  },
+  pieChartContainer: {
+    width: '49%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+  },
+  pieLegend: {
+    flexDirection: 'row',
+    marginTop: 10,
   },
   footer: {
     marginTop: 0,

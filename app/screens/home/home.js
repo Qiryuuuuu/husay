@@ -50,7 +50,7 @@ export default function HomeScreen({ navigation }) {
             <Image source={practiceCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ChallMainScreen')}>
             <Image source={challengeCard} style={styles.cards} />
           </TouchableOpacity>
         </View>

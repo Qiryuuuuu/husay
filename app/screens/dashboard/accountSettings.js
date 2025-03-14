@@ -333,7 +333,6 @@ const styles = StyleSheet.create({
     width: 250,
     height: 65,
     resizeMode: "contain",
-    marginBottom: 10,
   },
   logoutButton: {
     marginLeft: 15,
