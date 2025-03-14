@@ -9,16 +9,25 @@ import {
   useWindowDimensions,
   Modal,
   TextInput,
+  Alert,
 } from "react-native";
 import { PieChart } from 'react-native-svg-charts';
 import { Text as SVGText } from 'react-native-svg';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import moment from 'moment';
 
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [studentName, setStudentName] = useState("Prof. Snape");
-  const [fullName, setFullName] = useState("Harold");
+  const [studentName, setStudentName] = useState("Harry Potter"); //Students
+  const [students, setStudents] = useState([
+    "Harry Potter",
+    "Hermione Granger",
+    "Ron Weasley",
+    "Draco Malfoy",
+  ]); // List of students
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const [fullName, setFullName] = useState("Harold Puno"); //Teacher Name
   const [menuOpen, setMenuOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
@@ -32,6 +41,23 @@ export default function DashboardScreen({ navigation }) {
 
   const [currentQuarter, setCurrentQuarter] = useState(1);
   const [currentYear, setCurrentYear] = useState(moment().year());
+
+  //Logout
+  const handleLogout = async () => {
+    try {
+      // Remove authentication token from storage
+      await AsyncStorage.removeItem("authToken");
+  
+      // Show alert confirmation and navigate to login
+      Alert.alert("Logged Out", "You have been logged out.", [
+        { text: "OK", onPress: () => navigation.replace("Login") }
+      ]);
+  
+      console.log("✅ User successfully logged out.");
+    } catch (error) {
+      console.error("❌ Error logging out:", error);
+    }
+  };
 
   // Sample data generator for demonstration
   const generateAttendanceData = (year) => {
@@ -163,6 +189,22 @@ export default function DashboardScreen({ navigation }) {
     if (!difficultyOpen) {
       setMenuOpen(false);
     }
+  };
+
+  // Toggle Student Dropdown
+  const toggleStudentDropdown = () => {
+    setStudentDropdownOpen(!studentDropdownOpen);
+    if (!studentDropdownOpen) {
+      setModeOpen(false);
+      setDifficultyOpen(false);
+      setMenuOpen(false);
+    }
+  };
+
+  // Select Student from Dropdown
+  const selectStudent = (name) => {
+    setStudentName(name);
+    setStudentDropdownOpen(false);
   };
 
   // Handle edit button press
@@ -389,7 +431,7 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity onPress={handleLogout}>
+        <TouchableOpacity  onPress={handleLogout}>
           <Image
             style={styles.logoutButton}
             source={require("../../../assets/dashboard/Logout.png")}
@@ -408,10 +450,12 @@ export default function DashboardScreen({ navigation }) {
             />
           </View>
 
+          {/* Teacher Name */}
           <View style={styles.userContainer}>
             <Text style={styles.greeting}>
               Hello, {fullName ? fullName : "User"}!
             </Text>
+            {/* Teacher Image */}
             <Image
               source={require("../../../assets/default-profile.png")}
               style={styles.profilePic}
@@ -422,39 +466,29 @@ export default function DashboardScreen({ navigation }) {
         {/* Student Name and Menu Button Container */}
         <View style={styles.studentNameAndMenuContainer}>
           {/* Student Name Button */}
-          <TouchableOpacity
-            style={styles.studentNameButton}
-            onPress={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <Image
-              source={require("../../../assets/dashboard/arrow-up.png")}
+          <TouchableOpacity onPress={toggleStudentDropdown} style={styles.studentNameButton}>
+          <Image
+              source={
+                studentDropdownOpen
+                  ? require("../../../assets/dashboard/arrow-up.png")
+                  : require("../../../assets/dashboard/arrow-down.png")
+              }
               style={styles.dropdownIcon}
             />
-            <Text style={styles.studentName}>
-              {selectedStudent ? selectedStudent.fullName : "Select Student"}
-            </Text>
+          <Text style={styles.studentName}>{studentName}</Text>
           </TouchableOpacity>
-
-          {dropdownOpen && (
-            <View style={styles.dropdownMenu}>
-              {students.length > 0 ? (
-                students.map((student) => (
-                  <TouchableOpacity
-                    key={student._id}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedStudent(student);
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>
-                      {student.fullName}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noStudentText}>No students found</Text>
-              )}
+          
+          {studentDropdownOpen && (
+            <View style={styles.studentDropdownMenu}>
+              {students.map((name, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dropdownItem}
+                  onPress={() => selectStudent(name)}
+                >
+                  <Text style={styles.dropdownItemText}>{name}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           )}
 
@@ -888,12 +922,28 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     tintColor: "#FFFFFF",
-    marginRight: 5,
+    marginRight: 10,
   },
   studentName: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "500",
+  },
+  studentDropdownMenu: {
+    position: "absolute",
+    top: 0,
+    left: "18%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: 200,
+    zIndex: 1000,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
   },
   menuContainer: {
     position: "relative",
