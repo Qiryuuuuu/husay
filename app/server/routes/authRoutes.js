@@ -15,20 +15,30 @@ const authenticateUser = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized: Token is missing or invalid." });
     }
 
-    token = token.split(" ")[1]; // Remove "Bearer " from token
-    console.log("🔹 Decoding Token:", token); // ✅ Debugging output
+    token = token.split(" ")[1]; // ✅ Extract actual token
+    console.log("🔹 Extracted Token:", token);
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password");
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("🔹 Decoded Token Data:", decoded);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      const user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        console.error("❌ User not found for token.");
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      req.user = { id: user._id, employeeNo: user.employeeNo };
+      next();
+    } catch (verifyError) {
+      console.error("❌ JWT Verification Error:", verifyError);
+      if (verifyError.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Token has expired. Please log in again." });
+      }
+      return res.status(403).json({ message: "Invalid token." });
     }
-
-    req.user = user; // Store user data in request
-    next();
   } catch (error) {
-    console.error("❌ Token Verification Failed:", error);
+    console.error("❌ General Token Verification Failed:", error);
     return res.status(403).json({ message: "Invalid token." });
   }
 };
@@ -36,12 +46,25 @@ const authenticateUser = async (req, res, next) => {
 // ✅ Fetch the Logged-in User's Data
 router.get("/user", authenticateUser, async (req, res) => {
   try {
-    res.status(200).json(req.user); // Send user data
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      id: user._id,
+      fullName: user.fullName,
+      employeeNo: user.employeeNo,
+      phoneNumber: user.phoneNumber || "", // ✅ Ensure phoneNumber is included
+      profilePic: user.profilePic || null,
+    });
   } catch (error) {
     console.error("❌ Error fetching user:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
+
+
 
 // ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
@@ -73,18 +96,29 @@ router.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // ✅ Find user by email
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials." });
 
+    // ✅ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials." });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.json({ token, userId: user._id });
+    // ✅ Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, employeeNo: user.employeeNo }, // ✅ Ensure employeeNo is included in token payload
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ Return token and user details
+    res.json({ token, userID: user._id, employeeNo: user.employeeNo });
   } catch (error) {
+    console.error("❌ Sign-in Error:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
+
 
 // Save security questions on first sign-in
 router.post("/save-security", async (req, res) => {
@@ -130,5 +164,45 @@ router.post("/validate-security", async (req, res) => {
     res.status(500).json({ message: "Server error." });
   }
 });
+
+// ✅ Get Total Number of Students Assigned to User
+router.get("/count", authenticateUser, async (req, res) => {
+  try {
+    const employeeNo = req.user.employeeNo;
+    const studentCount = await Student.countDocuments({ employeeNo });
+
+    res.json({ count: studentCount });
+  } catch (error) {
+    console.error("❌ Error fetching student count:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// 
+router.put("/update", authenticateUser, async (req, res) => {
+  try {
+    const { fullName, phoneNumber } = req.body;
+
+    console.log("🔹 Received Update Request:", req.body); // ✅ Log incoming request
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (fullName) user.fullName = fullName;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
+
+    await user.save();
+
+    res.json({ message: "User updated successfully." });
+  } catch (error) {
+    console.error("❌ Server Error:", error); // ✅ Log full server error
+    res.status(500).json({ message: "Server error.", error: error.message });
+  }
+});
+
+
+
 
 module.exports = router;

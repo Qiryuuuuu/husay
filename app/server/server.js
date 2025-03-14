@@ -19,11 +19,13 @@ mongoose
 
 // ✅ Import Routes
 const authRoutes = require("./routes/authRoutes");
-const classRoutes = require("./routes/classRoutes"); 
+const classRoutes = require("./routes/classRoutes");
+const studentRoutes = require("./routes/studentRoutes"); // ✅ Added missing studentRoutes
 
 // ✅ Use Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/class", classRoutes); 
+app.use("/api/class", classRoutes);
+app.use("/api/students", studentRoutes); // ✅ Now registered
 
 // ✅ Server Listening
 const PORT = process.env.PORT || 5000;

@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both phone number and password.");
+      Alert.alert("Error", "Please enter both Email Address and password.");
       return;
     }
   
@@ -38,28 +38,35 @@ export default function LoginScreen({ navigation }) {
         password,
       });
   
-      // Log the raw response data first
       console.log("🧐 Raw Response:", response.data);
-      
-      // Check if the employee number is nested in a data property
-      const employeeNo = response.data.data?.employeeNo || response.data.employeeNo;
-      const token = response.data.data?.token || response.data.token;
   
-      if (token) await AsyncStorage.setItem("authToken", token);
+      // ✅ Extract token and employee number properly
+      const token = response.data.token; 
+      const employeeNo = response.data.employeeNo;
+  
+      if (!token) {
+        console.error("❌ No token received. Login failed.");
+        Alert.alert("Error", "Invalid credentials or missing token.");
+        return;
+      }
+  
+      // ✅ Store token and employee number in AsyncStorage
+      await AsyncStorage.setItem("authToken", token);
       if (employeeNo) await AsyncStorage.setItem("employeeNo", employeeNo.toString());
   
-      console.log("✅ Token Stored:", token);
+      console.log("✅ Token Stored Successfully:", token);
       console.log("✅ Employee Number:", employeeNo);
   
       Alert.alert("Success", "Login successful!");
-      navigation.navigate("Home");
+      navigation.navigate("AccountSettings");
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error("❌ Login Error:", error);
       Alert.alert("Error", error.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
+  
   
   return (
     <View style={styles.container}>
