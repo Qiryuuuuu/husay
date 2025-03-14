@@ -8,6 +8,11 @@ const ClassSchema = new mongoose.Schema({
       ref: "Student", // ✅ Reference to the Student model
     },
   ],
+  subjects: [
+    {
+      name: { type: String, enum: ["Colors", "Shapes", "Numbers"], required: true },
+    },
+  ],
   createdAt: { type: Date, default: Date.now }, // 📅 Auto timestamp
 });
 
