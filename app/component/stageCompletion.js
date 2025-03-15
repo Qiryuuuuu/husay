@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   chatContainer: {
     position: "absolute",
     bottom: 0,
-    left: "35%",
+    left: "30%",
     transform: [{ translateX: -50 }],
     flexDirection: "row-reverse",
     alignItems: "flex-start",

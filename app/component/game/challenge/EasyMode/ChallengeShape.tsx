@@ -29,7 +29,7 @@ const challengeDialogues = {
   ]
 };
 
-const ShapeGame = ({ onGameComplete, navigation }) => {
+const ShapeGame = ({ onGameComplete, navigation, onStateChange  }) => {
   return (
     <BaseGame
       items={shapes}
@@ -42,6 +42,7 @@ const ShapeGame = ({ onGameComplete, navigation }) => {
         name: "Eva"
       }}
       dialogues={challengeDialogues}
+      onStateChange={onStateChange}
     />
   );
 };

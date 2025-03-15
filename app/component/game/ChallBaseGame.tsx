@@ -1,3 +1,4 @@
+//ChallBaseGame.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration, ImageBackground } from "react-native";
 import Stopwatch from "../stopWatch";
@@ -27,22 +28,23 @@ interface GameItem {
 }
 
 interface GameProps {
-  items: GameItem[];
-  onGameComplete: (time: number, score: number) => void;
-  navigation: any;
-  npcConfig: {
-    idle: any;
-    correct: any;
-    wrong: any;
-    name: string;
-  };
-  dialogues: {
-    idle: string[];
-    correct: string[];
-    wrong: string[];
-  };
-  numRounds?: number;
-}
+    items: GameItem[];
+    onGameComplete: (time: number, score: number) => void;
+    navigation: any;
+    npcConfig: {
+      idle: any;
+      correct: any;
+      wrong: any;
+      name: string;
+    };
+    dialogues: {
+      idle: string[];
+      correct: string[];
+      wrong: string[];
+    };
+    numRounds?: number;
+    onStateChange?: (state: 'question' | 'feedback') => void; // Add this prop
+  }
 
 export const BaseGame: React.FC<GameProps> = ({
   items,
@@ -50,7 +52,8 @@ export const BaseGame: React.FC<GameProps> = ({
   navigation,
   npcConfig,
   dialogues,
-  numRounds = 5
+  numRounds = 5,
+  onStateChange 
 }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [rounds, setRounds] = useState<GameItem[]>([]);
@@ -174,6 +177,8 @@ export const BaseGame: React.FC<GameProps> = ({
       setCurrentBackground(correctBg); // Regular correct background
     }
     
+    if (onStateChange) onStateChange('feedback');
+
     // Play correct sound
     setCurrentSound(correctSound);
     setPlaySound(true);
@@ -201,6 +206,8 @@ export const BaseGame: React.FC<GameProps> = ({
     // Set incorrect background
     setCurrentBackground(incorrectBg);
     
+    if (onStateChange) onStateChange('feedback');
+
     // Play wrong sound
     setCurrentSound(wrongSound);
     setPlaySound(true);
@@ -210,6 +217,7 @@ export const BaseGame: React.FC<GameProps> = ({
     if (isCorrect) {
       if (currentRound < numRounds - 1) {
         setCurrentRound(currentRound + 1);
+        if (onStateChange) onStateChange('question');
       } else {
         setIsGameRunning(false);
         setTimeout(() => {
@@ -227,8 +235,13 @@ export const BaseGame: React.FC<GameProps> = ({
       setCurrentBackground(defaultBg);
       setShowFeedback(false);
       setShowNextButton(false);
+      if (onStateChange) onStateChange('question');
     }
   };
+
+  useEffect(() => {
+    if (onStateChange) onStateChange('question');
+  }, []);
   
   const triggerShake = () => {
     Animated.sequence([
@@ -264,7 +277,7 @@ export const BaseGame: React.FC<GameProps> = ({
   }
 
   return (
-    <ImageBackground source={currentBackground} style={styles.backgroundImage}>
+    <ImageBackground source={currentBackground} style={styles.backgroundImage}> 
       <View style={styles.container}>
         {/* Include AudioPlayer component */}
         {playSound && currentSound && (
@@ -274,7 +287,7 @@ export const BaseGame: React.FC<GameProps> = ({
             autoPlay={true}
           />
         )}
-
+  
         <TouchableOpacity 
           style={styles.pauseContainer} 
           onPress={() => {
@@ -283,7 +296,7 @@ export const BaseGame: React.FC<GameProps> = ({
           }}>
           <Image source={pauseBtn} style={styles.pause} />
         </TouchableOpacity>
-
+  
         <View style={styles.contentContainer}>
           <View style={styles.validationContainer}>
             {isCorrect !== null && (
@@ -298,16 +311,16 @@ export const BaseGame: React.FC<GameProps> = ({
             }} 
           />                
           <Text style={styles.roundText}>Round {currentRound + 1} of {numRounds}</Text>
-
+  
           {rounds.length > 0 && !showFeedback && (
-            <>
+            <View>
               <View style={styles.itemContainer}>
                 <Animated.Image 
                   source={rounds[currentRound].image} 
                   style={[styles.itemImage, { transform: [{ translateX: shakeAnim }] }]} 
                 />
               </View>
-
+  
               <View style={styles.buttonContainer}>
                 {options.map((option, index) => (
                   <TouchableOpacity
@@ -323,7 +336,7 @@ export const BaseGame: React.FC<GameProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
-            </>
+            </View>
           )}
           
           {showNextButton && (
@@ -335,19 +348,19 @@ export const BaseGame: React.FC<GameProps> = ({
             </TouchableOpacity>
           )}
         </View>
-
+  
         <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
           <Animated.Image 
             source={npcImage} 
             style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]} 
           />
-
+  
           <View style={styles.dialogueContainer}>
             <Text style={styles.npcName}>{npcConfig.name}</Text>
             <Text style={styles.npcDialogue}>{feedbackText}</Text>
           </View>
         </Animated.View>
-
+  
         <SettingsModal 
           visible={isPaused} 
           onClose={() => {
@@ -376,7 +389,7 @@ const styles = StyleSheet.create({
     backgroundImage: {
       flex: 1,
       width: '100%',
-      height: '100%'
+      height: '100%',
     },
     pauseContainer: {
       zIndex: 100,
