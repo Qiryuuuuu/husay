@@ -1,29 +1,153 @@
-import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ScrollView,
   useWindowDimensions,
   Modal,
-  TextInput
+  TextInput,
+  Alert,
 } from "react-native";
+import { PieChart } from 'react-native-svg-charts';
+import { Text as SVGText } from 'react-native-svg';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import moment from 'moment';
 
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [studentName, setStudentName] = useState("Nestor Navarro");
-  const [fullName, setFullName] = useState("Harold");
+  const [studentName, setStudentName] = useState("Harry Potter"); //Students
+  const [students, setStudents] = useState([
+    "Harry Potter",
+    "Hermione Granger",
+    "Ron Weasley",
+    "Draco Malfoy",
+  ]); // List of students
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const [fullName, setFullName] = useState("Harold Puno"); //Teacher Name
   const [menuOpen, setMenuOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editName, setEditName] = useState("Nestor Navarro");
+  const [editName, setEditName] = useState("Harry Potter");
   const [editAge, setEditAge] = useState("3");
   const [editGender, setEditGender] = useState("Male");
   const [timeRange, setTimeRange] = useState("Today");
+  
+
+  const [currentQuarter, setCurrentQuarter] = useState(1);
+  const [currentYear, setCurrentYear] = useState(moment().year());
+
+  //Logout
+  const handleLogout = async () => {
+    try {
+      // Remove authentication token from storage
+      await AsyncStorage.removeItem("authToken");
+  
+      // Show alert confirmation and navigate to login
+      Alert.alert("Logged Out", "You have been logged out.", [
+        { text: "OK", onPress: () => navigation.replace("Login") }
+      ]);
+  
+      console.log("✅ User successfully logged out.");
+    } catch (error) {
+      console.error("❌ Error logging out:", error);
+    }
+  };
+
+  // Sample data generator for demonstration
+  const generateAttendanceData = (year) => {
+    const data = {};
+    for (let month = 0; month < 12; month++) {
+      const daysInMonth = moment(`${year}-${month + 1}`, 'YYYY-MM').daysInMonth();
+      data[month] = Array(daysInMonth).fill().map(() => (Math.random() > 0.2 ? 'present' : 'absent'));
+    }
+    return data;
+  };
+
+  const attendanceData = generateAttendanceData(currentYear);
+
+  // Quarter handling logic
+  const quarters = {
+    1: [0, 1, 2],    // Jan-Mar
+    2: [3, 4, 5],    // Apr-Jun
+    3: [6, 7, 8],    // Jul-Sep
+    4: [9, 10, 11],  // Oct-Dec
+  };
+
+  const handleNextQuarter = () => {
+    if (currentQuarter === 4) {
+      setCurrentQuarter(1);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentQuarter(currentQuarter + 1);
+    }
+  };
+
+  const handlePrevQuarter = () => {
+    if (currentQuarter === 1) {
+      setCurrentQuarter(4);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentQuarter(currentQuarter - 1);
+    }
+  };
+
+  // Render Calendar Day
+  const renderDay = (day, status, month, year) => {
+    const today = moment();
+    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
+    const isToday = currentDay.isSame(today, 'day');
+    const isFuture = currentDay.isAfter(today, 'day');
+    const weekday = currentDay.day(); // 0 (Sunday) - 6 (Saturday)
+  
+    let backgroundColor;
+  
+    if (isFuture || weekday === 0 || weekday === 6) {
+      backgroundColor = '#D3D3D3'; // Light gray for weekends and future days
+    } else {
+      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
+    }
+  
+    return (
+      <View
+        key={`${year}-${month}-${day}`}
+        style={[
+          styles.dayItem,
+          { backgroundColor },
+          isToday && { borderWidth: 2, borderColor: '#007AFF' },
+        ]}
+      >
+        <Text style={styles.dayText}>{day}</Text>
+      </View>
+    );
+  };
+  
+  
+  //Pie Chart
+  const LabelsPie = ({ slices }) => {
+    return slices.map((slice, index) => {
+      const { pieCentroid, data } = slice;
+      return (
+        <SVGText
+          key={index}
+          x={pieCentroid[0]}
+          y={pieCentroid[1]}
+          fill="black"
+          textAnchor="middle"
+          alignmentBaseline="middle"
+          fontSize={15}
+          strokeWidth={0.2}
+        >
+          {data.label}
+        </SVGText>
+      );
+    });
+  };
   
   // Toggle menu function
   const toggleMenu = () => {
@@ -34,17 +158,17 @@ export default function DashboardScreen({ navigation }) {
       setDifficultyOpen(false);
     }
   };
-  
+
   // Toggle mode dropdown function
   const toggleMode = () => {
     // Close difficulty dropdown if it's open
     if (difficultyOpen) {
       setDifficultyOpen(false);
     }
-    
+
     // Toggle mode dropdown
     setModeOpen(!modeOpen);
-    
+
     // Close menu if opening mode dropdown
     if (!modeOpen) {
       setMenuOpen(false);
@@ -57,14 +181,30 @@ export default function DashboardScreen({ navigation }) {
     if (modeOpen) {
       setModeOpen(false);
     }
-    
+
     // Toggle difficulty dropdown
     setDifficultyOpen(!difficultyOpen);
-    
+
     // Close menu if opening difficulty dropdown
     if (!difficultyOpen) {
       setMenuOpen(false);
     }
+  };
+
+  // Toggle Student Dropdown
+  const toggleStudentDropdown = () => {
+    setStudentDropdownOpen(!studentDropdownOpen);
+    if (!studentDropdownOpen) {
+      setModeOpen(false);
+      setDifficultyOpen(false);
+      setMenuOpen(false);
+    }
+  };
+
+  // Select Student from Dropdown
+  const selectStudent = (name) => {
+    setStudentName(name);
+    setStudentDropdownOpen(false);
   };
 
   // Handle edit button press
@@ -101,52 +241,31 @@ export default function DashboardScreen({ navigation }) {
     setShowDeleteModal(false);
   };
   
-  // Sample data for attendance grid
-  const attendanceData = [
-    // Row 1
-    ['present', 'present', 'present', 'present', 'absent', 'absent', 'present', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-    // Row 2
-    ['present', 'present', 'present', 'present', 'present', 'present', 'absent', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-    // Row 3
-    ['present', 'present', 'present', 'present', 'absent', 'present', 'present', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-    // Row 4
-    ['present', 'present', 'present', 'present', 'present', 'absent', 'absent', 'present', 'present', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none'],
-  ];
+  
 
   // Sample data for time chart
   const timeData = [
-    { time: '9 AM', duration: 25 },
-    { time: '10 AM', duration: 40 },
-    { time: '11 AM', duration: 15 },
-    { time: '12 PM', duration: 30 },
-    { time: '1 PM', duration: 45 },
-    { time: '2 PM', duration: 20 },
-    { time: '3 PM', duration: 35 },
+    { time: "9 AM", duration: 25 },
+    { time: "10 AM", duration: 40 },
+    { time: "11 AM", duration: 15 },
+    { time: "12 PM", duration: 30 },
+    { time: "1 PM", duration: 45 },
+    { time: "2 PM", duration: 20 },
+    { time: "3 PM", duration: 35 },
   ];
 
   // Render attendance grid item
-  const renderAttendanceItem = (status) => {
+  const renderAttendanceItem = (gamesPlayed) => {
     let backgroundColor;
-    switch(status) {
-      case 'present':
-        backgroundColor = '#4CD964';
-        break;
-      case 'absent':
-        backgroundColor = '#FF3B30';
-        break;
-      default:
-        backgroundColor = '#E5E5EA';
+    if (gamesPlayed > 0) {
+      backgroundColor = "#4CD964"; // ✅ Green = Present
+    } else {
+      backgroundColor = "#FF3B30"; // ❌ Red = Absent
     }
-    
-    return (
-      <View 
-        style={[
-          styles.attendanceItem, 
-          { backgroundColor }
-        ]} 
-      />
-    );
+  
+    return <View style={[styles.attendanceItem, { backgroundColor }]} />;
   };
+  
 
   // Toggle time range dropdown
   const toggleTimeRange = () => {
@@ -166,8 +285,8 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.modalContainer}>
             {/* Profile Image */}
             <TouchableOpacity style={styles.profileImageContainer}>
-              <Image 
-                source={require('../../../assets/default-student.png')}
+              <Image
+                source={require("../../../assets/default-student.png")}
                 style={styles.modalProfileImage}
               />
               <Text style={styles.uploadText}>Upload picture</Text>
@@ -175,8 +294,8 @@ export default function DashboardScreen({ navigation }) {
 
             {/* Student Name Input */}
             <View style={styles.inputContainer}>
-              <Image 
-                source={require('../../../assets/dashboard/user-icon.png')}
+              <Image
+                source={require("../../../assets/dashboard/user-icon.png")}
                 style={styles.inputIcon}
               />
               <TextInput
@@ -190,8 +309,8 @@ export default function DashboardScreen({ navigation }) {
             {/* Age Input */}
             <View style={styles.inputRow}>
               <View style={[styles.inputContainer, styles.halfInput]}>
-                <Image 
-                  source={require('../../../assets/dashboard/age-icon.png')}
+                <Image
+                  source={require("../../../assets/dashboard/age-icon.png")}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -205,9 +324,9 @@ export default function DashboardScreen({ navigation }) {
 
               {/* Gender Input */}
               <View style={[styles.inputContainer, styles.halfInput]}>
-                <Image 
-                  source={require('../../../assets/dashboard/gender-icon.png')}
-                  style={styles.inputIcon} 
+                <Image
+                  source={require("../../../assets/dashboard/gender-icon.png")}
+                  style={styles.inputIcon}
                 />
                 <TextInput
                   style={styles.textInput}
@@ -220,22 +339,22 @@ export default function DashboardScreen({ navigation }) {
 
             {/* Buttons */}
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.editUpdateButton}
                 onPress={handleUpdate}
               >
-                <Image 
-                  source={require('../../../assets/dashboard/Update.png')}
+                <Image
+                  source={require("../../../assets/dashboard/Update.png")}
                   style={styles.editButtonImage}
                 />
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.editCancelButton}
                 onPress={handleCancel}
               >
-                <Image 
-                  source={require('../../../assets/dashboard/Cancel.png')}
+                <Image
+                  source={require("../../../assets/dashboard/Cancel.png")}
                   style={styles.editButtonImage}
                 />
               </TouchableOpacity>
@@ -254,25 +373,27 @@ export default function DashboardScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.deleteModalContainer}>
             <Text style={styles.warningTitle}>Warning!</Text>
-            <Text style={styles.warningText}>Are you sure you want to delete the student?</Text>
-            
+            <Text style={styles.warningText}>
+              Are you sure you want to delete the student?
+            </Text>
+
             <View style={styles.deleteButtonRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={handleDelete}
               >
-                <Image 
-                  source={require('../../../assets/dashboard/Delete.png')}
+                <Image
+                  source={require("../../../assets/dashboard/Delete.png")}
                   style={styles.deleteButtonImage}
                 />
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.deleteCancelButton}
-                onPress={handleDeleteCancel}  
+                onPress={handleDeleteCancel}
               >
-               <Image 
-                  source={require('../../../assets/dashboard/Cancel.png')}
+                <Image
+                  source={require("../../../assets/dashboard/Cancel.png")}
                   style={styles.deleteButtonImage}
                 />
               </TouchableOpacity>
@@ -284,30 +405,36 @@ export default function DashboardScreen({ navigation }) {
       {/* Left Sidebar */}
       <View style={styles.sidebar}>
         <TouchableOpacity onPress={() => navigation.navigate("StudentProfile")}>
-          <Image style={styles.backButton}
-            source={require('../../../assets/dashboard/Back.png')} 
+          <Image
+            style={styles.backButton}
+            source={require("../../../assets/dashboard/Back.png")}
           />
         </TouchableOpacity>
 
         {/* Sidebar Menu Options */}
         <View style={styles.sidebarMenu}>
           <TouchableOpacity>
-            <Image style={styles.studentButton}
-              source={require('../../../assets/dashboard/Dashboard.png')} 
+            <Image
+              style={styles.studentButton}
+              source={require("../../../assets/dashboard/Dashboard.png")}
             />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate("AccountSettings")}>
-            <Image style={styles.accountButton} 
-              source={require('../../../assets/dashboard/account-setting.png')} 
+          <TouchableOpacity
+            onPress={() => navigation.navigate("AccountSettings")}
+          >
+            <Image
+              style={styles.accountButton}
+              source={require("../../../assets/dashboard/account-setting.png")}
             />
           </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity>
-          <Image style={styles.logoutButton}
-            source={require('../../../assets/dashboard/Logout.png')} 
+        <TouchableOpacity  onPress={handleLogout}>
+          <Image
+            style={styles.logoutButton}
+            source={require("../../../assets/dashboard/Logout.png")}
           />
         </TouchableOpacity>
       </View>
@@ -317,17 +444,21 @@ export default function DashboardScreen({ navigation }) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Image 
-              source={require('../../../assets/dashboard/Husay.png')} 
-              style={styles.logo} 
+            <Image
+              source={require("../../../assets/dashboard/Husay.png")}
+              style={styles.logo}
             />
           </View>
 
+          {/* Teacher Name */}
           <View style={styles.userContainer}>
-            <Text style={styles.greeting}>Hello, {fullName}!</Text>
-            <Image 
-              source={require('../../../assets/default-profile.png')} 
-              style={styles.profilePic} 
+            <Text style={styles.greeting}>
+              Hello, {fullName ? fullName : "User"}!
+            </Text>
+            {/* Teacher Image */}
+            <Image
+              source={require("../../../assets/default-profile.png")}
+              style={styles.profilePic}
             />
           </View>
         </View>
@@ -335,35 +466,55 @@ export default function DashboardScreen({ navigation }) {
         {/* Student Name and Menu Button Container */}
         <View style={styles.studentNameAndMenuContainer}>
           {/* Student Name Button */}
-          <TouchableOpacity style={styles.studentNameButton}>
-            <Image 
-              source={require('../../../assets/dashboard/arrow-up.png')} 
-              style={styles.dropdownIcon} 
+          <TouchableOpacity onPress={toggleStudentDropdown} style={styles.studentNameButton}>
+          <Image
+              source={
+                studentDropdownOpen
+                  ? require("../../../assets/dashboard/arrow-up.png")
+                  : require("../../../assets/dashboard/arrow-down.png")
+              }
+              style={styles.dropdownIcon}
             />
-            <Text style={styles.studentName}>{studentName}</Text>
+          <Text style={styles.studentName}>{studentName}</Text>
           </TouchableOpacity>
+          
+          {studentDropdownOpen && (
+            <View style={styles.studentDropdownMenu}>
+              {students.map((name, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dropdownItem}
+                  onPress={() => selectStudent(name)}
+                >
+                  <Text style={styles.dropdownItemText}>{name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           {/* Menu Button with Dropdown */}
           <View style={styles.menuContainer}>
-            <TouchableOpacity onPress={toggleMenu} >
-              <Image 
-                source={menuOpen 
-                  ? require('../../../assets/dashboard/Close.png')
-                  : require('../../../assets/dashboard/menu.png')}
+            <TouchableOpacity onPress={toggleMenu}>
+              <Image
+                source={
+                  menuOpen
+                    ? require("../../../assets/dashboard/Close.png")
+                    : require("../../../assets/dashboard/menu.png")
+                }
                 style={styles.menuIcon}
               />
             </TouchableOpacity>
-            
+
             {/* Dropdown Menu */}
             {menuOpen && (
               <View style={styles.dropdownMenu}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.dropdownItem}
                   onPress={handleEditPress}
                 >
                   <Text style={styles.dropdownItemText}>Edit</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.dropdownItem, styles.lastDropdownItem]}
                   onPress={handleDeletePress}
                 >
@@ -374,67 +525,138 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Attendance Section */}
+        {/* Attendance Container */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Attendance</Text>
-          
-          {/* Attendance Grid */}
-          <View style={styles.attendanceGrid}>
-            {attendanceData.map((row, rowIndex) => (
-              <View key={`row-${rowIndex}`} style={styles.attendanceRow}>
-                {row.map((status, colIndex) => (
-                  <View key={`cell-${rowIndex}-${colIndex}`}>
-                    {renderAttendanceItem(status)}
-                  </View>
-                ))}
-              </View>
-            ))}
+          <View style={styles.attendanceHeader}>
+            <Text style={styles.sectionTitle}>Attendance</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity style={styles.paginationButton} onPress={handlePrevQuarter}>
+                <Text style={styles.paginationButtonText}>◀︎</Text>
+              </TouchableOpacity>
+              <Text style={styles.quarterLabel}>Q{currentQuarter} {currentYear}</Text>
+              <TouchableOpacity style={styles.paginationButton} onPress={handleNextQuarter}>
+                <Text style={styles.paginationButtonText}>▶︎</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Legend */}
+          <View style={styles.calendarContainer}>
+            {quarters[currentQuarter].map((month) => {
+              const firstDayOfMonth = moment(`${currentYear}-${month + 1}-01`, 'YYYY-MM-DD').day();
+              const daysInMonth = moment(`${currentYear}-${month + 1}`, 'YYYY-MM').daysInMonth();
+
+              // Generate empty slots before the first day of the month
+              const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
+                key: `empty-${month}-${i}`,  // Unique key for each empty slot before the month starts
+                day: null
+              }));
+
+              // Generate actual days with attendance status
+              const daysArray = Array.from({ length: daysInMonth }, (_, i) => ({
+                key: `day-${month}-${i + 1}`, // Unique key for each day
+                day: i + 1,
+                status: attendanceData[month][i]
+              }));
+
+              // Combine empty slots and days into one array
+              const totalSlots = [...blanks, ...daysArray];
+
+              // Ensure every row has exactly 7 elements
+              const rows = [];
+              let currentWeek = [];
+
+              totalSlots.forEach((item, index) => {
+                currentWeek.push(item);
+                if ((index + 1) % 7 === 0) {
+                  rows.push(currentWeek);
+                  currentWeek = [];
+                }
+              });
+
+              // Push the remaining days in the last row
+              if (currentWeek.length > 0) {
+                const missingDays = 7 - currentWeek.length;
+                for (let i = 0; i < missingDays; i++) {
+                  currentWeek.push({ key: `empty-${month}-extra-${i}`, day: null }); // Ensure unique keys for extra empty slots
+                }
+                rows.push(currentWeek);
+              }
+
+              return (
+                <View key={`month-${month}`} style={styles.monthContainer}>
+                  <Text style={styles.monthTitle}>{moment(month + 1, 'M').format('MMMM')}</Text>
+
+                  {/* Weekday Labels */}
+                  <View style={styles.weekdaysContainer}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <Text key={`label-${month}-${day}`} style={styles.weekdayLabel}>{day}</Text>
+                    ))}
+                  </View>
+
+                  {/* Days Grid (Fixed to always display 7 per row) */}
+                  {rows.map((row, rowIndex) => (
+                    <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
+                      {row.map(({ key, day, status }) => {
+                        return day ? renderDay(day, status, month, currentYear) : (
+                          <View key={key} style={[styles.dayItem, { backgroundColor: 'transparent' }]} />
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Legend at Bottom-left */}
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
               <Text style={styles.legendText}>Present</Text>
             </View>
-            <View style={styles.legendItem}>
+
+            <View style={[styles.legendItem, { marginLeft: 20 }]}>
               <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
               <Text style={styles.legendText}>Absent</Text>
             </View>
           </View>
         </View>
 
+
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
           {/* Mode Button with Dropdown */}
           <View style={styles.modeContainer}>
             <TouchableOpacity onPress={toggleMode} style={styles.modeButton}>
-              <Image 
-                source={require('../../../assets/dashboard/Mode.png')} 
-              />
+              <Image source={require("../../../assets/dashboard/Mode.png")} />
             </TouchableOpacity>
-            
+
             {/* Mode Dropdown Menu */}
             {modeOpen && (
               <View style={styles.modeDropdownMenu}>
                 <TouchableOpacity style={styles.modeDropdownItem}>
                   <Text style={styles.modeDropdownItemText}>Practice</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modeDropdownItem, styles.lastModeDropdownItem]}>
+                <TouchableOpacity
+                  style={[styles.modeDropdownItem, styles.lastModeDropdownItem]}
+                >
                   <Text style={styles.modeDropdownItemText}>Challenge</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
 
-          <View style={styles.difficultyContainer}> 
-              <TouchableOpacity onPress={toggleDifficulty} style={styles.difficultyButton}>
-                <Image 
-                  source={require('../../../assets/dashboard/Difficulty.png')} 
-                />
-              </TouchableOpacity>
+          <View style={styles.difficultyContainer}>
+            <TouchableOpacity
+              onPress={toggleDifficulty}
+              style={styles.difficultyButton}
+            >
+              <Image
+                source={require("../../../assets/dashboard/Difficulty.png")}
+              />
+            </TouchableOpacity>
 
-              {/* Difficulty Dropdown Menu */}
+            {/* Difficulty Dropdown Menu */}
             {difficultyOpen && (
               <View style={styles.difficultyDropdownMenu}>
                 <TouchableOpacity style={styles.difficultyDropdownItem}>
@@ -443,13 +665,17 @@ export default function DashboardScreen({ navigation }) {
                 <TouchableOpacity style={styles.difficultyDropdownItem}>
                   <Text style={styles.difficultyDropdownItemText}>Medium</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.difficultyDropdownItem, styles.lastDifficultyDropdownItem]}>
+                <TouchableOpacity
+                  style={[
+                    styles.difficultyDropdownItem,
+                    styles.lastDifficultyDropdownItem,
+                  ]}
+                >
                   <Text style={styles.difficultyDropdownItemText}>Hard</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>  
-        
         </View>
 
         {/* Charts Section */}
@@ -458,24 +684,19 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Shape Familiarity</Text>
             <View style={styles.shapeChart}>
-              {/* This would be replaced with an actual chart component */}
               <View style={styles.chartBarsContainer}>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 100, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Square</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 120, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Circle</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 80, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Triangle</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 110, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Rectangle</Text>
-                </View>
+                {[
+                  { label: "Square", percentage: 80, height: 100 },
+                  { label: "Circle", percentage: 90, height: 120 },
+                  { label: "Triangle", percentage: 60, height: 80 },
+                  { label: "Rectangle", percentage: 85, height: 110 },
+                ].map((item, index) => (
+                  <View key={`shape-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{item.label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -484,36 +705,22 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Color Familiarity</Text>
             <View style={styles.colorChart}>
-              {/* This would be replaced with an actual chart component */}
               <View style={styles.chartBarsContainer}>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 90, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#FF3B30' }]} />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 70, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#FFCC00' }]} />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 100, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#007AFF' }]} />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 120, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#4CD964' }]} />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 50, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#000000' }]} />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 80, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#8E8E93' }]} />
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 95, backgroundColor: '#4DD0E1' }]} />
-                  <View style={[styles.colorLabel, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#8E8E93' }]} />
-                </View>
+                {[
+                  { label: "Red", percentage: 75, height: 90 },
+                  { label: "Yellow", percentage: 58, height: 70 },
+                  { label: "Blue", percentage: 83, height: 100 },
+                  { label: "Green", percentage: 100, height: 120 },
+                  { label: "Black", percentage: 42, height: 50 },
+                  { label: "Gray", percentage: 67, height: 80 },
+                  { label: "White", percentage: 79, height: 95 },
+                ].map((item, index) => (
+                  <View key={`color-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{item.label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -523,129 +730,94 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Number Familiarity</Text>
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 100, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>One</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 110, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Two</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 90, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Three</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 80, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Four</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 95, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Five</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 70, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Six</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 85, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Seven</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 95, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Eight</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 75, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Nine</Text>
-                </View>
-                <View style={styles.chartBarGroup}>
-                  <View style={[styles.chartBar, { height: 65, backgroundColor: '#4DD0E1' }]} />
-                  <Text style={styles.chartLabel}>Ten</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Accuracy Chart */}
-          <View style={[styles.chartCard, styles.fullWidthChart]}>
-            <View style={styles.accuracyHeader}>
-              <Text style={styles.chartTitle}>Accuracy</Text>
-              <TouchableOpacity style={styles.todayButton} onPress={toggleTimeRange}>
-                <Image 
-                  source={require('../../../assets/menu.png')} 
-                  style={styles.upArrowIcon} 
-                />
-                <Text style={styles.todayText}>{timeRange}</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.accuracyChart}>
-              {/* This would be replaced with an actual chart component */}
-              <View style={styles.areaChart}>
-                {/* Placeholder for area chart */}
-                <View style={styles.areaChartPlaceholder} />
-              </View>
-              
-              {/* Legend */}
-              <View style={styles.accuracyLegend}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
-                  <Text style={styles.legendText}>Correct</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
-                  <Text style={styles.legendText}>Mistakes</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Time Chart */}
-          <View style={[styles.chartCard, styles.fullWidthChart]}>
-            <View style={styles.timeHeader}>
-              <Text style={styles.chartTitle}>Time Spent Learning</Text>
-              <TouchableOpacity style={styles.todayButton} onPress={toggleTimeRange}>
-                <Image 
-                  source={require('../../../assets/menu.png')} 
-                  style={styles.upArrowIcon} 
-                />
-                <Text style={styles.todayText}>{timeRange}</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.timeChart}>
-              <View style={styles.chartBarsContainer}>
-                {timeData.map((item, index) => (
-                  <View key={`time-${index}`} style={styles.chartBarGroup}>
-                    <View 
-                      style={[
-                        styles.timeBar, 
-                        { 
-                          height: item.duration * 2, 
-                          backgroundColor: '#7986CB' 
-                        }
-                      ]} 
-                    />
-                    <Text style={styles.chartLabel}>{item.time}</Text>
+                {[
+                  { label: "One (1)", percentage: 80, height: 100 },
+                  { label: "Two (2)", percentage: 88, height: 110 },
+                  { label: "Three (3)", percentage: 72, height: 90 },
+                  { label: "Four (4)", percentage: 64, height: 80 },
+                  { label: "Five (5)", percentage: 76, height: 95 },
+                  { label: "Six (6)", percentage: 56, height: 70 },
+                  { label: "Seven (7)", percentage: 68, height: 85 },
+                  { label: "Eight (8)", percentage: 76, height: 95 },
+                  { label: "Nine (9)", percentage: 60, height: 75 },
+                  { label: "Ten (10)", percentage: 52, height: 65 },
+                ].map((item, index) => (
+                  <View key={`number-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
+                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{item.label}</Text>
                   </View>
                 ))}
               </View>
-              
-              {/* Time Legend */}
-              <View style={styles.timeLegend}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, { backgroundColor: '#7986CB' }]} />
-                  <Text style={styles.legendText}>Minutes Spent</Text>
-                </View>
-              </View>
             </View>
           </View>
+
+          {/* Accuracy and Time Spent Pie Chart */}
+          <View style={styles.accuracyTimeContainer}>
+              {/* Accuracy Pie Chart */}
+              <View style={styles.pieChartContainer}>
+                <Text style={styles.chartTitle}>Accuracy</Text>
+                <PieChart
+                  style={{ height: 250 }}
+                  valueAccessor={({ item }) => item.value}
+                  data={[
+                    { key: 1, value: 8, label: '8', svg: { fill: '#4CD964' } },
+                    { key: 2, value: 2, label: '2', svg: { fill: '#FF3B30' } },
+                  ]}
+                  spacing={0}
+                  outerRadius={'100%'}
+                >
+                  <LabelsPie />
+                </PieChart>
+
+                <View style={styles.legend}>
+                  <View style={[styles.legendItem, {marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
+                    <Text style={styles.legendText}>Correct</Text>
+                  </View>
+                  <View style={[styles.legendItem, { marginLeft: 15, marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+                    <Text style={styles.legendText}>Incorrect</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Time Spent Pie Chart */}
+              <View style={styles.pieChartContainer}>
+                <Text style={styles.chartTitle}>Time Spent (Today)</Text>
+                <PieChart
+                  style={{ height: 250 }}
+                  valueAccessor={({ item }) => item.value}
+                  data={[
+                    { key: 1, value: 45, label: '45 mins', svg: { fill: '#4CD964' } }, 
+                    { key: 2, value: 15, label: '15 mins', svg: { fill: '#FF3B30' } },
+                  ]}
+                  spacing={0}
+                  outerRadius={'100%'}
+                >
+                  <LabelsPie />
+                </PieChart>
+
+                <View style={styles.legend}>
+                  <View style={[styles.legendItem, {marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
+                    <Text style={styles.legendText}>Spent</Text>
+                  </View>
+                  <View style={[styles.legendItem, { marginLeft: 15, marginTop: 15}]}>
+                    <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+                    <Text style={styles.legendText}>Left</Text>
+                  </View>
+                </View>
+              </View>
+          </View>
+
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.copyright}>© 2024 Husay. All Rights Reserved.</Text>
+          <Text style={styles.copyright}>
+            © 2024 Husay. All Rights Reserved.
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -655,42 +827,42 @@ export default function DashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
+    flexDirection: "row",
+    backgroundColor: "#F2F2F7",
   },
   sidebar: {
     width: 300,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingVertical: 20,
     paddingHorizontal: 15,
     borderRightWidth: 1,
-    borderRightColor: '#E5E5EA',
-    justifyContent: 'space-between',
-    height: '100%',
+    borderRightColor: "#E5E5EA",
+    justifyContent: "space-between",
+    height: "100%",
   },
   sidebarMenu: {
     flex: 1,
     marginTop: 45,
-    marginLeft: 15,  
+    marginLeft: 15,
   },
   backButton: {
     marginTop: 45,
     marginLeft: 15,
   },
-  studentButton:{
+  studentButton: {
     width: 250,
-    height: 65, 
-    resizeMode: "contain", 
+    height: 65,
+    resizeMode: "contain",
   },
-  accountButton:{
+  accountButton: {
     width: 250,
-    height: 65,  
-    resizeMode: "contain", 
+    height: 65,
+    resizeMode: "contain",
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 'auto',
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: "auto",
     marginBottom: 25,
     marginLeft: 15,
   },
@@ -699,71 +871,94 @@ const styles = StyleSheet.create({
     padding: 45,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 35,
   },
   userContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 35,
   },
   greeting: {
     fontSize: 20,
-    fontWeight: '500',
+    fontWeight: "500",
     marginRight: 10,
   },
   profilePic: {
     width: 50,
     height: 50,
     borderRadius: 30,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   studentNameAndMenuContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   studentNameButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#5A8EF4',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 15,
+    borderWidth: 4,
+    borderColor: '#FFFFFF', 
+    shadowColor: '#000',  
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 4, 
   },
   dropdownIcon: {
     width: 16,
     height: 16,
-    tintColor: '#FFFFFF',
-    marginRight: 5,
+    tintColor: "#FFFFFF",
+    marginRight: 10,
   },
   studentName: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
+  },
+  studentDropdownMenu: {
+    position: "absolute",
+    top: 0,
+    left: "18%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: 200,
+    zIndex: 1000,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
   },
   menuContainer: {
-    position: 'relative',
+    position: "relative",
   },
   menuIcon: {
     width: 45,
     height: 45,
   },
   dropdownMenu: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: 50,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -771,35 +966,34 @@ const styles = StyleSheet.create({
     width: 150,
     zIndex: 1000,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
   },
   dropdownItem: {
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
   },
   lastDropdownItem: {
     borderBottomWidth: 0,
   },
   dropdownItemText: {
     fontSize: 16,
-    color: '#1E1E1E',
-    textAlign: 'center',
+    color: "#1E1E1E",
+    textAlign: "center",
   },
   modeContainer: {
     position: 'relative',
-    marginRight: 15,
   },
   modeButton: {
     padding: 5,
   },
   modeDropdownMenu: {
-    position: 'absolute',
-    left: '100%',
-    backgroundColor: '#FFFFFF',
+    position: "absolute",
+    left: "100%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -807,35 +1001,34 @@ const styles = StyleSheet.create({
     width: 150,
     zIndex: 1000,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
   },
   modeDropdownItem: {
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
   },
   lastModeDropdownItem: {
     borderBottomWidth: 0,
   },
   modeDropdownItemText: {
     fontSize: 16,
-    color: '#1E1E1E',
-    textAlign: 'center',
+    color: "#1E1E1E",
+    textAlign: "center",
   },
   difficultyContainer: {
     position: 'relative',
-    marginRight: 15,
   },
   difficultyButton: {
     padding: 5,
   },
   difficultyDropdownMenu: {
-    position: 'absolute',
-    left: '100%',
-    backgroundColor: '#FFFFFF',
+    position: "absolute",
+    left: "100%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -843,107 +1036,164 @@ const styles = StyleSheet.create({
     width: 150,
     zIndex: 1000,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
   },
   difficultyDropdownItem: {
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
   },
   lastDifficultyDropdownItem: {
     borderBottomWidth: 0,
   },
   difficultyDropdownItemText: {
     fontSize: 16,
-    color: '#1E1E1E',
-    textAlign: 'center',
+    color: "#1E1E1E",
+    textAlign: "center",
   },
   sectionContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 15,
   },
-  attendanceGrid: {
-    marginBottom: 10,
-  },
-  attendanceRow: {
+
+  //Attendance Container Style
+  attendanceHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+
+  quarterLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 10,
+  },
+  
+  paginationButton: {
+    paddingHorizontal: 10,
+  },
+  
+  paginationButtonText: {
+    fontSize: 18,
+    color: '#000',
+  },
+
+  calendarContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  
+  monthContainer: {
+    flex: 1,
+    marginHorizontal: 10,
+  },
+
+  monthTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
     marginBottom: 10,
   },
-  attendanceItem: {
-    width: 25,
-    height: 25,
-    borderRadius: 5,
-    marginRight: 10,
+
+  weekdaysContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
+
+  weekdayLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'center',
+    flex: 1,
+  },
+
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  dayItem: {
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dayText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+
   legend: {
     flexDirection: 'row',
-    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: "center",
+    marginTop: 15,
+    alignSelf: 'center',
   },
+
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 20,
+    marginHorizontal: 10,
   },
+
   legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
+    width: 15,
+    height: 15,
+    borderRadius: 4,
     marginRight: 5,
   },
+
   legendText: {
-    fontSize: 12,
-    color: '#8E8E93',
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginRight: 15,
-  },
-  actionIcon: {
-    width: 16,
-    height: 16,
-    tintColor: '#FFFFFF',
-    marginRight: 5,
-  },
-  actionText: {
-    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '500',
+    color: '#1E1E1E',
+    textAlign: 'center',
+  },
+  // End
+
+  actionButtonsContainer: {
+    flexDirection: "row",
+    marginBottom: 20,
   },
   chartsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    
+  },
+
+  percentageLabel: {
+    fontSize: 12,
+    color: '#000',
+    marginBottom: 4,
   },
   chartCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    width: '49%',
+    width: "49%",
   },
   fullWidthChart: {
-    width: '100%',
+    width: "100%",
   },
   chartTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 15,
   },
   shapeChart: {
@@ -956,13 +1206,13 @@ const styles = StyleSheet.create({
     height: 150,
   },
   chartBarsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "flex-end",
+    height: "100%",
   },
   chartBarGroup: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   chartBar: {
     width: 30,
@@ -976,38 +1226,33 @@ const styles = StyleSheet.create({
   },
   chartLabel: {
     fontSize: 10,
-    color: '#8E8E93',
-  },
-  colorLabel: {
-    width: 20,
-    height: 8,
-    borderRadius: 2,
+    color: "#8E8E93",
   },
   accuracyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   timeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   todayButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   upArrowIcon: {
     width: 12,
     height: 12,
-    tintColor: '#8E8E93',
+    tintColor: "#8E8E93",
     marginRight: 5,
   },
   todayText: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   accuracyChart: {
     height: 200,
@@ -1020,45 +1265,57 @@ const styles = StyleSheet.create({
   },
   areaChartPlaceholder: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: "#F2F2F7",
     borderRadius: 8,
   },
   accuracyLegend: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 10,
   },
   timeLegend: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 0,
+  },
+  accuracyTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    width: '100%'
+  },
+  pieChartContainer: {
+    width: '49%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
   },
   footer: {
     marginTop: 0,
     marginBottom: 75,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   copyright: {
     fontSize: 12,
-    color: '#1E1E1E',
+    color: "#1E1E1E",
   },
-  
+
   /* Edit Modal Styles */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 35,
     paddingLeft: 100,
     paddingRight: 100,
-    width: '50%',
-    alignItems: 'center',
+    width: "50%",
+    alignItems: "center",
   },
   profileImageContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
     marginTop: 20,
   },
@@ -1066,33 +1323,33 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 12,
-    backgroundColor: '#4D7AFF',
+    backgroundColor: "#4D7AFF",
     marginBottom: 10,
   },
   uploadText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     marginTop: 5,
     marginBottom: 25,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 5,
     marginBottom: 25,
-    width: '100%',
+    width: "100%",
   },
   inputRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
   halfInput: {
-    width: '48%',
+    width: "48%",
   },
   inputIcon: {
     width: 20,
@@ -1104,39 +1361,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
     marginTop: 10,
   },
   editUpdateButton: {
-    width: '48%',
+    width: "48%",
     height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 25,
   },
   editCancelButton: {
-    width: '48%',
+    width: "48%",
     height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 25,
   },
   editButtonImage: {
-    resizeMode: 'contain',
-    width: '100%',
+    resizeMode: "contain",
+    width: "100%",
     height: 80,
   },
-  
+
   /* Delete Modal Styles */
   deleteModalContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 30,
-    width: '40%',
-    alignItems: 'center',
-    shadowColor: '#000',
+    width: "40%",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1144,36 +1401,36 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     fontSize: 35,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 15,
-    color: '#1E1E1E',
+    color: "#1E1E1E",
   },
   warningText: {
     fontSize: 20,
-    color: '#1E1E1E',
+    color: "#1E1E1E",
     marginBottom: 15,
-    textAlign: 'center',
+    textAlign: "center",
   },
   deleteButtonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '85%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "85%",
   },
   deleteButton: {
     paddingVertical: 5,
     paddingHorizontal: 30,
-    width: '45%',
-    alignItems: 'center',
+    width: "45%",
+    alignItems: "center",
   },
   deleteCancelButton: {
     paddingVertical: 5,
     paddingHorizontal: 30,
-    width: '45%',
-    alignItems: 'center',
+    width: "45%",
+    alignItems: "center",
   },
   deleteButtonImage: {
-    resizeMode: 'contain',
-    width: '150%',
+    resizeMode: "contain",
+    width: "150%",
     height: 75,
   },
 });

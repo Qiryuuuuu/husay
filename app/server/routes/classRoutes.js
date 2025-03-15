@@ -10,85 +10,68 @@ router.post("/add-student", authenticateUser, async (req, res) => {
   try {
     const { fullName, age, gender, profileImage } = req.body;
 
-    // ✅ Check if user is authenticated and has employeeNo
     if (!req.user || !req.user.employeeNo) {
-      console.error("❌ Unauthorized: Employee number is missing.");
       return res.status(403).json({ message: "Unauthorized: Employee number is missing." });
     }
 
-    const employeeNo = req.user.employeeNo; 
-    console.log("🔹 Adding student for employeeNo:", employeeNo);
+    const employeeNo = req.user.employeeNo;
 
-    // ✅ Validate required fields
     if (!fullName || !age || !gender) {
-      console.error("❌ Validation Error: Missing fields.");
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    // 🔹 Find or create class for the logged-in user
     let userClass = await Class.findOne({ employeeNo }).populate("students");
-    console.log("🔹 Found Class:", userClass);
 
-    // 🔹 If no class exists, create one for the employeeNo
     if (!userClass) {
-      console.log("🔹 No class found. Creating class for:", employeeNo);
-
       userClass = new Class({
         employeeNo,
-        students: [], // Start with an empty student array
+        students: [],
+        subjects: ["Colors", "Shapes", "Numbers"], // ✅ Add default subjects
       });
-      await userClass.save(); // ✅ Create the class if it does not exist
-      console.log("✅ Class created successfully:", userClass);
+      await userClass.save();
     }
 
-    // 🔹 Create and save the new student
     const newStudent = new Student({
       fullName,
       age,
       gender,
       profileImage,
-      employeeNo, // ✅ Link student to employeeNo
+      employeeNo,
+      subjects: {
+        Colors: { Easy: 0, Medium: 0, Hard: 0 },
+        Shapes: { Easy: 0, Medium: 0, Hard: 0 },
+        Numbers: { Easy: 0, Medium: 0, Hard: 0 },
+      },
     });
 
-    await newStudent.save(); 
-    console.log("✅ New student saved:", newStudent);
-
+    await newStudent.save();
     userClass.students.push(newStudent);
     await userClass.save();
 
-    console.log("✅ Student added to class successfully!");
     res.status(201).json({ message: "Student added successfully!", student: newStudent });
 
   } catch (error) {
-    console.error("❌ Error adding student:", error.message); 
-    console.error(error); 
     res.status(500).json({ message: "Server error.", error: error.message });
   }
 });
 
-// ✅ Get all students in a class for the logged-in teacher
+// ✅ Fetch students along with subjects and progress
 router.get("/get-students", authenticateUser, async (req, res) => {
   try {
     const employeeNo = req.user.employeeNo;
-    console.log("🔹 Fetching students for employeeNo:", employeeNo);
 
-    // 🔹 Find class and populate students
     const userClass = await Class.findOne({ employeeNo }).populate({
       path: "students",
       model: "Student",
-      select: "fullName profileImage stars"
+      select: "fullName profileImage stars subjects",
     });
 
-    console.log("🔹 User Class Found:", userClass);
-
     if (!userClass) {
-      console.error("❌ No class found for employeeNo:", employeeNo);
       return res.status(404).json({ message: "Class not found." });
     }
 
     res.status(200).json({ students: userClass.students });
   } catch (error) {
-    console.error("❌ Error fetching students:", error.message);
     res.status(500).json({ message: "Server error.", error: error.message });
   }
 });

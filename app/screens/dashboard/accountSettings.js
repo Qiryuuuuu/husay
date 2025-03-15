@@ -1,135 +1,308 @@
-import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  Image, 
-  StyleSheet, 
-  useWindowDimensions 
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  ActivityIndicator,
+  TextInput,
+  Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AccountSettingsScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [fullName, setFullName] = useState("Harold");
-  const [studentId, setStudentId] = useState("202100912");
-  const [totalStudents, setTotalStudents] = useState(15);
+  const [loading, setLoading] = useState(true);
+  const [fullName, setFullName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newName, setNewName] = useState("");
   
+
+  // ✅ Fetch User Data
+  const fetchUser = async () => {
+    try {
+      console.log("🔍 Fetching user data...");
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        setLoading(false);
+        return;
+      }
+  
+      const response = await fetch("http://10.0.2.2:5000/api/auth/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      const text = await response.text();
+      console.log("🔹 Raw API Response: ", text);
+  
+      const data = JSON.parse(text);
+      if (response.ok) {
+        console.log("✅ User Data:", data);
+        setFullName(data.fullName || "Unknown User");  // ✅ Ensure fullName is set
+        setStudentId(data.employeeNo);
+        fetchStudentCount(data.employeeNo);
+      } else {
+        console.error("❌ Server Error:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Network error fetching user:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // ✅ Fetch Student Count
+  const fetchStudentCount = async (employeeNo) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token || !employeeNo) {
+        console.error("❌ No token or employeeNo found.");
+        return;
+      }
+  
+      console.log("🔹 Fetching student count with token:", token);
+  
+      const response = await fetch(`http://10.0.2.2:5000/api/students/count`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      const text = await response.text();
+      console.log("🔹 Raw Student Count API Response:", text);
+  
+      try {
+        const data = JSON.parse(text);
+        if (response.ok) {
+          setTotalStudents(data.count || 0);
+        } else {
+          console.error("❌ Error fetching student count:", data.message);
+        }
+      } catch (jsonError) {
+        console.error("❌ JSON Parsing Error:", jsonError, "Response:", text);
+      }
+    } catch (error) {
+      console.error("❌ Network error fetching students:", error);
+    }
+  };
+  
+  
+  //✅ Update User Info
+  const updateUserInfo = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        return;
+      }
+  
+      // ✅ Fetch existing phoneNumber before sending update
+      const userResponse = await fetch("http://10.0.2.2:5000/api/auth/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      const userData = await userResponse.json();
+      const existingPhoneNumber = userData.phoneNumber || "";
+  
+      // ✅ Send fullName AND existing phoneNumber (if required)
+      const response = await fetch("http://10.0.2.2:5000/api/auth/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fullName: newName, phoneNumber: existingPhoneNumber }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        console.log("✅ User info updated:", data);
+        setFullName(newName);
+        setIsEditing(false);
+        Alert.alert("Success", "User info updated successfully!");
+      } else {
+        console.error("❌ Error updating user:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Network error updating user:", error);
+    }
+  };
+  
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  // ✅ Logout Functionality
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("authToken");
+      Alert.alert("Logged Out", "You have been logged out.", [{ text: "OK", onPress: () => navigation.replace("Login") }]);
+    } catch (error) {
+      console.error("❌ Error logging out:", error);
+    }
+  };
+  
+
+
   return (
     <View style={styles.container}>
-      {/* Left Sidebar */}
-      <View style={styles.sidebar}>
-        <TouchableOpacity onPress={() => navigation.navigate("StudentProfile")}>
-          <Image 
-            style={styles.backButton}
-            source={require('../../../assets/dashboard/Back.png')} 
-          />
-        </TouchableOpacity>
-    
-        {/* Sidebar Menu Options */}
-        <View style={styles.sidebarMenu}>
-          <TouchableOpacity onPress={() => navigation.navigate("Dashboard")}>
-            <Image 
-              style={styles.menuButton}
-              source={require('../../../assets/dashboard/Dashboard.png')} 
-            />
-          </TouchableOpacity>
-    
-          <TouchableOpacity>
-            <Image 
-              style={styles.menuButton}
-              source={require('../../../assets/dashboard/account-setting.png')} 
-            />
-          </TouchableOpacity>
-        </View>
-    
-        {/* Logout Button */}
-        <TouchableOpacity>
-          <Image 
-            style={styles.logoutButton}
-            source={require('../../../assets/dashboard/Logout.png')} 
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Content */}
-      <View style={styles.mainContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Image 
-              source={require('../../../assets/dashboard/Husay.png')} 
-             
-            />
-          </View>
-          
-          <View style={styles.userContainer}>
-            <Text style={styles.greeting}>Hello, {fullName}!</Text>
-            <Image 
-              source={require('../../../assets/default-profile.png')} 
-              style={styles.profilePic} 
-            />
-          </View>
-        </View>
-
-        {/* Account Settings Content */}
-        <View style={styles.settingsContainer}>
-          <View style={styles.settingsHeader}>
-            <View style={styles.profileSection}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <>
+          {/* Left Sidebar */}
+          <View style={styles.sidebar}>
+            <TouchableOpacity onPress={() => navigation.navigate("StudentProfile")}>
               <Image 
-                source={require('../../../assets/default-profile.png')} 
-                style={styles.largeProfilePic} 
+                style={styles.backButton}
+                source={require('../../../assets/dashboard/Back.png')} 
               />
-              
-              <View style={styles.profileInfo}>
-                <View style={styles.infoRow}>
-                  <Image 
-                    source={require('../../../assets/dashboard/user-icon.png')} 
-                    style={styles.infoIcon} 
-                  />
-                  <Text style={styles.nameText}>Harold Puno</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Image 
-                    source={require('../../../assets/dashboard/IDNumber.png')} 
-                    style={styles.infoIcon} 
-                  />
-                  <Text style={styles.idText}>{studentId}</Text>
-                </View>
-              </View>
+            </TouchableOpacity>
+  
+            {/* Sidebar Menu Options */}
+            <View style={styles.sidebarMenu}>
+              <TouchableOpacity onPress={() => navigation.navigate("Dashboard")}>
+                <Image 
+                  style={styles.menuButton}
+                  source={require('../../../assets/dashboard/Dashboard.png')} 
+                />
+              </TouchableOpacity>
+  
+              <TouchableOpacity>
+                <Image 
+                  style={styles.menuButton}
+                  source={require('../../../assets/dashboard/account-setting.png')} 
+                />
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity style={styles.editButton}>
+  
+            {/* Logout Button */}
+            <TouchableOpacity onPress={handleLogout}>
               <Image 
-                source={require('../../../assets/dashboard/Edit.png')} 
+                style={styles.logoutButton}
+                source={require('../../../assets/dashboard/Logout.png')} 
               />
             </TouchableOpacity>
           </View>
-
-          
-          <View style={styles.statsCard}>
-            <View style={styles.statsHeader}>
-              <Image 
-                source={require('../../../assets/dashboard/people.png')} 
-                style={styles.statsIcon} 
-              />
-              <Text style={styles.statsTitle}>Total Number of Students</Text>
+  
+          {/* Main Content */}
+          <View style={styles.mainContent}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Image 
+                  source={require('../../../assets/dashboard/Husay.png')} 
+                />
+              </View>
+  
+              <View style={styles.userContainer}>
+                <Text style={styles.greeting}>Hello, {fullName}!</Text>
+                <Image 
+                  source={require('../../../assets/default-profile.png')} 
+                  style={styles.profilePic} 
+                />
+              </View>
             </View>
-            <View style={styles.statsContent}>
-              <Text style={styles.statsNumber}>{totalStudents}</Text>
-              <Text style={styles.statsLabel}>Students</Text>
+  
+            {/* Account Settings Content */}
+            <View style={styles.settingsContainer}>
+              <View style={styles.settingsHeader}>
+                <View style={styles.profileSection}>
+                  <Image 
+                    source={require('../../../assets/default-profile.png')} 
+                    style={styles.largeProfilePic} 
+                  />
+                  
+                  <View style={styles.profileInfo}>
+                    <View style={styles.infoRow}>
+                      <Image 
+                        source={require('../../../assets/dashboard/user-icon.png')} 
+                        style={styles.infoIcon} 
+                      />
+                      {isEditing ? (
+                        <TextInput
+                          style={styles.input}
+                          value={newName}
+                          onChangeText={setNewName}
+                          placeholder="Enter new name"
+                        />
+                      ) : (
+                        <Text style={styles.nameText}>{fullName}</Text>
+                      )}
+                    </View>
+                    
+                    <View style={styles.infoRow}>
+                      <Image 
+                        source={require('../../../assets/dashboard/IDNumber.png')} 
+                        style={styles.infoIcon} 
+                      />
+                      <Text style={styles.idText}>{studentId}</Text>
+                    </View>
+                  </View>
+                </View>
+  
+                <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(!isEditing)}>
+                  <Image 
+                    source={require('../../../assets/dashboard/Edit.png')} 
+                  />
+                </TouchableOpacity>
+              </View>
+  
+              {/* Save Button (Only Shows When Editing) */}
+              {isEditing && (
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity onPress={updateUserInfo} style={styles.saveButton}>
+                    <Text style={styles.buttonText}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.cancelButton}>
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+  
+              {/* Student Stats */}
+              <View style={styles.statsCard}>
+                <View style={styles.statsHeader}>
+                  <Image 
+                    source={require('../../../assets/dashboard/people.png')} 
+                    style={styles.statsIcon} 
+                  />
+                  <Text style={styles.statsTitle}>Total Number of Students</Text>
+                </View>
+                <View style={styles.statsContent}>
+                  <Text style={styles.statsNumber}>{totalStudents}</Text>
+                  <Text style={styles.statsLabel}>Students</Text>
+                </View>
+              </View>
+            </View>
+  
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.copyright}>© 2024 Husay. All Rights Reserved.</Text>
             </View>
           </View>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.copyright}>© 2024 Husay. All Rights Reserved.</Text>
-        </View>
-      </View>
-    </View>  
+        </>
+      )}
+    </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -160,7 +333,6 @@ const styles = StyleSheet.create({
     width: 250,
     height: 65,
     resizeMode: "contain",
-    marginBottom: 10,
   },
   logoutButton: {
     marginLeft: 15,
