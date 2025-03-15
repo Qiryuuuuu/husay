@@ -1,28 +1,36 @@
 const mongoose = require("mongoose");
 
+const ScoreSchema = new mongoose.Schema({
+  points: { type: Number, default: 0 }, // Total points scored
+  stars: { type: Number, default: 0 }, // Stars earned based on score
+});
+
+const DifficultySchema = new mongoose.Schema({
+  Easy: { type: ScoreSchema, default: () => ({}) },
+  Medium: { type: ScoreSchema, default: () => ({}) },
+  Hard: { type: ScoreSchema, default: () => ({}) },
+});
+
 const StudentSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   age: { type: Number, required: true },
   gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
-  stars: { type: Number, default: 0 },
   profileImage: { type: String, default: "" },
   employeeNo: { type: String, required: true },
 
+  // ✅ Subject-based scores for both practice and challenge modes
   subjects: {
     Colors: {
-      Easy: { type: Number, default: 0 },
-      Medium: { type: Number, default: 0 },
-      Hard: { type: Number, default: 0 },
+      practice: { type: DifficultySchema, default: () => ({}) },
+      challenge: { type: DifficultySchema, default: () => ({}) },
     },
     Shapes: {
-      Easy: { type: Number, default: 0 },
-      Medium: { type: Number, default: 0 },
-      Hard: { type: Number, default: 0 },
+      practice: { type: DifficultySchema, default: () => ({}) },
+      challenge: { type: DifficultySchema, default: () => ({}) },
     },
     Numbers: {
-      Easy: { type: Number, default: 0 },
-      Medium: { type: Number, default: 0 },
-      Hard: { type: Number, default: 0 },
+      practice: { type: DifficultySchema, default: () => ({}) },
+      challenge: { type: DifficultySchema, default: () => ({}) },
     },
   },
 
