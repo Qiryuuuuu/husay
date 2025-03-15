@@ -248,7 +248,9 @@ export default function DashboardScreen({ navigation }) {
   };
   
   // ✅ Get real attendance data from the backend
-  const attendanceData = students && students.length > 0 ? getAttendanceData(students) : {};
+  const attendanceData = selectedStudent
+  ? getAttendanceData([selectedStudent]) 
+  : {};
 
   // Quarter handling logic
   const quarters = {
@@ -278,30 +280,18 @@ export default function DashboardScreen({ navigation }) {
 
   // Render Calendar Day 
   const renderDay = (day, status, month, year) => {
-    // If no status, default to white
-    if (!status) {
-      return (
-        <View key={`no-status-${month}-${day}`} style={[styles.dayItem, { backgroundColor: '#FFFFFF' }]}>
-          <Text style={styles.dayText}>{day}</Text>
-        </View>
-      );
-    }
-  
     const today = moment();
-    const currentDay = moment(`${year}-${month + 1}-${day}`, "YYYY-MM-DD");
-    const isToday = currentDay.isSame(today, "day");
-    const isFuture = currentDay.isAfter(today, "day");
+    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
+    const isToday = currentDay.isSame(today, 'day');
+    const isFuture = currentDay.isAfter(today, 'day');
     const weekday = currentDay.day();
   
+    // Decide background color
     let backgroundColor;
     if (isFuture || weekday === 0 || weekday === 6) {
-      backgroundColor = "#D3D3D3"; // light gray for weekends/future days
-    } else if (status === "present") {
-      backgroundColor = "#4CD964"; // green
-    } else if (status === "absent") {
-      backgroundColor = "#FF3B30"; // red
+      backgroundColor = '#D3D3D3';  // gray for future or weekends
     } else {
-      backgroundColor = "#FFFFFF"; // default white
+      backgroundColor = (status === 'present') ? '#4CD964' : '#FF3B30'; 
     }
   
     return (
@@ -310,13 +300,14 @@ export default function DashboardScreen({ navigation }) {
         style={[
           styles.dayItem,
           { backgroundColor },
-          isToday && { borderWidth: 2, borderColor: "#007AFF" },
+          isToday && { borderWidth: 2, borderColor: '#007AFF' }
         ]}
       >
         <Text style={styles.dayText}>{day}</Text>
       </View>
     );
-  };        
+  };
+  
   
   //Pie Chart
   const LabelsPie = ({ slices }) => {
@@ -397,7 +388,7 @@ export default function DashboardScreen({ navigation }) {
     setStudentDropdownOpen(false);
     setMenuOpen(false);
   };
-  
+
   // Handle edit button press
   const handleEditPress = () => {
     if (selectedStudent) {
@@ -800,33 +791,33 @@ export default function DashboardScreen({ navigation }) {
             </View>
           </View>
 
-          <View style={styles.calendarContainer}>
+         <View style={styles.calendarContainer}>
             {quarters[currentQuarter].map((month) => {
               const firstDayOfMonth = moment(`${currentYear}-${month + 1}-01`, 'YYYY-MM-DD').day();
               const daysInMonth = moment(`${currentYear}-${month + 1}`, 'YYYY-MM').daysInMonth();
 
               // Generate empty slots before the first day of the month
               const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
-                key: `empty-${month}-${i}`,  // Unique key for each empty slot before the month starts
+                key: `empty-${month}-${i}`,
                 day: null
               }));
 
-              // Generate actual days with attendance status
+              // Generate the array of day objects
               const daysArray = Array.from({ length: daysInMonth }, (_, i) => ({
-                key: `day-${month}-${i+1}`,
-                day: i+1,
-                status: attendanceData[month] 
-                  ? attendanceData[month][i]  // e.g. "present", "absent", ""
-                  : ""  // fallback if month isn't in attendanceData
+                key: `day-${month}-${i + 1}`,
+                day: i + 1,
+                // 1) Grab status from attendanceData for THIS month & day
+                status: attendanceData[month]
+                  ? attendanceData[month][i] // i == day - 1
+                  : "" // fallback
               }));
 
-              // Combine empty slots and days into one array
+              // Combine empty slots + days
               const totalSlots = [...blanks, ...daysArray];
 
-              // Ensure every row has exactly 7 elements
+              // Split into rows of 7 days each
               const rows = [];
               let currentWeek = [];
-
               totalSlots.forEach((item, index) => {
                 currentWeek.push(item);
                 if ((index + 1) % 7 === 0) {
@@ -835,34 +826,44 @@ export default function DashboardScreen({ navigation }) {
                 }
               });
 
-              // Push the remaining days in the last row
+              // Fill the last row if it has fewer than 7 slots
               if (currentWeek.length > 0) {
                 const missingDays = 7 - currentWeek.length;
                 for (let i = 0; i < missingDays; i++) {
-                  currentWeek.push({ key: `empty-${month}-extra-${i}`, day: null }); // Ensure unique keys for extra empty slots
+                  currentWeek.push({ 
+                    key: `empty-${month}-extra-${i}`, 
+                    day: null 
+                  });
                 }
                 rows.push(currentWeek);
               }
 
               return (
                 <View key={`month-${month}`} style={styles.monthContainer}>
-                  <Text style={styles.monthTitle}>{moment(month + 1, 'M').format('MMMM')}</Text>
+                  <Text style={styles.monthTitle}>
+                    {moment(month + 1, 'M').format('MMMM')}
+                  </Text>
 
                   {/* Weekday Labels */}
                   <View style={styles.weekdaysContainer}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <Text key={`label-${month}-${day}`} style={styles.weekdayLabel}>{day}</Text>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                      <Text key={`label-${month}-${d}`} style={styles.weekdayLabel}>
+                        {d}
+                      </Text>
                     ))}
                   </View>
 
-                  {/* Days Grid (Fixed to always display 7 per row) */}
+                  {/* Days Grid */}
                   {rows.map((row, rowIndex) => (
                     <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
                       {row.map(({ key, day, status }) => {
                         return day
                           ? renderDay(day, status, month, currentYear)
                           : (
-                            <View key={key} style={[styles.dayItem, { backgroundColor: 'transparent' }]} />
+                            <View
+                              key={key}
+                              style={[styles.dayItem, { backgroundColor: 'transparent' }]}
+                            />
                           );
                       })}
                     </View>
@@ -871,6 +872,7 @@ export default function DashboardScreen({ navigation }) {
               );
             })}
           </View>
+
 
           {/* Legend at Bottom-left */}
           <View style={styles.legend}>
@@ -1404,15 +1406,13 @@ const styles = StyleSheet.create({
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: "center",
     marginTop: 15,
-    alignSelf: 'center',
+    alignSelf: 'flex-start',
   },
 
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 10,
   },
 
   legendColor: {
@@ -1425,7 +1425,6 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 14,
     color: '#1E1E1E',
-    textAlign: 'center',
   },
   // End
 

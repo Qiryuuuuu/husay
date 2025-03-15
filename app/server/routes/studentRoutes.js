@@ -44,9 +44,6 @@ router.get("/all", authenticateUser, async (req, res) => {
   }
 });
 
-
-
-
 // ✅ Update Student Progress
 router.put("/update-attendance/:studentId", authenticateUser, async (req, res) => {
   try {
@@ -176,7 +173,46 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
   }
 });
 
+//test route for changing a students attendance manually.
+// router.put("/:studentId/attendance", async (req, res) => {
+//   try {
+//     const { studentId } = req.params;
+//     const { date, status } = req.body;
 
+//     // Validate input
+//     if (!date || !status || !["Present", "Absent"].includes(status)) {
+//       return res.status(400).json({ message: "Invalid date or status provided." });
+//     }
+
+//     console.log(`📅 Updating attendance for Student ${studentId} on ${date} as ${status}`);
+
+//     // Find student by ID
+//     const student = await Student.findById(studentId);
+//     if (!student) {
+//       return res.status(404).json({ message: "Student not found." });
+//     }
+
+//     // ✅ Check if the date already exists in attendance
+//     const existingRecord = student.attendance.find((entry) =>
+//       entry.date.toISOString().split("T")[0] === new Date(date).toISOString().split("T")[0]
+//     );
+
+//     if (existingRecord) {
+//       existingRecord.status = status; // ✅ Update existing record
+//     } else {
+//       student.attendance.push({ date: new Date(date), status }); // ✅ Add new attendance record
+//     }
+
+//     // ✅ Save the student record with updated attendance
+//     await student.save();
+
+//     console.log("✅ Attendance updated successfully.");
+//     res.status(200).json({ message: "Attendance updated successfully", student });
+//   } catch (error) {
+//     console.error("❌ Error updating attendance:", error);
+//     res.status(500).json({ message: "Server error updating attendance." });
+//   }
+// });
 
 
 module.exports = router;
