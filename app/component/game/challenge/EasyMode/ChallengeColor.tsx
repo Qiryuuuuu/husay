@@ -1,10 +1,10 @@
+//ChallengeColor.tsx
 import React from 'react';
-import { BaseGame } from '../../EasyBaseGame';
-import colorDialogues from "../../../../data/colorDialogues";
+import { BaseGame } from '../../ChallBaseGame';
 
-const dolorIdleImg = require("../../../../../assets/dolor/dolor-guess.png");
-const dolorCorrectImg = require("../../../../../assets/dolor/dolor-correct.png");
-const dolorWrongImg = require("../../../../../assets/dolor/dolor-wrong.png");
+const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
+const evaCorrectImg = require("../../../../../assets/eva/eva-correct.png");
+const evaWrongImg = require("../../../../../assets/eva/eva-wrong.png");
 
 const colors = [
   { name: "Red", image: require("../../../../../assets/color/red.png") },
@@ -16,21 +16,38 @@ const colors = [
   { name: "White", image: require("../../../../../assets/color/white.png") }
 ];
 
-const ColorGame = ({ onGameComplete, navigation }) => {
+const challengeDialogues = {
+  idle: [
+    "Now where should I begin?", // First question
+    "Which stone should I pick next?", // Second question
+    "Which stone should I pick next?", // Third question
+    "Which stone should I pick next?", // Fourth question
+    "Yeyyy, I think we’re almost at the edge of the river. Help me one last time, will you? Which is it?"  // Fifth question
+  ],
+  correct: [
+    "Gee, thanks for helping me find a good stone to stand on to."
+  ],
+  wrong: [
+    "I’m not sure I can stand there."
+  ]
+};
+
+const ShapeGame = ({ onGameComplete, navigation, onStateChange  }) => {
   return (
     <BaseGame
-    items={colors}
-    onGameComplete={onGameComplete}
-    navigation={navigation}
-    npcConfig={{
-        idle: dolorIdleImg,
-        correct: dolorCorrectImg,
-        wrong: dolorWrongImg,
-        name: "Dolor"
-    }}
-    dialogues={colorDialogues}
+      items={colors}
+      onGameComplete={onGameComplete}
+      navigation={navigation}
+      npcConfig={{
+        idle: evaIdleImg,
+        correct: evaCorrectImg,
+        wrong: evaWrongImg,
+        name: "Eva"
+      }}
+      dialogues={challengeDialogues}
+      onStateChange={onStateChange}
     />
   );
 };
 
-export default ColorGame;
+export default ShapeGame;

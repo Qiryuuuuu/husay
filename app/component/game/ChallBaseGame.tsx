@@ -43,7 +43,7 @@ interface GameProps {
       wrong: string[];
     };
     numRounds?: number;
-    onStateChange?: (state: 'question' | 'feedback') => void; // Add this prop
+    onStateChange?: (state: 'question' | 'feedback') => void; 
   }
 
 export const BaseGame: React.FC<GameProps> = ({

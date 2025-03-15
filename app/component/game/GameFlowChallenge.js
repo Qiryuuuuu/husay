@@ -1,20 +1,6 @@
+// GameFlowChallenge.js
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, ImageBackground, Animated, Easing } from "react-native";
-import { Asset } from 'expo-asset';
-
-// Preload all background images
-const backgroundImages = {
-  default: require('../../../assets/gameBackground/challenge/easy/default-easy.png'),
-  correct: require('../../../assets/gameBackground/challenge/easy/correct-easy.png'),
-  incorrect: require('../../../assets/gameBackground/challenge/easy/incorrect-easy.png'),
-  outro: require('../../../assets/gameBackground/challenge/easy/outro-easy.png'),
-};
-
-// Preload function
-const preloadImages = async () => {
-  const imageAssets = Object.values(backgroundImages).map(image => Asset.fromModule(image).downloadAsync());
-  await Promise.all(imageAssets);
-};
 
 const GameFlows = ({
   backgroundImg,
@@ -24,38 +10,32 @@ const GameFlows = ({
   StageCompletionComponent,
   navigation
 }) => {
-  const [gamePhase, setGamePhase] = useState("loading");
+  const [gamePhase, setGamePhase] = useState("dialog");
   const [finalTime, setFinalTime] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
-  const [gameState, setGameState] = useState("question");
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-
-  // Preload images when component mounts
-  useEffect(() => {
-    const loadAssets = async () => {
-      await preloadImages();
-      setGamePhase("dialog");
-    };
-    loadAssets();
-  }, []);
+  const [gameState, setGameState] = useState("question"); 
+  const overlayOpacity = useRef(new Animated.Value(0)).current; 
 
   useEffect(() => {
     let toValue = 1;
     let duration = 1500;
-
+  
     if (gamePhase === "countdown") {
       toValue = 0;
       duration = 2000;
-    } 
-    else if (gamePhase === "game") {
-      toValue = gameState === "question" ? 0.7 : 0;
+    } else if (gamePhase === "game") {
+      toValue = 0; // Ensure opacity is always 0 during the game phase
+      duration = 500;
     }
+  
+
+    console.log(`Game Phase: ${gamePhase}, Game State: ${gameState}, Opacity: ${toValue}`); // Debugging
 
     Animated.timing(overlayOpacity, {
       toValue,
       duration,
       easing: Easing.out(Easing.quad),
-      useNativeDriver: true,
+      useNativeDriver: false, // Ensure this is false for opacity
     }).start();
   }, [gamePhase, gameState, overlayOpacity]);
 
@@ -65,27 +45,31 @@ const GameFlows = ({
     setGamePhase("completed");
   };
 
+  // Add this handler to receive state changes from BaseGame
   const handleGameStateChange = (state) => {
+    console.log(`Game State Changed: ${state}`); // Debugging
     setGameState(state);
   };
 
-  if (gamePhase === "loading") {
-    return (
-      <View style={styles.loadingContainer}>
-        <Animated.Text style={styles.loadingText}>Loading...</Animated.Text>
-      </View>
-    );
-  }
-
   return (
-    <ImageBackground source={backgroundImg} style={styles.background}>
-      <Animated.View
-        style={[
-          styles.overlay,
-          { opacity: overlayOpacity },
-        ]}
-      />
-      <View style={[styles.overlayContainer, { zIndex: gameState === 'question' ? 2 : 1 }]}>
+    <View style={styles.container}>
+      {/* Background Image with Overlay */}
+      <View style={styles.backgroundContainer}>
+        <ImageBackground source={backgroundImg} style={styles.background}>
+          <Animated.View
+            style={[
+              styles.overlay,
+              { 
+                opacity: overlayOpacity,
+                pointerEvents: gameState === 'question' ? 'none' : 'auto', // Allow touch events to pass through
+              },
+            ]}
+          />
+        </ImageBackground>
+      </View>
+
+      {/* Game Content */}
+      <View style={styles.contentContainer}>
         {gamePhase === "dialog" && (
           <View style={styles.fullscreenContainer}>
             <DialogComponent onDialogComplete={() => setGamePhase("countdown")} />
@@ -103,7 +87,7 @@ const GameFlows = ({
             <GameComponent 
               onGameComplete={handleGameComplete} 
               navigation={navigation}
-              onStateChange={handleGameStateChange}
+              onStateChange={handleGameStateChange} // Pass the handler
             />
           </View>
         )}
@@ -119,50 +103,36 @@ const GameFlows = ({
           </View>
         )}
       </View>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  loadingContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
+    position: 'relative',
   },
-  loadingText: {
-    color: '#fff',
-    fontSize: 20,
+  backgroundContainer: {
+    ...StyleSheet.absoluteFillObject, // Fill the entire screen
+    zIndex: 1, // Ensure the background is behind the content
   },
   background: {
     flex: 1,
     width: "100%",
     height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)", // Default overlay color
   },
-  overlayContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: "100%",
-    height: "100%",
+  contentContainer: {
+    flex: 1,
+    zIndex: 2, // Ensure the content is above the background
   },
   fullscreenContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: "100%",
-    height: "100%",
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

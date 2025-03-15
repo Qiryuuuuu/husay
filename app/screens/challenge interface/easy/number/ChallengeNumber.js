@@ -1,57 +1,58 @@
-// ChallengeNumber.js
+// ChallengeShape.js
 import React from "react";
-import GameFlows from "../../../../component/game/GameFlows";
+import GameFlows from "../../../../component/game/GameFlowChallenge";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
-import NumberGame from "../../../../component/game/Practice/EasyMode/PracticeNumber";
+import ShapeGame from "../../../../component/game/challenge/EasyMode/ChallengeNumber";
 import StageCompletion from "../../../../component/stageCompletion";
-import numberDialogues from "../../../../data/numberDialogues";
 import { useNavigation } from '@react-navigation/native';
 
+const bg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.png");
 
-const numberBg = require("../../../../../assets/gameBackground/challenge-number-bg.png");
-
-const numberDialogData = {
+const DialogData = {
   dialogues: [
-    "Hey there, little math wizard! 🧙‍♂️✨ Today, we’re going on an adventure with NUMBERS! Can you count with me?",
-    "That’s right! I’m Amber, and I LOVE numbers! 😆 Get ready to spot, count, and match the right ones. Let’s make numbers magical!",
-    "That’s the spirit! 🌟 Stay sharp, have fun, and let’s crack the number code together! Off we goooo!",
+    "Woahhh, there’s a river we must cross to reach the lair. But, as you know it, I’m a robot hihihihi I’m not sure I’m waterproof. How silly of me. My friend, will you help me cross the river?"
   ],
-  npcNames: ["Eva", "Amber", "Eva"],
+  npcNames: ["Eva"],
   npcImages: [
-    { image: require("../../../../../assets/eva/eva-excited.png"), width: 340, height: 480 },
-    { image: require("../../../../../assets/amber/amber-greet.png"), width: 460, height: 500 },
-    { image: require("../../../../../assets/eva/eva-pointing.png"), width: 601, height: 493 },
+    { image: require("../../../../../assets/eva/eva-happy.png"), width: 340, height: 480 },
+  ],
+  audioFiles: [
+    [require('../../../../../assets/voiceOver/eva/challengEasy/1-pregame.mp3')], 
   ],
 };
 
-const numberCompletionNpc = {
-  name: "Amber",
-  image: require("../../../../../assets/amber/amber-greet.png")
+const CompletionNpc = {
+  name: "Eva",
+  image: require("../../../../../assets/eva/eva-happy.png")
 };
 
-const NumberModeScreen = () => {
+const customCompletionDialog = [
+  "Thank you. We crossed the river safely. I can see the lair but we have to pass through the forest first."
+];
+
+const ShapeModeScreen = () => {
   const navigation = useNavigation(); 
 
   return (
     <GameFlows
-      backgroundImg={numberBg}
-      DialogComponent={(props) => <PregameDialog {...props} dialogData={numberDialogData} />}
+      backgroundImg={bg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={DialogData} />}
       CountdownComponent={Countdown}
-      GameComponent={NumberGame}
+      GameComponent={(props) => <ShapeGame {...props} />}
       navigation={navigation} 
       StageCompletionComponent={(props) => (
         <StageCompletion 
           {...props} 
-          dialoguesData={numberDialogues} 
-          completionNpc={numberCompletionNpc} 
-          navigation={navigation}  
+          dialoguesData={{ complete: customCompletionDialog }}  
+          completionNpc={CompletionNpc} 
+          navigation={navigation} 
           isChallengeMode={true} 
           totalRounds={5} 
         />
       )}
     />
   );
-}
+};
 
-export default NumberModeScreen;
+export default ShapeModeScreen;
