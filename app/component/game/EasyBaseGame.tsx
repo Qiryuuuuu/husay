@@ -66,6 +66,7 @@ export const BaseGame: React.FC<GameProps> = ({
   );
   const [npcImage, setNpcImage] = useState(npcConfig.idle);
   const [isGameRunning, setIsGameRunning] = useState(true);
+  const correctFirstTryRef = useRef(0); // ✅ Track latest score
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
 
@@ -146,24 +147,26 @@ export const BaseGame: React.FC<GameProps> = ({
 
       if (selectedName === rounds[currentRound].name) {
         handleCorrectAnswer();
+        console.log("Correct First Try: ", correctFirstTry);
       } else {
         handleWrongAnswer();
       }
     },
-    [currentRound, rounds, isClickable, correctFirstTry, hasTried]
+    [currentRound, rounds, isClickable, correctFirstTry + 1, hasTried]
   );
 
   const handleGameEnd = () => {
-    console.log("BaseGame detected game end!");
+    console.log("✅ BaseGame detected game end!");
 
-    const finalScore = correctFirstTry; // ✅ Final score = correct answers on the first try
-    const totalTime = elapsedTimeRef.current; // ✅ Get total time
+    const finalScore = correctFirstTryRef.current; // ✅ Get the latest score
+    const totalTime = elapsedTimeRef.current; // ✅ Get total elapsed time
 
     console.log("Final Score:", finalScore);
     console.log("Total Time:", totalTime);
 
     if (typeof onGameComplete === "function") {
-      onGameComplete(totalTime, finalScore); // ✅ Pass correct score & time
+      console.log("✅ Calling onGameComplete with:", finalScore, totalTime);
+      onGameComplete(finalScore, totalTime); // ✅ Pass correct score & time
     }
   };
 
@@ -183,11 +186,18 @@ export const BaseGame: React.FC<GameProps> = ({
     setCurrentSound(correctSound);
     setPlaySound(true);
 
-    let updatedScore = correctFirstTry;
-    if (!hasTried) {
-      updatedScore += 1;
-      setCorrectFirstTry(updatedScore);
-    }
+    setCorrectFirstTry((prev) => {
+      if (!hasTried) {
+        const newScore = prev + 1;
+        correctFirstTryRef.current = newScore; // ✅ Immediately update the latest score
+        console.log(
+          "✅ Correct answer on first try! Updating score to:",
+          newScore
+        );
+        return newScore;
+      }
+      return prev;
+    });
 
     setTimeout(() => {
       if (currentRound < numRounds - 1) {

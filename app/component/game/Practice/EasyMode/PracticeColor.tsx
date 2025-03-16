@@ -23,14 +23,12 @@ const ColorGame = ({ onGameComplete, navigation }) => {
     setStartTime(Date.now()); // Start tracking time when game starts
   }, []);
 
-  const finishGame = (finalScore) => {
-    const endTime = Date.now();
-    const timeTaken = Math.floor((endTime - startTime) / 1000); // Convert ms to seconds
+  const finishGame = (score, timeTaken) => {
+    console.log("✅ Game Finished in ColorGame!");
+    console.log("Time Taken:", timeTaken);
+    console.log("Final Score Received:", score);
 
-    console.log("Game finished! Submitting score...");
-    console.log("Time Taken:", timeTaken, "Score:", finalScore);
-
-    onGameComplete(timeTaken, finalScore); // ✅ Use score from BaseGame
+    onGameComplete(score, timeTaken); // ✅ Correct order
   };
 
   return (

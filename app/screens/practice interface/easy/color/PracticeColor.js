@@ -66,7 +66,7 @@ const ColorModeScreen = ({ route }) => {
   const { studentId } = route.params || {}; // Receive studentId
   console.log("Practice Color easy received studentID: ", studentId);
 
-  const handleGameComplete = async (timeTaken, score) => {
+  const handleGameComplete = async (score, timeTaken) => {
     console.log("Submitting game results...");
     console.log("Student ID:", studentId);
     console.log("Score:", score);
