@@ -173,6 +173,38 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
   }
 });
 
+router.post("/update-score", async (req, res) => {
+  try {
+    const { studentId, subject, difficulty, mode, points, stars } = req.body;
+
+    // Validate inputs
+    if (!studentId || !subject || !difficulty || !mode || points === undefined || stars === undefined) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Find the student by ID
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Build the dynamic path for updating the score
+    const scorePath = `subjects.${subject}.${mode}.${difficulty}`;
+
+    // Update the score and stars
+    student.set(`${scorePath}.points`, points);
+    student.set(`${scorePath}.stars`, stars);
+
+    // Save the updated student document
+    await student.save();
+
+    res.status(200).json({ message: "Score updated successfully", student });
+  } catch (error) {
+    console.error("Error updating score:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+})
+
 //test route for changing a students attendance manually.
 // router.put("/:studentId/attendance", async (req, res) => {
 //   try {

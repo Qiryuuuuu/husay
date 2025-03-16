@@ -1,10 +1,17 @@
 //PracMainScreen.js
 import React, { useState } from "react";
-import { 
-  View, Text, TouchableOpacity, Image, StyleSheet, Modal, 
-  useWindowDimensions, ImageBackground 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Modal,
+  useWindowDimensions,
+  ImageBackground,
 } from "react-native";
 import PregameDialog from "../../component/game/PregameDialog";
+import { useNavigation } from "@react-navigation/native";
 
 /* Background image */
 const bgImg = require("../../../assets/gameBackground/yellow.png");
@@ -21,25 +28,39 @@ const dialogData = {
   dialogues: [
     "Hi, I'm EVA, your trusted friendly guide here in Techtopia. Techtopia is a fun knowledge world. Here, we play under the sun and learn colors, shapes, and numbers along with other kids. Now, put on your thinking cats. Oops! Sorry, your thinking hats—and let's check if you can get these questions right.",
     "Before we practice, let me give you these goodies. These are the tools you are going to use later.",
-    "Now, are you ready? Let's go kiddos!"
+    "Now, are you ready? Let's go kiddos!",
   ],
   npcNames: ["EVA", "EVA", "EVA"],
   npcImages: [
-    { image: require("../../../assets/eva/eva-happy.png"), width: 450, height: 450 },
-    { image: require("../../../assets/eva/eva-present.png"), width: 663, height: 455 },
-    { image: require("../../../assets/eva/eva-pointing.png"), width: 600, height: 500 }
+    {
+      image: require("../../../assets/eva/eva-happy.png"),
+      width: 450,
+      height: 450,
+    },
+    {
+      image: require("../../../assets/eva/eva-present.png"),
+      width: 663,
+      height: 455,
+    },
+    {
+      image: require("../../../assets/eva/eva-pointing.png"),
+      width: 600,
+      height: 500,
+    },
   ],
   audioFiles: [
     require("../../../assets/voiceOver/eva/practiceIntro/eva-narrative-1.mp3"),
-    require('../../../assets/voiceOver/eva/practiceIntro/eva-narrative-2.mp3'),
-    require('../../../assets/voiceOver/eva/practiceIntro/eva-narrative-3.mp3')
-  ]
+    require("../../../assets/voiceOver/eva/practiceIntro/eva-narrative-2.mp3"),
+    require("../../../assets/voiceOver/eva/practiceIntro/eva-narrative-3.mp3"),
+  ],
 };
 
-export default function PracMainScreen({ navigation }) {
+export default function PracMainScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [showDialog, setShowDialog] = useState(true);
+  const navigation = useNavigation();
+  const { studentId } = route.params || {}; // Get studentName from params
 
   const handleDialogComplete = () => {
     setShowDialog(false);
@@ -57,7 +78,7 @@ export default function PracMainScreen({ navigation }) {
           <>
             {/* Header */}
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+              <TouchableOpacity onPress={() => navigation.navigate("Home")}>
                 <Image source={backButton} style={styles.logo} />
               </TouchableOpacity>
 
@@ -68,22 +89,40 @@ export default function PracMainScreen({ navigation }) {
 
             {/* Main content */}
             <View style={styles.cardContainer}>
-              <TouchableOpacity onPress={() => navigation.navigate('EasyMenuInteface')}>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log(
+                    "Navigating to EasyMenuInterface with studentId:",
+                    studentId
+                  ); // Debugging
+                  navigation.navigate("PracticeColor", { studentId });
+                }}
+              >
                 <Image source={easyCard} style={styles.cards} />
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => navigation.navigate('PracticeMedium')}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("PracticeMedium", { studentId })
+                }
+              >
                 <Image source={mediumCard} style={styles.cards} />
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => navigation.navigate('PracticeHard')}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("PracticeHard", { studentId })
+                }
+              >
                 <Image source={hardCard} style={styles.cards} />
               </TouchableOpacity>
             </View>
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+              <Text style={styles.footerText}>
+                © 2024 Husay. All Rights Reserved.
+              </Text>
             </View>
           </>
         )}
@@ -112,7 +151,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     position: "absolute",
-    left: "37%",  
+    left: "37%",
     top: 30,
     transform: [{ translateX: -100 }],
   },

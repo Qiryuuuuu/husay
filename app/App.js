@@ -59,16 +59,16 @@ export default function App() {
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
 
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Home" }} />
         <Stack.Screen name="Class" component={ClassScreen} />
-        <Stack.Screen name="PracMainScreen" component={PracMainScreen}  />
+        <Stack.Screen name="PracMainScreen" component={PracMainScreen} options={{ title: "Practice" }} />
         <Stack.Screen name="ChallMainScreen" component={ChallMainScreen}  />
 
         <Stack.Screen name="EasyMenuInteface" component={PracticeEasyIntefaceScreen} />
         <Stack.Screen name="ChallengeEasyInterface" component={ChallengeEasyIntefaceScreen} />
 
         <Stack.Screen name="PracticeShape" component={PracticeShape} />
-        <Stack.Screen name="PracticeColor" component={PracticeColor} />
+        <Stack.Screen name="PracticeColor" component={PracticeColor} options={{ title: "EasyColor" }}/>
         <Stack.Screen name="PracticeNumber" component={PracticeNumber} />
         <Stack.Screen name="PracticeMedium" component={PracticeMediumScreen} />
         <Stack.Screen name="PracticeHard" component={PracticeHardScreen} />
