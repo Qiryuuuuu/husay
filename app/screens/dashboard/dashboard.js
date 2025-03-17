@@ -332,7 +332,7 @@ export default function DashboardScreen({ navigation }) {
   
   // Toggle menu function
   const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
+    setMenuOpenStudentId(!menuOpen);
     // Close other dropdowns when opening menu
     if (!menuOpen) {
       setModeOpen(false);
@@ -352,7 +352,7 @@ export default function DashboardScreen({ navigation }) {
 
     // Close menu if opening mode dropdown
     if (!modeOpen) {
-      setMenuOpen(false);
+      setMenuOpenStudentId(false);
     }
   };
 
@@ -368,7 +368,7 @@ export default function DashboardScreen({ navigation }) {
 
     // Close menu if opening difficulty dropdown
     if (!difficultyOpen) {
-      setMenuOpen(false);
+      setMenuOpenStudentId(false);
     }
   };
 
@@ -378,7 +378,7 @@ export default function DashboardScreen({ navigation }) {
     if (!studentDropdownOpen) {
       setModeOpen(false);
       setDifficultyOpen(false);
-      setMenuOpen(false);
+      setMenuOpenStudentId(false);
     }
   };
 
@@ -386,7 +386,7 @@ export default function DashboardScreen({ navigation }) {
   const selectStudent = (student) => {
     setSelectedStudent(student);
     setStudentDropdownOpen(false);
-    setMenuOpen(false);
+    setMenuOpenStudentId(false);
   };
 
   // Handle edit button press
@@ -1406,13 +1406,15 @@ const styles = StyleSheet.create({
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 15,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
   },
 
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginHorizontal: 10,
   },
 
   legendColor: {
@@ -1425,6 +1427,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 14,
     color: '#1E1E1E',
+    textAlign: 'center',
   },
   // End
 
