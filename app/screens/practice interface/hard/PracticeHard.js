@@ -1,5 +1,5 @@
 // PracticeHardScreen.js 
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../component/game/GameFlows";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
@@ -7,6 +7,7 @@ import PracticeHard from "../../../component/game/Practice/HardMode/PracticeHard
 import StageCompletion from "../../../component/stageCompletion";
 import EvaDialouges from "../../../data/evaDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
 
 
 const practiceHardBg = require("../../../../assets/gameBackground/practice-hard-bg.png");
@@ -35,6 +36,11 @@ const practiceHardCompletionNpc = {
 const PracticeHardScreen = () => {
   const navigation = useNavigation(); 
 
+  useEffect(() => {
+    playMusic("hardBg");
+    return () => stopMusic();
+  }, []);
+
   return (
     <GameFlows
       backgroundImg={practiceHardBg}
@@ -48,6 +54,8 @@ const PracticeHardScreen = () => {
           dialoguesData={EvaDialouges} 
           completionNpc={practiceHardCompletionNpc} 
           navigation={navigation} 
+          currentScreen="PracticeHard"
+
         />
       )}
     />

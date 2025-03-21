@@ -1,11 +1,19 @@
-//ChallengeColor.tsx
+//ChallengeNumber.tsx
 import React from 'react';
 import { BaseGame } from '../../ChallBaseGame';
 
+// Import NPC images
 const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
 const evaCorrectImg = require("../../../../../assets/eva/eva-correct.png");
 const evaWrongImg = require("../../../../../assets/eva/eva-wrong.png");
 
+// Import Backgrounds for each round
+const bgIntro = require("../../../../../assets/gameBackground/challenge/easy/default-easy.webp");
+const correctBg = require("../../../../../assets/gameBackground/challenge/easy/correct-easy.webp");
+const incorrectBg = require("../../../../../assets/gameBackground/challenge/easy/incorrect-easy.webp");
+const outro = require("../../../../../assets/gameBackground/challenge/easy/outro-easy.webp");
+
+// Import numbers
 const numbers = [
   { name: "One", image: require("../../../../../assets/numbers/one.png") },
   { name: "Two", image: require("../../../../../assets/numbers/two.png") },
@@ -19,26 +27,153 @@ const numbers = [
   { name: "Ten", image: require("../../../../../assets/numbers/ten.png") },
 ];
 
-const challengeDialogues = {
-  idle: [
-    "Now where should I begin?", // First question
-    "Which stone should I pick next?", // Second question
-    "Which stone should I pick next?", // Third question
-    "Which stone should I pick next?", // Fourth question
-    "Yeyyy, I think we’re almost at the edge of the river. Help me one last time, will you? Which is it?"  // Fifth question
+// Define Frame Types
+export const FrameType = {
+  INTRODUCTION: "introduction",
+  QUESTION: "question",
+  CORRECT_ANSWER: "correctAnswer",
+  INCORRECT_ANSWER: "incorrectAnswer"
+};
+
+// Define Game Flow with Backgrounds and Correct/Incorrect Frames
+const storyScenes = {
+  round1: [
+    {
+      type: FrameType.INTRODUCTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["Now where should I begin?"]
+    },
+    {
+      type: FrameType.QUESTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["What color is this?"]
+    },
+    {
+      type: FrameType.CORRECT_ANSWER,
+      background: correctBg,
+      character: "EVA",
+      dialogues: ["Gee, thanks for helping me find a good stone to stand on to."]
+    },
+    {
+      type: FrameType.INCORRECT_ANSWER,
+      background: incorrectBg,
+      character: "EVA",
+      dialogues: ["That scares me, let's be careful next time."]
+    }
   ],
-  correct: [
-    "Gee, thanks for helping me find a good stone to stand on to."
+  round2: [
+    {
+      type: FrameType.INTRODUCTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["Which stone should I pick next?"]
+    },
+    {
+      type: FrameType.QUESTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["What color is this?"]
+    },
+    {
+      type: FrameType.CORRECT_ANSWER,
+      background: correctBg,
+      character: "EVA",
+      dialogues: ["Gee, thanks for helping me find a good stone to stand on to."]
+    },
+    {
+      type: FrameType.INCORRECT_ANSWER,
+      background: incorrectBg,
+      character: "EVA",
+      dialogues: ["Oh my that's dangerous, let's be cautious."]
+    }
   ],
-  wrong: [
-    "I’m not sure I can stand there."
+  round3: [
+    {
+      type: FrameType.INTRODUCTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["Which stone should I pick next?"]
+    },
+    {
+      type: FrameType.QUESTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["What color is this?"]
+    },
+    {
+      type: FrameType.CORRECT_ANSWER,
+      background: correctBg,
+      character: "EVA",
+      dialogues: ["Gee, thanks for helping me find a good stone to stand on to."]
+    },
+    {
+      type: FrameType.INCORRECT_ANSWER,
+      background: incorrectBg,
+      character: "EVA",
+      dialogues: ["Oh my that's dangerous, let's be cautious."]
+    }
+  ],
+  round4: [
+    {
+      type: FrameType.INTRODUCTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["Which stone should I pick next?"]
+    },
+    {
+      type: FrameType.QUESTION,
+      background: bgIntro,
+      character: "EVA",
+      dialogues: ["What color is this?"]
+    },
+    {
+      type: FrameType.CORRECT_ANSWER,
+      background: correctBg,
+      character: "EVA",
+      dialogues: ["Gee, thanks for helping me find a good stone to stand on to."]
+    },
+    {
+      type: FrameType.INCORRECT_ANSWER,
+      background: incorrectBg,
+      character: "EVA",
+      dialogues: ["Oh my that's dangerous, let's be cautious."]
+    }
+  ],
+  round5: [
+    {
+      type: FrameType.INTRODUCTION,
+      background: outro,
+      character: "EVA",
+      dialogues: ["Yeyyy, I think we’re almost at the edge of the river. Help me one last time, will you?"]
+    },
+    {
+      type: FrameType.QUESTION,
+      background: outro,
+      character: "EVA",
+      dialogues: ["What color is this?"]
+    },
+    {
+      type: FrameType.CORRECT_ANSWER,
+      background: correctBg,
+      character: "EVA",
+      dialogues: ["Thank you. We crossed the river safely. I can see the lair but we have to pass through this forest first."]
+    },
+    {
+      type: FrameType.INCORRECT_ANSWER,
+      background: incorrectBg,
+      character: "EVA",
+      dialogues: ["Oh my I almost fell there... Luckily, I jumped to the next stone."]
+    }
   ]
 };
 
-const ShapeGame = ({ onGameComplete, navigation, onStateChange  }) => {
+const ShapeGame = ({ onGameComplete, navigation, onStateChange }) => {
   return (
     <BaseGame
-      items={numbers}
+      category="number"
+      categories={{ number: numbers }}
       onGameComplete={onGameComplete}
       navigation={navigation}
       npcConfig={{
@@ -47,7 +182,8 @@ const ShapeGame = ({ onGameComplete, navigation, onStateChange  }) => {
         wrong: evaWrongImg,
         name: "Eva"
       }}
-      dialogues={challengeDialogues}
+      storyScenes={storyScenes} // Pass storyScenes correctly
+      dialogues={{ idle: [], correct: [], wrong: [] }}  
       onStateChange={onStateChange}
     />
   );

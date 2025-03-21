@@ -1,25 +1,34 @@
-// PracticeHardScreen.js 
-import React from "react";
-import GameFlows from "../../../component/game/GameFlows";
+// ChallengeHard.js 
+import React, { useEffect } from "react";
+import GameFlows from "../../../component/game/GameFlowChallenge";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
 import PracticeHard from "../../../component/game/challenge/HardMode/ChallengeHard";
 import StageCompletion from "../../../component/stageCompletion";
 import EvaDialouges from "../../../data/evaDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
 
 
-const practiceHardBg = require("../../../../assets/gameBackground/challenge-hard-bg.png");
+const bg = require("../../../../assets/gameBackground/challenge/hard/chall-hard-bg.webp");
 
-const practiceHardDialogData = {
+const ChallHardDialogData = {
   dialogues: [
-    "Ah, this is the hardest level! This is where true adventurers prove their mastery. You'll need to think fast and stay sharp—shapes, colors, and numbers will appear in trickier ways! Can you handle it? Let’s find out! ⚡",
-    "You're learning, but this challenge won’t be easy! Pay close attention, trust your instincts, and give it your best shot. Only the sharpest minds can conquer this level! Let's see if you're up for it! 💡🔥",
+    "Waaahhh",
+    "*laughs menacingly* WAHAHAHAHAHAHAA welcome. You will not foil my plan. I already have your friend’s memories erased. There’s no turning back.",
+    "Noooo—Shane, Dolor, Amber. I have to save them."
   ],
-  npcNames: ["Eva", "Eva"],
+  npcNames: ["Eva", "Evil Inventor", "Eva"],
   npcImages: [
-    { image: require("../../../../assets/eva/eva-loud.png"), width: 500, height: 400 },
-    { image: require("../../../../assets/eva/eva-pointing.png"), width: 460, height: 470 },
+    { image: require("../../../../assets/eva/eva-sad.png"), width: 344, height: 566 },
+    { image: require("../../../../assets/inventor/inventor-laughing.png"), width: 600, height: 500 },
+    { image: require("../../../../assets/eva/eva-sad.png"), width: 344, height: 566 },
+  ],
+  audioFiles: [
+    [require('../../../../assets/gameBackground/challenge/hard/audio/pregame/pregame-1.mp3')], 
+    [require('../../../../assets/gameBackground/challenge/hard/audio/pregame/pregame-2.mp3')], 
+    [require('../../../../assets/gameBackground/challenge/hard/audio/pregame/pregame-3.mp3')], 
+
   ],
 };
 
@@ -28,24 +37,34 @@ const practiceHardCompletionNpc = {
   image: require("../../../../assets/eva/eva-excited.png")
 };
 
+const customCompletionDialog = [
+  "I'm truly grateful for your help! We have now successfully rescued our friends and defeated the Evil Inventor. If you ever need help, you're always welcome here in Techtopia."
+];
+
 const PracticeHardScreen = () => {
   const navigation = useNavigation(); 
 
+  useEffect(() => {
+    playMusic("hardBg");
+    return () => stopMusic();
+  }, []);
+
   return (
     <GameFlows
-      backgroundImg={practiceHardBg}
-      DialogComponent={(props) => <PregameDialog {...props} dialogData={practiceHardDialogData} />}
+      backgroundImg={bg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={ChallHardDialogData} />}
       CountdownComponent={Countdown}
       GameComponent={PracticeHard}
       navigation={navigation} 
       StageCompletionComponent={(props) => (
         <StageCompletion 
           {...props} 
-          dialoguesData={EvaDialouges} 
+          dialoguesData={{ complete: customCompletionDialog }}  
           completionNpc={practiceHardCompletionNpc} 
           navigation={navigation} 
           isChallengeMode={true} 
           totalRounds={5} 
+          currentScreen="ChallengeHard"
         />
       )}
     />

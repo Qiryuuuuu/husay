@@ -1,4 +1,3 @@
-// GameFlowChallenge.js
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, ImageBackground, Animated, Easing } from "react-native";
 
@@ -14,30 +13,40 @@ const GameFlows = ({
   const [finalTime, setFinalTime] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
   const [gameState, setGameState] = useState("question"); 
-  const overlayOpacity = useRef(new Animated.Value(0)).current; 
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const backgroundOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    let toValue = 1;
-    let duration = 1500;
+    let overlayToValue = 1;
+    let overlayDuration = 1500;
   
     if (gamePhase === "countdown") {
-      toValue = 0;
-      duration = 2000;
+      overlayToValue = 0;
+      overlayDuration = 2000;
     } else if (gamePhase === "game") {
-      toValue = 0; // Ensure opacity is always 0 during the game phase
-      duration = 500;
+      overlayToValue = 0;
+      overlayDuration = 500;
+      // Fade out background when transitioning to game phase
+      Animated.timing(backgroundOpacity, {
+        toValue: 0,
+        duration: 500,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+    } else if (gamePhase === "completed") {
+      // Instantly show background in completion phase
+      backgroundOpacity.setValue(1);
     }
-  
 
-    console.log(`Game Phase: ${gamePhase}, Game State: ${gameState}, Opacity: ${toValue}`); // Debugging
+    console.log(`Game Phase: ${gamePhase}, Game State: ${gameState}, Opacity: ${overlayToValue}`);
 
     Animated.timing(overlayOpacity, {
-      toValue,
-      duration,
+      toValue: overlayToValue,
+      duration: overlayDuration,
       easing: Easing.out(Easing.quad),
-      useNativeDriver: false, // Ensure this is false for opacity
+      useNativeDriver: false,
     }).start();
-  }, [gamePhase, gameState, overlayOpacity]);
+  }, [gamePhase, gameState, overlayOpacity, backgroundOpacity]);
 
   const handleGameComplete = (timeTaken, score) => {
     setFinalTime(timeTaken);
@@ -45,28 +54,27 @@ const GameFlows = ({
     setGamePhase("completed");
   };
 
-  // Add this handler to receive state changes from BaseGame
   const handleGameStateChange = (state) => {
-    console.log(`Game State Changed: ${state}`); // Debugging
+    console.log(`Game State Changed: ${state}`);
     setGameState(state);
   };
 
   return (
     <View style={styles.container}>
       {/* Background Image with Overlay */}
-      <View style={styles.backgroundContainer}>
+      <Animated.View style={[styles.backgroundContainer, { opacity: backgroundOpacity }]}>
         <ImageBackground source={backgroundImg} style={styles.background}>
           <Animated.View
             style={[
               styles.overlay,
               { 
                 opacity: overlayOpacity,
-                pointerEvents: gameState === 'question' ? 'none' : 'auto', // Allow touch events to pass through
+                pointerEvents: gameState === 'question' ? 'none' : 'auto',
               },
             ]}
           />
         </ImageBackground>
-      </View>
+      </Animated.View>
 
       {/* Game Content */}
       <View style={styles.contentContainer}>
@@ -87,7 +95,7 @@ const GameFlows = ({
             <GameComponent 
               onGameComplete={handleGameComplete} 
               navigation={navigation}
-              onStateChange={handleGameStateChange} // Pass the handler
+              onStateChange={handleGameStateChange}
             />
           </View>
         )}
@@ -111,10 +119,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
+    backgroundColor: 'white', // Add white background as default
   },
   backgroundContainer: {
-    ...StyleSheet.absoluteFillObject, // Fill the entire screen
-    zIndex: 1, // Ensure the background is behind the content
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   background: {
     flex: 1,
@@ -123,16 +132,21 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.7)", // Default overlay color
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   contentContainer: {
     flex: 1,
-    zIndex: 2, // Ensure the content is above the background
+    zIndex: 2,
   },
   fullscreenContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });
 

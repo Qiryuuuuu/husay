@@ -1,13 +1,15 @@
 // ChallengeShape.js
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../../component/game/GameFlowChallenge";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
 import ShapeGame from "../../../../component/game/challenge/EasyMode/ChallengeColor";
 import StageCompletion from "../../../../component/stageCompletion";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
-const bg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.png");
+
+const bg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.webp");
 
 const DialogData = {
   dialogues: [
@@ -32,6 +34,10 @@ const customCompletionDialog = [
 ];
 
 const ShapeModeScreen = () => {
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
   const navigation = useNavigation(); 
 
   return (
@@ -49,6 +55,7 @@ const ShapeModeScreen = () => {
           navigation={navigation} 
           isChallengeMode={true} 
           totalRounds={5} 
+          currentScreen="ChallengeColor"
         />
       )}
     />

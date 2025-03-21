@@ -1,54 +1,66 @@
-// PracticeMediumScreen.js 
-import React from "react";
-import GameFlows from "../../../component/game/GameFlows";
+// ChallengeMedium.js
+import React, { useEffect } from "react";
+import GameFlows from "../../../component/game/GameFlowChallenge";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
-import PracticeMedium from "../../../component/game/challenge/MediumMode/ChallengeMedium";
+import ShapeGame from "../../../component/game/challenge/MediumMode/ChallengeMedium";
 import StageCompletion from "../../../component/stageCompletion";
-import PracticeMediumDialogues from "../../../data/evaDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
 
 
-const practiceMediumBg = require("../../../../assets/gameBackground/challenge-medium-bg.png");
+const bg = require("../../../../assets/gameBackground/challenge/medium/medium-bg.webp");
 
-const practiceMediumDialogData = {
+const DialogData = {
   dialogues: [
-    "Hello Adventurer! time to step up your skills! In this level, you'll need to identify shapes, colors, and numbers ✨. Are you ready for the challenge? Let's see how sharp your mind is!",
-    "Great! Remember, take your time and think carefully before you choose 👀. Shapes, colors, and numbers are all around us—let’s see if you can spot them correctly! I'm cheering for you!",
+    "Thanks for helping me cross the river. Now, the last obstacle is this forest. It's a total maze here."
   ],
-  npcNames: ["Eva", "Eva"],
+  npcNames: ["Eva"],
   npcImages: [
-    { image: require("../../../../assets/eva/eva-love.png"), width: 260, height: 400 },
-    { image: require("../../../../assets/eva/eva-happy.png"), width: 430, height: 470 },
+    { image: require("../../../../assets/eva/eva-pointing.png"), width: 520, height: 480 },
+  ],
+  audioFiles: [
+    [require('../../../../assets/gameBackground/challenge/medium/audio/pregame/medium-pregame.mp3')], 
   ],
 };
 
-const practiceMediumCompletionNpc = {
+const CompletionNpc = {
   name: "Eva",
-  image: require("../../../../assets/eva/eva-excited.png")
+  image: require("../../../../assets/eva/eva-happy.png")
 };
 
-const PracticeMediumScreen = () => {
+const customCompletionDialog = [
+  "I can’t thank you enough for helping me pass through the forest. Not only that, we have found ourselves new friends!"
+];
+
+const ShapeModeScreen = () => {
   const navigation = useNavigation(); 
+
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
 
   return (
     <GameFlows
-      backgroundImg={practiceMediumBg}
-      DialogComponent={(props) => <PregameDialog {...props} dialogData={practiceMediumDialogData} />}
+      backgroundImg={bg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={DialogData} />}
       CountdownComponent={Countdown}
-      GameComponent={PracticeMedium}
+      GameComponent={(props) => <ShapeGame {...props} />}
       navigation={navigation} 
       StageCompletionComponent={(props) => (
         <StageCompletion 
           {...props} 
-          dialoguesData={PracticeMediumDialogues} 
-          completionNpc={practiceMediumCompletionNpc} 
+          dialoguesData={{ complete: customCompletionDialog }}  
+          completionNpc={CompletionNpc} 
           navigation={navigation} 
           isChallengeMode={true} 
           totalRounds={5} 
+          currentScreen="ChallengeMedium"
         />
       )}
     />
   );
 };
-export default PracticeMediumScreen;
+
+export default ShapeModeScreen;

@@ -1,5 +1,5 @@
 // PracticeNumber.js
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
@@ -7,6 +7,7 @@ import NumberGame from "../../../../component/game/Practice/EasyMode/PracticeNum
 import StageCompletion from "../../../../component/stageCompletion";
 import numberDialogues from "../../../../data/numberDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
 
 const numberBg = require("../../../../../assets/gameBackground/practice-number-bg.png");
@@ -41,6 +42,12 @@ const numberCompletionNpc = {
 const NumberModeScreen = () => {
   const navigation = useNavigation(); 
 
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
+
+
   return (
     <GameFlows
       backgroundImg={numberBg}
@@ -54,6 +61,7 @@ const NumberModeScreen = () => {
           dialoguesData={numberDialogues} 
           completionNpc={numberCompletionNpc} 
           navigation={navigation}  
+          currentScreen="PracticeNumber"
         />
       )}
     />

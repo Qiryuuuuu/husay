@@ -36,13 +36,11 @@ import ChallengeNumber from "./screens/challenge interface/easy/number/Challenge
 import ChallengeMedium from "../app/screens/challenge interface/medium/ChallengeMedium"
 import ChallengeHard from "../app/screens/challenge interface/hard/ChallengeHard"
 
-import chall from "../app/component/game/challenge/EasyMode/ChallengeShape"
-
 const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="ChallengeEasyInterface" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="SecurityQuestion" component={SecurityQuestionScreen} />
@@ -77,10 +75,6 @@ export default function App() {
         <Stack.Screen name="ChallengeNumber" component={ChallengeNumber} />
         <Stack.Screen name="ChallengeMedium" component={ChallengeMedium} />
         <Stack.Screen name="ChallengeHard" component={ChallengeHard} />
-
-        <Stack.Screen name="chall" component={chall} />
-
-
       </Stack.Navigator>
     </NavigationContainer>
   );

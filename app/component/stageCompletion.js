@@ -6,11 +6,36 @@ import AudioPlayer from "../component/audio/AudioPlayer"; // Import AudioPlayer 
 // Import the completion sound effect
 const completionSound = require("../../assets/voiceOver/misc/stage-complete.wav"); // Update this path to match your sound file location
 
-const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, dialoguesData, completionNpc, navigation, isChallengeMode }) => {
+const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, dialoguesData, completionNpc, navigation, isChallengeMode, currentScreen  }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const typingSpeed = 30;
   const [playCompletionSound, setPlayCompletionSound] = useState(true);
+
+  // Define the mapping for the next levels
+  const nextLevelMap = {
+    // Practice mode levels
+    PracticeShape: "PracticeColor",
+    PracticeColor: "PracticeNumber",
+    PracticeNumber: "PracticeMedium",
+    PracticeMedium: "PracticeHard",
+    PracticeHard: null, // No Next button for last stage
+
+    // Challenge mode levels
+    ChallengeShape: "ChallengeColor",
+    ChallengeColor: "ChallengeNumber",
+    ChallengeNumber: "ChallengeMedium",
+    ChallengeMedium: "ChallengeHard",
+    ChallengeHard: null // No Next button for last stage
+  };
+
+  // Function to handle next button press
+  const handleNext = () => {
+    const nextScreen = nextLevelMap[currentScreen];
+    if (nextScreen && navigation) {
+      navigation.navigate(nextScreen);
+    }
+  };
 
   // Handle audio playback status
   const handlePlaybackStatusUpdate = (status) => {
@@ -107,9 +132,11 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
           <TouchableOpacity style={styles.button} onPress={() => { if (navigation) { navigation.navigate("Home") } }}>
             <Image source={require("../../assets/stageCompletion/home-btn.png")} style={styles.image} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Image source={require("../../assets/stageCompletion/next-btn.png")} style={styles.image} />
-          </TouchableOpacity>
+          {nextLevelMap[currentScreen] && (
+            <TouchableOpacity style={styles.button} onPress={handleNext}>
+              <Image source={require("../../assets/stageCompletion/next-btn.png")} style={styles.image} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.chatContainer}>

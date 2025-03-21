@@ -1,3 +1,4 @@
+//PracticeMedium.tsx
 import React from "react";
 import { BaseMediumGame } from "../../MediumBaseGame";
 import dialogues from "../../../../data/evaDialogues"; 

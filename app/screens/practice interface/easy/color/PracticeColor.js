@@ -1,5 +1,5 @@
 // PracticeColor.js
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
@@ -7,6 +7,7 @@ import ColorGame from "../../../../component/game/Practice/EasyMode/PracticeColo
 import StageCompletion from "../../../../component/stageCompletion";
 import colorDialogues from "../../../../data/colorDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
 
 const colorBg = require("../../../../../assets/gameBackground/practice-color-bg.png");
@@ -40,6 +41,11 @@ const colorCompletionNpc = {
 
 const ColorModeScreen = () => {
   const navigation = useNavigation(); 
+  
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
 
   return (
     <GameFlows
@@ -54,6 +60,7 @@ const ColorModeScreen = () => {
           dialoguesData={colorDialogues} 
           completionNpc={colorCompletionNpc} 
           navigation={navigation}
+          currentScreen="PracticeColor"
         />
       )}
     />

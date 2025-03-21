@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, Text, TouchableOpacity, Image, StyleSheet, 
   useWindowDimensions, ImageBackground 
 } from "react-native";
 import SettingsModal from "../../component/setting"; 
+import { playMusic, stopMusic } from "../../component/audio/MusicManager";
+
 
 /* Background image */
 const bgImg = require("../../../assets/gameBackground/blue.png");
@@ -20,6 +22,11 @@ const settingHeader = require("../../../assets/headerText/setting-header.png");
 
 
 export default function HomeScreen({ navigation }) {
+  useEffect(() => {
+    playMusic("appBg");
+    return () => stopMusic(); // Stop music when the screen unmounts
+  }, []);
+
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
 

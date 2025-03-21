@@ -1,5 +1,5 @@
 // PracticeShape.js 
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
@@ -7,6 +7,8 @@ import ShapeGame from "../../../../component/game/Practice/EasyMode/PracticeShap
 import StageCompletion from "../../../../component/stageCompletion";
 import shapeDialogues from "../../../../data/shapeDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
+
 
 const shapeBg = require("../../../../../assets/gameBackground/practice-shape-bg.webp");
 
@@ -36,6 +38,12 @@ const shapeCompletionNpc = {
 const ShapeModeScreen = () => {
   const navigation = useNavigation(); 
 
+    useEffect(() => {
+      playMusic("easyBg");
+      return () => stopMusic();
+    }, []);
+  
+  
   return (
     <GameFlows
       backgroundImg={shapeBg}
@@ -49,6 +57,8 @@ const ShapeModeScreen = () => {
           dialoguesData={shapeDialogues} 
           completionNpc={shapeCompletionNpc} 
           navigation={navigation} 
+          currentScreen="PracticeShape"
+
         />
       )}
     />

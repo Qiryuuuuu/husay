@@ -1,5 +1,5 @@
 // PracticeMediumScreen.js 
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../component/game/GameFlows";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
@@ -7,6 +7,7 @@ import PracticeMedium from "../../../component/game/Practice/MediumMode/Practice
 import StageCompletion from "../../../component/stageCompletion";
 import PracticeMediumDialogues from "../../../data/evaDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
 
 
 const practiceMediumBg = require("../../../../assets/gameBackground/practice-meduim-bg.png");
@@ -35,6 +36,11 @@ const practiceMediumCompletionNpc = {
 const PracticeMediumScreen = () => {
   const navigation = useNavigation(); 
 
+ useEffect(() => {
+    playMusic("mediumBg");
+    return () => stopMusic();
+  }, []);
+
   return (
     <GameFlows
       backgroundImg={practiceMediumBg}
@@ -48,6 +54,7 @@ const PracticeMediumScreen = () => {
           dialoguesData={PracticeMediumDialogues} 
           completionNpc={practiceMediumCompletionNpc} 
           navigation={navigation} 
+          currentScreen="PracticeMedium"
         />
       )}
     />
