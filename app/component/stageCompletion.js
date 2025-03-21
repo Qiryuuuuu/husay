@@ -2,11 +2,21 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import AudioPlayer from "../component/audio/AudioPlayer"; // Import AudioPlayer component
+import { useNavigation } from "@react-navigation/native";
 
 // Import the completion sound effect
 const completionSound = require("../../assets/voiceOver/misc/stage-complete.wav"); // Update this path to match your sound file location
 
-const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, dialoguesData, completionNpc, navigation, isChallengeMode }) => {
+const StageCompletion = ({
+  timeTaken,
+  correctAnswers,
+  totalRounds,
+  onRestart,
+  dialoguesData,
+  completionNpc,
+  isChallengeMode,
+}) => {
+  const navigation = useNavigation();
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const typingSpeed = 30;
@@ -22,7 +32,7 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
   useEffect(() => {
     // Play completion sound when component mounts
     setPlayCompletionSound(true);
-    
+
     const completeDialogues = dialoguesData?.complete || [];
     if (!completeDialogues.length) {
       setIsTyping(false);
@@ -69,22 +79,32 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
     <View style={styles.containerStage}>
       {/* Add AudioPlayer component */}
       {playCompletionSound && (
-        <AudioPlayer 
+        <AudioPlayer
           audioSource={completionSound}
           onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
           autoPlay={true}
         />
       )}
-      
+
       <View style={styles.containerContent}>
-        <Image source={require("../../assets/gameBackground/stage-completion-bg.png")} style={styles.completionBg} />
-        <Image source={require("../../assets/stageCompletion/completion-header.png")} style={styles.headerStage} />
+        <Image
+          source={require("../../assets/gameBackground/stage-completion-bg.png")}
+          style={styles.completionBg}
+        />
+        <Image
+          source={require("../../assets/stageCompletion/completion-header.png")}
+          style={styles.headerStage}
+        />
 
         {/* Star Display */}
         {isChallengeMode && (
           <View style={styles.starContainer}>
             {[...Array(starCount)].map((_, index) => (
-              <Image key={index} source={require("../../assets/stageCompletion/star.png")} style={styles.starImage} />
+              <Image
+                key={index}
+                source={require("../../assets/stageCompletion/star.png")}
+                style={styles.starImage}
+              />
             ))}
           </View>
         )}
@@ -102,13 +122,32 @@ const StageCompletion = ({ timeTaken, correctAnswers, totalRounds, onRestart, di
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={onRestart}>
-            <Image source={require("../../assets/stageCompletion/retry-btn.png")} style={styles.image} />
+            <Image
+              source={require("../../assets/stageCompletion/retry-btn.png")}
+              style={styles.image}
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => { if (navigation) { navigation.navigate("Home") } }}>
-            <Image source={require("../../assets/stageCompletion/home-btn.png")} style={styles.image} />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              navigation.navigate("Home");
+            }}
+          >
+            <Image
+              source={require("../../assets/stageCompletion/home-btn.png")}
+              style={styles.image}
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Image source={require("../../assets/stageCompletion/next-btn.png")} style={styles.image} />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              navigation.navigate("PracMainScreen");
+            }}
+          >
+            <Image
+              source={require("../../assets/stageCompletion/next-btn.png")}
+              style={styles.image}
+            />
           </TouchableOpacity>
         </View>
 

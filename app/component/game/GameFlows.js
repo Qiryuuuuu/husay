@@ -1,6 +1,12 @@
 // GameFlow.js
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, ImageBackground, Animated, Easing } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ImageBackground,
+  Animated,
+  Easing,
+} from "react-native";
 
 const GameFlows = ({
   backgroundImg,
@@ -8,7 +14,7 @@ const GameFlows = ({
   CountdownComponent,
   GameComponent,
   StageCompletionComponent,
-  navigation
+  navigation,
 }) => {
   const [gamePhase, setGamePhase] = useState("dialog");
   const [finalTime, setFinalTime] = useState(0);
@@ -36,9 +42,10 @@ const GameFlows = ({
   }, [gamePhase, overlayOpacity]);
 
   const handleGameComplete = (timeTaken, score) => {
+    console.log("✅ Transitioning to Stage Completion...");
     setFinalTime(timeTaken);
     setFinalScore(score);
-    setGamePhase("completed");
+    setGamePhase("completed"); // ✅ Ensure the game phase updates properly
   };
 
   return (
@@ -48,7 +55,7 @@ const GameFlows = ({
           styles.overlay,
           gamePhase === "game"
             ? styles.lightOverlay
-            : (gamePhase === "dialog" || gamePhase === "completed")
+            : gamePhase === "dialog" || gamePhase === "completed"
             ? styles.darkOverlay
             : styles.noOverlay,
           { opacity: overlayOpacity },
@@ -63,14 +70,17 @@ const GameFlows = ({
 
       {gamePhase === "countdown" && (
         <View style={[styles.fullscreenContainer, { zIndex: 10 }]}>
-          <CountdownComponent onCountDownComplete={() => setGamePhase("game")} />
+          <CountdownComponent
+            onCountDownComplete={() => setGamePhase("game")}
+          />
         </View>
       )}
 
       {gamePhase === "game" && (
         <View style={styles.fullscreenContainer}>
-          <GameComponent 
-            onGameComplete={handleGameComplete} 
+          <GameComponent
+            onGameComplete={handleGameComplete}
+            setGamePhase={setGamePhase} // ✅ Pass setGamePhase to GameComponent
             navigation={navigation}
           />
         </View>

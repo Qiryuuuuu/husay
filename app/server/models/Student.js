@@ -5,12 +5,20 @@ const ScoreSchema = new mongoose.Schema({
   stars: { type: Number, default: 0 }, // Stars earned based on score
 });
 
-const DifficultySchema = new mongoose.Schema({
-  Easy: { type: ScoreSchema, default: () => ({}) },
-  Medium: { type: ScoreSchema, default: () => ({}) },
-  Hard: { type: ScoreSchema, default: () => ({}) },
+// ✅ Define structure for Easy difficulty (separate subjects)
+const EasySubjectsSchema = new mongoose.Schema({
+  colors: { type: ScoreSchema, default: () => ({}) },
+  shapes: { type: ScoreSchema, default: () => ({}) },
+  numbers: { type: ScoreSchema, default: () => ({}) },
 });
 
+// ✅ Define structure for Medium & Hard (combined subjects)
+const MixedSubjectsSchema = new mongoose.Schema({
+  medium: { type: ScoreSchema, default: () => ({}) },
+  hard: { type: ScoreSchema, default: () => ({}) },
+});
+
+// ✅ Final Student Schema
 const StudentSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   age: { type: Number, required: true },
@@ -18,19 +26,15 @@ const StudentSchema = new mongoose.Schema({
   profileImage: { type: String, default: "" },
   employeeNo: { type: String, required: true },
 
-  // ✅ Subject-based scores for both practice and challenge modes
-  subjects: {
-    Colors: {
-      practice: { type: DifficultySchema, default: () => ({}) },
-      challenge: { type: DifficultySchema, default: () => ({}) },
+  // ✅ Scores for practice and challenge modes
+  modes: {
+    practice: {
+      easy: { type: EasySubjectsSchema, default: () => ({}) }, // ✅ Separate subjects for Easy
+      mixed: { type: MixedSubjectsSchema, default: () => ({}) }, // ✅ Combined scores for Medium & Hard
     },
-    Shapes: {
-      practice: { type: DifficultySchema, default: () => ({}) },
-      challenge: { type: DifficultySchema, default: () => ({}) },
-    },
-    Numbers: {
-      practice: { type: DifficultySchema, default: () => ({}) },
-      challenge: { type: DifficultySchema, default: () => ({}) },
+    challenge: {
+      easy: { type: EasySubjectsSchema, default: () => ({}) }, // ✅ Separate subjects for Easy
+      mixed: { type: MixedSubjectsSchema, default: () => ({}) }, // ✅ Combined scores for Medium & Hard
     },
   },
 
