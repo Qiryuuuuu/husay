@@ -1,56 +1,65 @@
-// ChallengeColor.js
-import React from "react";
-import GameFlows from "../../../../component/game/GameFlows";
+// ChallengeShape.js
+import React, { useEffect } from "react";
+import GameFlows from "../../../../component/game/GameFlowChallenge";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
-import ColorGame from "../../../../component/game/challenge/EasyMode/ChallengeColor";
+import ShapeGame from "../../../../component/game/challenge/EasyMode/ChallengeColor";
 import StageCompletion from "../../../../component/stageCompletion";
-import colorDialogues from "../../../../data/colorDialogues";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
 
-const colorBg = require("../../../../../assets/gameBackground/challenge-color-bg.png");
+const bg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.webp");
 
-const colorDialogData = {
+const DialogData = {
   dialogues: [
-    "Hey there, superstar! 🌟 Today, we’re diving into a world of COLORS! Can you name all the colors you see?",
-    "That’s right! I’m Shane, and I LOVE colors! 😆 Get ready to match, sort, and play with vibrant hues. Let’s light up the screen!",
-    "Awesome! I know you’ll do great! 🎉 Let’s jump in and have some colorful fun! Go, go, go!",
+    "Woahhh, there’s a river we must cross to reach the lair. But, as you know it, I’m a robot hihihihi I’m not sure I’m waterproof. How silly of me. My friend, will you help me cross the river?"
   ],
-  npcNames: ["Eva", "Dolor", "Eva"],
+  npcNames: ["Eva"],
   npcImages: [
-    { image: require("../../../../../assets/eva/eva-excited.png"), width: 340, height: 480 },
-    { image: require("../../../../../assets/dolor/dolor-greet.png"), width: 460, height: 500 },
-    { image: require("../../../../../assets/eva/eva-pointing.png"), width: 601, height: 493 },
+    { image: require("../../../../../assets/eva/eva-happy.png"), width: 340, height: 480 },
+  ],
+  audioFiles: [
+    [require('../../../../../assets/voiceOver/eva/challengEasy/1-pregame.mp3')], 
   ],
 };
 
-const colorCompletionNpc = {
-  name: "Dolor",
-  image: require("../../../../../assets/dolor/dolor-greet.png")
+const CompletionNpc = {
+  name: "Eva",
+  image: require("../../../../../assets/eva/eva-happy.png")
 };
 
-const ColorModeScreen = () => {
+const customCompletionDialog = [
+  "Thank you. We crossed the river safely. I can see the lair but we have to pass through the forest first."
+];
+
+const ShapeModeScreen = () => {
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
   const navigation = useNavigation(); 
 
   return (
     <GameFlows
-      backgroundImg={colorBg}
-      DialogComponent={(props) => <PregameDialog {...props} dialogData={colorDialogData} />}
+      backgroundImg={bg}
+      DialogComponent={(props) => <PregameDialog {...props} dialogData={DialogData} />}
       CountdownComponent={Countdown}
-      GameComponent={ColorGame}
+      GameComponent={(props) => <ShapeGame {...props} />}
       navigation={navigation} 
       StageCompletionComponent={(props) => (
         <StageCompletion 
           {...props} 
-          dialoguesData={colorDialogues} 
-          completionNpc={colorCompletionNpc} 
-          navigation={navigation}
+          dialoguesData={{ complete: customCompletionDialog }}  
+          completionNpc={CompletionNpc} 
+          navigation={navigation} 
           isChallengeMode={true} 
           totalRounds={5} 
+          currentScreen="ChallengeColor"
         />
       )}
     />
   );
 };
-export default ColorModeScreen;
+
+export default ShapeModeScreen;

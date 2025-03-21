@@ -7,6 +7,7 @@ import ColorGame from "../../../../component/game/Practice/EasyMode/PracticeColo
 import StageCompletion from "../../../../component/stageCompletion";
 import colorDialogues from "../../../../data/colorDialogues";
 import { useNavigation } from "@react-navigation/native";
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
 const colorBg = require("../../../../../assets/gameBackground/practice-color-bg.png");
 
@@ -63,6 +64,11 @@ const colorCompletionNpc = {
 
 const ColorModeScreen = ({ route }) => {
   const navigation = useNavigation();
+
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
   const { studentId } = route.params || {}; // Receive studentId
   console.log("Practice Color easy received studentID: ", studentId);
 

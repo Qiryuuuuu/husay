@@ -1,3 +1,4 @@
+//hardQuestions.js
 const figures = {
     houseFigure: [
         { 

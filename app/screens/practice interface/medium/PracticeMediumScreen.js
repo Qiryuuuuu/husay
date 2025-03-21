@@ -1,11 +1,14 @@
 // PracticeMediumScreen.js
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../component/game/GameFlows";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
 import PracticeMedium from "../../../component/game/Practice/MediumMode/PracticeMedium";
 import StageCompletion from "../../../component/stageCompletion";
 import PracticeMediumDialogues from "../../../data/evaDialogues";
+import { useNavigation } from "@react-navigation/native";
+import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
+
 import { useNavigation } from "@react-navigation/native";
 
 const practiceMediumBg = require("../../../../assets/gameBackground/practice-meduim-bg.png");

@@ -1,4 +1,4 @@
-//HardBaseGame.tsx
+//HardGameLogic
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
 import Stopwatch from "../stopWatch";

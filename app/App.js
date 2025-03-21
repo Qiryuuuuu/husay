@@ -37,7 +37,6 @@ import ChallengeMedium from "../app/screens/challenge interface/medium/Challenge
 import ChallengeHard from "../app/screens/challenge interface/hard/ChallengeHard";
 
 const Stack = createStackNavigator();
-
 export default function App() {
   return (
     <NavigationContainer>

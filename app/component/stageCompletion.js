@@ -22,6 +22,31 @@ const StageCompletion = ({
   const typingSpeed = 30;
   const [playCompletionSound, setPlayCompletionSound] = useState(true);
 
+  // Define the mapping for the next levels
+  const nextLevelMap = {
+    // Practice mode levels
+    PracticeShape: "PracticeColor",
+    PracticeColor: "PracticeNumber",
+    PracticeNumber: "PracticeMedium",
+    PracticeMedium: "PracticeHard",
+    PracticeHard: null, // No Next button for last stage
+
+    // Challenge mode levels
+    ChallengeShape: "ChallengeColor",
+    ChallengeColor: "ChallengeNumber",
+    ChallengeNumber: "ChallengeMedium",
+    ChallengeMedium: "ChallengeHard",
+    ChallengeHard: null, // No Next button for last stage
+  };
+
+  // Function to handle next button press
+  const handleNext = () => {
+    const nextScreen = nextLevelMap[currentScreen];
+    if (nextScreen && navigation) {
+      navigation.navigate(nextScreen);
+    }
+  };
+
   // Handle audio playback status
   const handlePlaybackStatusUpdate = (status) => {
     if (status.didJustFinish) {

@@ -1,5 +1,5 @@
 // PracticeNumber.js
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";

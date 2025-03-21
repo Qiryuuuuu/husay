@@ -1,13 +1,15 @@
 // ChallengeShape.js
-import React from "react";
+import React, { useEffect } from "react";
 import GameFlows from "../../../../component/game/GameFlowChallenge";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
 import ShapeGame from "../../../../component/game/challenge/EasyMode/ChallengeShape";
 import StageCompletion from "../../../../component/stageCompletion";
 import { useNavigation } from '@react-navigation/native';
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
-const shapeBg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.png");
+
+const shapeBg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.webp");
 
 const shapeDialogData = {
   dialogues: [
@@ -34,6 +36,11 @@ const customCompletionDialog = [
 const ShapeModeScreen = () => {
   const navigation = useNavigation(); 
 
+  useEffect(() => {
+    playMusic("easyBg");
+    return () => stopMusic();
+  }, []);
+
   return (
     <GameFlows
       backgroundImg={shapeBg}
@@ -48,7 +55,8 @@ const ShapeModeScreen = () => {
           completionNpc={shapeCompletionNpc} 
           navigation={navigation} 
           isChallengeMode={true} 
-          totalRounds={5} 
+          totalRounds={5}
+          currentScreen="ChallengeShape"
         />
       )}
     />

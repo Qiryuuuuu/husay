@@ -1,16 +1,12 @@
 //PracMainScreen.js
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Modal,
-  useWindowDimensions,
-  ImageBackground,
+import React, { useState, useEffect } from "react";
+import { 
+  View, Text, TouchableOpacity, Image, StyleSheet, Modal, 
+  useWindowDimensions, ImageBackground 
 } from "react-native";
 import PregameDialog from "../../component/game/PregameDialog";
+import { playMusic, stopMusic } from "../../component/audio/MusicManager";
+
 import { useNavigation } from "@react-navigation/native";
 
 /* Background image */
@@ -65,6 +61,11 @@ export default function PracMainScreen({ route }) {
   const handleDialogComplete = () => {
     setShowDialog(false);
   };
+
+  useEffect(() => {
+    playMusic("gameInterfaceBg");
+    return () => stopMusic();
+  }, []);
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>

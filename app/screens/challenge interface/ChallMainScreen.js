@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from "react";
 import { 
   View, Text, TouchableOpacity, Image, StyleSheet, 
-  useWindowDimensions, ImageBackground 
+  useWindowDimensions, ImageBackground, Pressable 
 } from "react-native";
 import PregameDialog from "../../component/game/dialogBg";
+import { playMusic, stopMusic, playAudio } from "../../component/audio/MusicManager"; // Import playAudio
 
 /* Background images */
 const bg1 = require("../../../assets/gameBackground/challenge-interface-bg.png");
 const bg2 = require("../../../assets/gameBackground/challenge-interface-bg-2.webp");
 const bgKids = require("../../../assets/gameBackground/challenge-interface-kids-bg.webp");
 const mainBg = require("../../../assets/gameBackground/red.png");
+const journeyMap = require("../../../assets/gameBackground/challenge/journey-map.png"); // Import the journey map image
 
 /* Header images */
 const challengeHeader = require("../../../assets/headerText/challenge-header.png");
@@ -43,7 +45,7 @@ const dialogData = {
     require('../../../assets/voiceOver/eva/challengeIntro/eva-narrative-1.mp3'),
     require("../../../assets/voiceOver/misc/kids.mp3"),
     require("../../../assets/voiceOver/eva/challengeIntro/eva-narrative-2.mp3"),
-    require('../../../assets/voiceOver/eva/challengeIntro/eva-narrative-3.mp3'),
+    require('../../../assets/voiceOver/eva/challengeIntro/eva-narrative-3.mp3'), // Audio for the journey map dialog
   ],
 };
 
@@ -52,7 +54,10 @@ export default function ChallMainScreen({ navigation }) {
   const [showDialog, setShowDialog] = useState(true);
   const [currentBackground, setCurrentBackground] = useState(bg1);
 
-  const getBackgroundForSpeaker = (npcName) => {
+  const getBackgroundForSpeaker = (npcName, dialogue) => {
+    if (dialogue === "First, we need to follow this forest path and cross the river. Then, we must pass through the forest to the Evil Inventor's Lair and hopefully we defeat the Evil Inventor.") {
+      return journeyMap;
+    }
     switch (npcName) {
       case "Evil Inventor":
         return bg1;
@@ -66,9 +71,20 @@ export default function ChallMainScreen({ navigation }) {
   };
 
   useEffect(() => {
+    playMusic("gameInterfaceBg");
+    return () => stopMusic();
+  }, []);
+
+  useEffect(() => {
     if (showDialog) {
       const speaker = dialogData.npcNames[dialogIndex];
-      setCurrentBackground(getBackgroundForSpeaker(speaker));
+      const dialogue = dialogData.dialogues[dialogIndex];
+      setCurrentBackground(getBackgroundForSpeaker(speaker, dialogue));
+
+      // Play the corresponding audio for the current dialog
+      if (dialogData.audioFiles[dialogIndex]) {
+        playAudio(dialogData.audioFiles[dialogIndex]);
+      }
     } else {
       setCurrentBackground(mainBg);
     }
@@ -76,13 +92,20 @@ export default function ChallMainScreen({ navigation }) {
 
   const handleDialogNext = (index) => {
     const nextIndex = index + 1;
-    setDialogIndex(nextIndex);
+    if (nextIndex < dialogData.dialogues.length) {
+      setDialogIndex(nextIndex);
+    } else {
+      handleDialogComplete(); // Complete the dialog if it's the last one
+    }
   };
 
   const handleDialogComplete = () => {
     setShowDialog(false);
     setCurrentBackground(mainBg);
   };
+
+  // Check if the current background is the journey map
+  const isJourneyMap = currentBackground === journeyMap;
 
   return (
     <ImageBackground 
@@ -91,7 +114,7 @@ export default function ChallMainScreen({ navigation }) {
       resizeMode="cover"
     >
       <View style={styles.container}>
-        {showDialog ? (
+        {showDialog && !isJourneyMap ? ( // Only show dialog if it's not the journey map
           <PregameDialog
             dialogData={dialogData}
             onDialogComplete={handleDialogComplete}
@@ -101,35 +124,52 @@ export default function ChallMainScreen({ navigation }) {
         ) : (
           <>
             {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-                <Image source={backButton} style={styles.logo} />
-              </TouchableOpacity>
+            {!isJourneyMap && ( // Only show header if it's not the journey map
+              <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                  <Image source={backButton} style={styles.logo} />
+                </TouchableOpacity>
 
-              <View style={styles.titleContainer}>
-                <Image source={challengeHeader} style={styles.studentImg} />
+                <View style={styles.titleContainer}>
+                  <Image source={challengeHeader} style={styles.studentImg} />
+                </View>
               </View>
-            </View>
+            )}
 
             {/* Main content */}
-            <View style={styles.cardContainer}>
-              <TouchableOpacity onPress={() => navigation.navigate('ChallengeEasyInterface')}>
-                <Image source={easyCard} style={styles.cards} />
-              </TouchableOpacity>
+            {!showDialog && !isJourneyMap && ( // Only show main content if it's not the journey map
+              <View style={styles.cardContainer}>
+                <TouchableOpacity onPress={() => navigation.navigate('ChallengeEasyInterface')}>
+                  <Image source={easyCard} style={styles.cards} />
+                </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => navigation.navigate('ChallengeMedium')}>
-                <Image source={mediumCard} style={styles.cards} />
-              </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('ChallengeMedium')}>
+                  <Image source={mediumCard} style={styles.cards} />
+                </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => navigation.navigate('ChallengeHard')}>
-                <Image source={hardCard} style={styles.cards} />
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity onPress={() => navigation.navigate('ChallengeHard')}>
+                  <Image source={hardCard} style={styles.cards} />
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
-            </View>
+            {!isJourneyMap && ( // Only show footer if it's not the journey map
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+              </View>
+            )}
+
+            {/* Overlay for journey map to make it clickable */}
+            {isJourneyMap && (
+              <Pressable
+                style={styles.fullScreenPressable}
+                onPress={() => handleDialogNext(dialogIndex)} // Proceed to the next dialog or complete
+              >
+                {/* Empty view to make the entire screen clickable */}
+                <View style={styles.fullScreenPressable} />
+              </Pressable>
+            )}
           </>
         )}
       </View>
@@ -176,13 +216,9 @@ const styles = StyleSheet.create({
     color: "#555",
     textAlign: "center",
   },
-  logo: {
-    // Add dimensions if needed
+  fullScreenPressable: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
   },
-  studentImg: {
-    // Add dimensions if needed
-  },
-  cards: {
-    // Add dimensions if needed
-  }
 });

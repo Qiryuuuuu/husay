@@ -1,14 +1,10 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  useWindowDimensions,
-  ImageBackground,
+import React, { useState, useEffect } from "react";
+import { 
+  View, Text, TouchableOpacity, Image, StyleSheet, 
+  useWindowDimensions, ImageBackground 
 } from "react-native";
-import SettingsModal from "../../component/setting";
+import SettingsModal from "../../component/setting"; 
+import { playMusic, stopMusic } from "../../component/audio/MusicManager";
 import { useNavigation } from "@react-navigation/native";
 
 /* Background image */
@@ -24,11 +20,18 @@ const challengeCard = require("../../../assets/menuCards/home/challenge-card.png
 
 const settingHeader = require("../../../assets/headerText/setting-header.png");
 
+
+
 export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const navigation = useNavigation();
   const { studentName, studentId } = route.params || {}; // Get studentName from params
+
+  useEffect(() => {
+    playMusic("appBg");
+    return () => stopMusic(); // Stop music when the screen unmounts
+  }, []);
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>
