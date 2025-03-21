@@ -1,9 +1,17 @@
 //EasyBaseGame.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Animated,
+  Vibration,
+} from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
-import AudioPlayer from "../../component/audio/AudioPlayer"; 
+import AudioPlayer from "../../component/audio/AudioPlayer";
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -44,7 +52,7 @@ export const BaseGame: React.FC<GameProps> = ({
   navigation,
   npcConfig,
   dialogues,
-  numRounds = 5
+  numRounds = 5,
 }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [rounds, setRounds] = useState<GameItem[]>([]);
@@ -53,13 +61,15 @@ export const BaseGame: React.FC<GameProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isClickable, setIsClickable] = useState(true);
   const [feedbackText, setFeedbackText] = useState(
-    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!"
+    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+      "Let's begin!"
   );
   const [npcImage, setNpcImage] = useState(npcConfig.idle);
   const [isGameRunning, setIsGameRunning] = useState(true);
+  const correctFirstTryRef = useRef(0); // ✅ Track latest score
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
-  
+
   // Add state for audio playback
   const [currentSound, setCurrentSound] = useState<any>(null);
   const [playSound, setPlaySound] = useState(false);
@@ -74,7 +84,7 @@ export const BaseGame: React.FC<GameProps> = ({
     let roundsArray = [...items]
       .sort(() => Math.random() - 0.5)
       .slice(0, numRounds);
-    
+
     // If we don't have enough items, repeat some to reach numRounds
     while (roundsArray.length < numRounds) {
       const remainingNeeded = numRounds - roundsArray.length;
@@ -83,7 +93,7 @@ export const BaseGame: React.FC<GameProps> = ({
         .slice(0, remainingNeeded);
       roundsArray = [...roundsArray, ...additionalItems];
     }
-    
+
     setRounds(roundsArray);
     setCurrentRound(0);
     resetGameState();
@@ -92,14 +102,17 @@ export const BaseGame: React.FC<GameProps> = ({
   const resetGameState = () => {
     setIsCorrect(null);
     setIsClickable(true);
-    setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!");
+    setFeedbackText(
+      dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+        "Let's begin!"
+    );
     setNpcImage(npcConfig.idle);
     setIsGameRunning(true);
     setCorrectFirstTry(0);
     elapsedTimeRef.current = 0;
     setHasTried(false);
   };
-  
+
   // Audio playback status handler
   const handlePlaybackStatusUpdate = useCallback((status) => {
     if (status.didJustFinish) {
@@ -119,58 +132,88 @@ export const BaseGame: React.FC<GameProps> = ({
       setOptions(allOptions);
       setIsCorrect(null);
       setIsClickable(true);
-      setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's continue!");
+      setFeedbackText(
+        dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+          "Let's continue!"
+      );
       setNpcImage(npcConfig.idle);
       setHasTried(false);
     }
   }, [currentRound, rounds, items, dialogues?.idle, npcConfig.idle]);
 
-  const handleSelection = useCallback((selectedName: string) => {
-    if (!isClickable) return;
+  const handleSelection = useCallback(
+    (selectedName: string) => {
+      if (!isClickable) return;
 
-    if (selectedName === rounds[currentRound].name) {
-      handleCorrectAnswer();
-    } else {
-      handleWrongAnswer();
+      if (selectedName === rounds[currentRound].name) {
+        handleCorrectAnswer();
+        console.log("Correct First Try: ", correctFirstTry);
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [currentRound, rounds, isClickable, correctFirstTry + 1, hasTried]
+  );
+
+  const handleGameEnd = () => {
+    console.log("✅ BaseGame detected game end!");
+
+    const finalScore = correctFirstTryRef.current; // ✅ Get the latest score
+    const totalTime = elapsedTimeRef.current; // ✅ Get total elapsed time
+
+    console.log("Final Score:", finalScore);
+    console.log("Total Time:", totalTime);
+
+    if (typeof onGameComplete === "function") {
+      console.log("✅ Calling onGameComplete with:", finalScore, totalTime);
+      onGameComplete(finalScore, totalTime); // ✅ Pass correct score & time
     }
-  }, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
+  };
 
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
-    const randomCorrectDialogue = dialogues?.correct?.[Math.floor(Math.random() * dialogues.correct.length)] || "Correct!";
+    const randomCorrectDialogue =
+      dialogues?.correct?.[
+        Math.floor(Math.random() * dialogues.correct.length)
+      ] || "Correct!";
     setFeedbackText(randomCorrectDialogue);
     animateNpcBounce();
     setNpcImage(npcConfig.correct);
     fadeInAnimation();
     setIsClickable(false);
-    
+
     // Play correct sound
     setCurrentSound(correctSound);
     setPlaySound(true);
-  
-    let updatedScore = correctFirstTry;
-    if (!hasTried) {
-      updatedScore += 1;
-      setCorrectFirstTry(updatedScore);
-    }
-  
+
+    setCorrectFirstTry((prev) => {
+      if (!hasTried) {
+        const newScore = prev + 1;
+        correctFirstTryRef.current = newScore; // ✅ Immediately update the latest score
+        console.log(
+          "✅ Correct answer on first try! Updating score to:",
+          newScore
+        );
+        return newScore;
+      }
+      return prev;
+    });
+
     setTimeout(() => {
       if (currentRound < numRounds - 1) {
         setCurrentRound(currentRound + 1);
       } else {
         setIsGameRunning(false);
-        setTimeout(() => {
-          if (onGameComplete) {
-            onGameComplete(elapsedTimeRef.current, updatedScore);
-          }
-        }, 500);
+        setTimeout(handleGameEnd, 500);
       }
     }, 1500);
   };
-  
+
   const handleWrongAnswer = () => {
     setIsCorrect(false);
-    const randomWrongDialogue = dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] || "Try again!";
+    const randomWrongDialogue =
+      dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] ||
+      "Try again!";
     setFeedbackText(randomWrongDialogue);
     setNpcImage(npcConfig.wrong);
     fadeInAnimation();
@@ -178,26 +221,54 @@ export const BaseGame: React.FC<GameProps> = ({
     triggerShake();
     Vibration.vibrate(100);
     setHasTried(true);
-    
+
     // Play wrong sound
     setCurrentSound(wrongSound);
     setPlaySound(true);
   };
-  
+
   const triggerShake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
   const animateNpcBounce = () => {
     Animated.sequence([
-      Animated.timing(npcBounceAnim, { toValue: 1.1, duration: 150, useNativeDriver: true }),
-      Animated.timing(npcBounceAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1.1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -221,43 +292,53 @@ export const BaseGame: React.FC<GameProps> = ({
     <View style={styles.container}>
       {/* Include AudioPlayer component */}
       {playSound && currentSound && (
-        <AudioPlayer 
+        <AudioPlayer
           audioSource={currentSound}
           onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
           autoPlay={true}
         />
       )}
 
-      <TouchableOpacity 
-        style={styles.pauseContainer} 
+      <TouchableOpacity
+        style={styles.pauseContainer}
         onPress={() => {
           setIsPaused(true);
           setIsGameRunning(false);
-        }}>
+        }}
+      >
         <Image source={pauseBtn} style={styles.pause} />
       </TouchableOpacity>
 
       <View style={styles.contentContainer}>
         <View style={styles.validationContainer}>
           {isCorrect !== null && (
-            <Image source={isCorrect ? correctImg : wrongImg} style={styles.validationImage} />
+            <Image
+              source={isCorrect ? correctImg : wrongImg}
+              style={styles.validationImage}
+            />
           )}
         </View>
-      
-        <Stopwatch 
-          isRunning={isGameRunning} 
-          onStop={(finalTime) => { 
-            elapsedTimeRef.current = finalTime;
-          }} 
-        />                
-        <Text style={styles.roundText}>Round {currentRound + 1} of {numRounds}</Text>
+
+        <Stopwatch
+          isRunning={isGameRunning}
+          onStop={(finalTime) => {
+            elapsedTimeRef.current = finalTime; // ✅ Save total time
+          }}
+        />
+
+        <Text style={styles.roundText}>
+          Round {currentRound + 1} of {numRounds}
+        </Text>
 
         {rounds.length > 0 && (
           <>
             <View style={styles.itemContainer}>
-              <Animated.Image 
-                source={rounds[currentRound].image} 
-                style={[styles.itemImage, { transform: [{ translateX: shakeAnim }] }]} 
+              <Animated.Image
+                source={rounds[currentRound].image}
+                style={[
+                  styles.itemImage,
+                  { transform: [{ translateX: shakeAnim }] },
+                ]}
               />
             </View>
 
@@ -266,10 +347,7 @@ export const BaseGame: React.FC<GameProps> = ({
                 <TouchableOpacity
                   key={index}
                   onPress={() => handleSelection(option.name)}
-                  style={[
-                    styles.button,
-                    !isClickable && styles.disabledButton
-                  ]}
+                  style={[styles.button, !isClickable && styles.disabledButton]}
                   disabled={!isClickable}
                 >
                   <Text style={styles.buttonText}>{option.name}</Text>
@@ -281,9 +359,9 @@ export const BaseGame: React.FC<GameProps> = ({
       </View>
 
       <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
-        <Animated.Image 
-          source={npcImage} 
-          style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]} 
+        <Animated.Image
+          source={npcImage}
+          style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]}
         />
 
         <View style={styles.dialogueContainer}>
@@ -292,8 +370,8 @@ export const BaseGame: React.FC<GameProps> = ({
         </View>
       </Animated.View>
 
-      <SettingsModal 
-        visible={isPaused} 
+      <SettingsModal
+        visible={isPaused}
         onClose={() => {
           setIsPaused(false);
           setIsGameRunning(true);
@@ -307,7 +385,7 @@ export const BaseGame: React.FC<GameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home');
+          navigation.navigate("Home");
           setIsPaused(false);
         }}
       />
@@ -320,7 +398,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     position: "absolute",
     top: 40,
-    left: 50
+    left: 50,
   },
   container: {
     flex: 1,
@@ -334,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     paddingBottom: 150,
-    zIndex: 10
+    zIndex: 10,
   },
   validationContainer: {
     height: 50,
@@ -382,7 +460,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   buttonText: {
-    color: "white"
+    color: "white",
   },
   button: {
     backgroundColor: "#5A8EF4",
@@ -391,7 +469,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: 120,
     alignItems: "center",
-    zIndex: 20
+    zIndex: 20,
   },
   npcContainer: {
     position: "absolute",
@@ -418,14 +496,14 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     elevation: 3,
     borderWidth: 4,
-    borderColor: "white"
+    borderColor: "white",
   },
   npcName: {
     fontWeight: "bold",
     alignSelf: "flex-start",
     marginBottom: 5,
     paddingLeft: 60,
-    fontSize: 18
+    fontSize: 18,
   },
   npcDialogue: {
     textAlign: "center",
@@ -439,6 +517,6 @@ const styles = StyleSheet.create({
   pause: {
     width: 80,
     height: 80,
-    resizeMode: "contain"
-  }
+    resizeMode: "contain",
+  },
 });

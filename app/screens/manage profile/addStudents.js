@@ -6,16 +6,22 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage"; 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://10.0.2.2:5000/api/class/add-student"; // ✅ Fixed API endpoint
+const API_URL = "http://10.0.2.2:5000/api/class/add-student";
 
-const backIcon = require("../../../assets/back-icon.png");
-const logoImg = require("../../../assets/logo.png");
+const backIcon = require("../../../assets/addStudent/Back.png");
+const logoImg = require("../../../assets/Husay.png");
 const defaultProfile = require("../../../assets/default-student.png");
 const userIcon = require("../../../assets/user-icon.png");
 const ageIcon = require("../../../assets/age-icon.png");
 const genderIcon = require("../../../assets/gender-icon.png");
+const addSquareIcon = require("../../../assets/addStudent/add-square.png");
+const element1 = require("../../../assets/addStudent/element1.png");
+const element2 = require("../../../assets/addStudent/element2.png");
+const element3 = require("../../../assets/addStudent/element3.png");
+const element4 = require("../../../assets/addStudent/element4.png");
+const element5 = require("../../../assets/addStudent/element5.png");
 
 export default function AddStudentScreen({ navigation }) {
   const [employeeNo, setEmployeeNo] = useState(null);
@@ -26,7 +32,6 @@ export default function AddStudentScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // ✅ Fetch logged-in user's employeeNo from AsyncStorage
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -51,7 +56,6 @@ export default function AddStudentScreen({ navigation }) {
     fetchUser();
   }, []);
 
-  // ✅ Select and Upload Image
   const selectImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -71,7 +75,6 @@ export default function AddStudentScreen({ navigation }) {
     }
   };
 
-  // ✅ Add Student with Authentication Token
   const addStudent = async () => {
     if (!employeeNo) {
       Alert.alert("Error", "Unauthorized: Employee number is missing.");
@@ -89,10 +92,10 @@ export default function AddStudentScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const token = await AsyncStorage.getItem("authToken"); // ✅ Retrieve the token
+      const token = await AsyncStorage.getItem("authToken");
 
       const newStudent = {
-        employeeNo,  // ✅ Only logged-in teacher can add students
+        employeeNo,
         fullName,
         age: parseInt(age),
         gender,
@@ -102,20 +105,16 @@ export default function AddStudentScreen({ navigation }) {
 
       const response = await axios.post(API_URL, newStudent, {
         headers: {
-          Authorization: `Bearer ${token}`, // ✅ Send token for authentication
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.status === 201) {
         Alert.alert("Success", "Student added successfully!");
-
-        // ✅ Reset form fields
         setFullName("");
         setAge("");
         setGender("");
         setProfileImage(null);
-
-        // ✅ Redirect back to Student Profile
         navigation.navigate("StudentProfile");
       }
     } catch (error) {
@@ -126,7 +125,6 @@ export default function AddStudentScreen({ navigation }) {
     }
   };
 
-  // ✅ Show a loading screen while fetching user data
   if (authLoading) {
     return (
       <View style={styles.container}>
@@ -138,219 +136,328 @@ export default function AddStudentScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backHeader}>
-        <TouchableOpacity onPress={() => navigation.navigate("StudentProfile")} style={styles.backButton}>
-          <Image source={backIcon} style={styles.backIcon} />
-          <Text style={styles.backText}>Student Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Decorative Elements */}
+      <Image source={element1} style={styles.element1} />
+      <Image source={element2} style={styles.element2} />
+      <Image source={element3} style={styles.element3} />
+      <Image source={element4} style={styles.element4} />
+      <Image source={element5} style={styles.element5} />
 
-      <View style={styles.headerContainer}>
+      {/* Back Button */}
+      <TouchableOpacity 
+        onPress={() => navigation.navigate("StudentProfile")} 
+        style={styles.backButton}
+      >
+        <Image source={backIcon} style={styles.backIcon} />
+      </TouchableOpacity>
+
+      {/* Header */}
+      <View style={styles.header}>
         <Image source={logoImg} style={styles.logo} />
-        <View style={styles.textHeader}>
-          <Text style={styles.title}>Husay</Text>
-          <Text style={styles.subtitle}>Hugis, bilang, at kulay — aalalay!</Text>
-        </View>
       </View>
 
-      <View style={styles.formWrapper}>
-        <View style={[styles.formContainer, styles.shadow]}>
-          <TouchableOpacity onPress={selectImage} style={styles.profileImgContainer}>
-            <Image source={profileImage ? { uri: profileImage } : defaultProfile} style={styles.profileImg} />
-            <Text style={styles.changeText}>Upload Profile Picture</Text>
-          </TouchableOpacity>
-
-          <View style={styles.inputWrapper}>
-            <Image source={userIcon} style={styles.inputIcon} />
-            <TextInput 
-              style={styles.input} 
-              placeholder="Student name" 
-              placeholderTextColor="#BDBDBD" 
-              value={fullName} 
-              onChangeText={setFullName} 
-            />
-          </View>
-
-          <View style={styles.inputRow}>
-            <View style={styles.inputWrapper}>
-              <Image source={ageIcon} style={styles.inputIcon} />
-              <TextInput 
-                style={styles.input} 
-                placeholder="Age" 
-                placeholderTextColor="#BDBDBD" 
-                value={age} 
-                onChangeText={setAge} 
-                keyboardType="numeric" 
+      {/* Main Form Container */}
+      <View style={styles.mainContainer}>
+        <View style={styles.formCard}>
+          {/* Profile Picture Upload */}
+          <View style={styles.uploadContainer}>
+            <TouchableOpacity onPress={selectImage}>
+              <Image 
+                source={profileImage ? { uri: profileImage } : defaultProfile} 
+                style={styles.profileImage} 
               />
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Image source={genderIcon} style={styles.inputIcon} />
-              <Picker
-                selectedValue={gender}
-                style={styles.input}
-                onValueChange={(itemValue) => setGender(itemValue)}
-              >
-                <Picker.Item label="Select Gender" value="" />
-                <Picker.Item label="Male" value="Male" />
-                <Picker.Item label="Female" value="Female" />
-                <Picker.Item label="Other" value="Other" />
-              </Picker>
-            </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={selectImage} style={styles.uploadTextContainer}>
+              <Text style={styles.uploadText}>Upload picture</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={[styles.button, styles.shadow]} onPress={addStudent} disabled={loading}>
-            {loading ? <ActivityIndicator color="#000000" /> : <Text style={styles.buttonText}>Add Student</Text>}
-          </TouchableOpacity>
+          {/* Form Fields */}
+          <View style={styles.inputsContainer}>
+            <View style={styles.inputWrapper}><Image source={userIcon} style={styles.icon}/>
+              <TextInput
+                style={styles.input}
+                placeholder="Student Name"
+                value={fullName}
+                onChangeText={setFullName}
+                placeholderTextColor="#999"
+              />
+              
+            </View>
+
+            <View style={styles.rowInputs}>
+              <View style={[styles.inputWrapper, styles.halfInput]}>
+                <Image source={ageIcon} style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  
+                  placeholder="Age"
+                  value={age}
+                  onChangeText={setAge}
+                  keyboardType="numeric"
+                  placeholderTextColor="#999"
+                  
+                  
+                />
+                
+              </View>
+              <View style={[styles.inputWrapper, styles.halfInput]}>
+                 <Image source={genderIcon} style={styles.inputIcon} />
+                <Picker
+                  selectedValue={gender}
+                  style={styles.picker} 
+                  onValueChange={(itemValue) => setGender(itemValue)}
+                >
+                  <Picker.Item label="Gender" value="" />
+                  <Picker.Item label="Male" value="Male" />
+                  <Picker.Item label="Female" value="Female" />
+                  <Picker.Item label="Other" value="Other" />
+                </Picker>
+                
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.addButton} 
+              onPress={addStudent}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <View style={styles.addButtonContent}>
+                  <Image source={addSquareIcon} style={styles.addButtonIcon} />
+                  <Text style={styles.addButtonText}>Add Student</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
-      </View>
+      {/* Footer */}
+      <Text style={styles.footer}>© 2024 Husay. All Rights Reserved.</Text>
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  element1:{position: "absolute", bottom: -180, left: -10, resizeMode: "contain",},
-  element2:{position: "absolute", top: -180, right: -70, resizeMode: "contain",},
-  element3:{position: "absolute", left: -50, top: 300, resizeMode: "contain",},
-  element4:{position: "absolute", right: -180, top: 300, resizeMode: "contain", },
-  element5:{position: "absolute", bottom: -40, right: 40 , resizeMode: "contain", },
-  element6:{position: "absolute", top: -70, left: 400, resizeMode: "contain", },
-  
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#F5F7FA',
+    position: 'relative',
   },
-  backHeader: {
-    position: "absolute",
-    top: 45,
-    left: 30,
+  // Decorative Elements
+  element1: {
+    position: 'absolute',
+    bottom: 500,
+    right: -210,
+    width: 500,
+    height: 300,
+    resizeMode: 'contain',
+  },
+  element2: {
+    position: 'absolute',
+    top: 300,
+    right: -120,
+    width: 300,
+    height: 300,
+    resizeMode: 'contain',
+  },
+  element3: {
+    position: 'absolute',
+    left: 1000,
+    top: 620,
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
+  },
+  element4: {
+    position: 'absolute',
+    right: 1090,
+    top: 250,
+    width: 300,
+    height: 300,
+    resizeMode: 'contain',
+  },
+  element5: {
+    position: 'absolute',
+    bottom: -70,
+    left: 40,
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
+  },
+  // Back Button
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
     zIndex: 10,
   },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
   backIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 5,
-    resizeMode: "contain",
+    width: 100,
+    height: 65,
+    resizeMode: 'contain',
   },
-  backText: {
-    color: "#5A8EF4",
-    fontSize: 16,
-  },
-  headerContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
+  // Header
+  header: {
+    alignItems: 'center',
     marginTop: 50,
-    gap: 15,
+    marginBottom: 20,
   },
-  title: {
-    fontSize: 24,
-    color: "#333",
-    fontWeight: "bold",
-  },
-  subtitle: {
-    fontSize: 16,
-  },
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-  formWrapper: {
-    flex: 1, // Takes up remaining space
-    justifyContent: "center", // Centers the formContainer vertically
-    alignItems: "center", // Centers it horizontally
-    width: "100%",
-  },
-  formContainer: {
-    padding: 50,
-    borderRadius: 50,
-    alignItems: "center",
-    width: "90%",
-    maxWidth: 650,
-    backgroundColor: "#fff",
-    alignSelf: "center",
-  },
-  profileImgContainer: {
-    alignItems: "center",
+  logo: {
+    resizeMode: 'contain',
     marginBottom: 30,
   },
-  profileImg: {
-    width: 350,
-    height: 350,
+  
+  // Main Container
+  mainContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  formCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "#5A8EF4",
+    padding: 30,
+    width: '100%',
+    maxWidth: 500,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  changeText: {
-    marginTop: 10,
+  // Upload Container
+  uploadContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+    position: "relative",
+  },
+  uploadTextContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 7,
+    paddingHorizontal: 29,
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 10,
+    zIndex: 1,
+    marginBottom: -10,
+  },
+  profileImageContainer: {
+    zIndex: 2,
+  },
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 3,
+    backgroundColor: '#F0F0F0',
+    marginBottom: -5,
+    zIndex: 1,
+  },
+  uploadText: {
+    color: '#666666',
     fontSize: 14,
-    color: "#007BFF",
+    textAlign: 'center',
   },
-  inputRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    width: "100%",
-    maxWidth: 245,
-    gap: 10,
+  // Form Inputs
+  inputsContainer: {
+    marginTop: 10,
+    width: '100%',
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
-    maxWidth: 500,
-    paddingHorizontal: 10,
+    backgroundColor: "#F8F8F8",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "#5A8EF4",
-    borderRadius: 10,
-    marginBottom: 20,
-    backgroundColor: "#f9f9f9",
+    borderColor: "#EEEEEE",
+    marginBottom: 15,
+    width: "100%",
   },
   inputIcon: {
     width: 20,
     height: 20,
-    marginRight: 20,
     resizeMode: "contain",
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#333",
+    fontSize: 14,
+    color: "#333333",
+    marginLeft: 10,
   },
-  button: {
-    width: "90%",
-    backgroundColor: "#5A8EF4",
-    padding: 12,
-    borderRadius: 10,
+  rowInputs: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  halfInput: {
+    width: '48%',
+  },
+  picker: {
+    flex: 1,
+    backgroundColor: "#F8F8F8",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#EEEEEE",
+    fontSize: 14,
+  },
+  // Add Button
+  addButton: {
+    flexDirection: "row",
+    backgroundColor: "#4A90E2",
+    borderRadius: 8,
+    padding: 15,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "white",
+    justifyContent: "center",
+    width: "100%",
+    borderWidth: 4,
+    borderColor: "#FFFFFF",
+    shadowColor: "#000",  
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 4, 
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
+  addButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
   },
+  
+  addButtonIcon: {
+    width: 25, 
+    height: 25,
+    marginRight: 8, 
+    resizeMode: "contain",
+  },
+
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Footer
   footer: {
-    position: "absolute",
-    bottom: 20,
-    alignSelf: "center",
-  },
-  footerText: {
-    fontSize: 14,
-    color: "#555",
-    textAlign: "center",
+    textAlign: 'center',
+    color: '#666666',
+    marginBottom: 20,
+    marginTop: 50,
+    fontSize: 18,
   },
 });

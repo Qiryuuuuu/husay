@@ -1,13 +1,20 @@
 import React, { useState } from "react";
-import { 
-  View, Text, FlatList, Image, StyleSheet, 
-  useWindowDimensions, TouchableOpacity, Alert, ActivityIndicator 
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Searchbar } from "react-native-paper";
-import { useFocusEffect } from "@react-navigation/native"; 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome, Feather } from "@expo/vector-icons";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const API_URL = "http://10.0.2.2:5000/api/class/get-students";
 
@@ -19,6 +26,7 @@ export default function StudentProfileScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const homeNavigation = useNavigation(); // Using useNavigation hook
 
   useFocusEffect(
     React.useCallback(() => {
@@ -56,11 +64,12 @@ export default function StudentProfileScreen({ navigation }) {
   };
 
   // ✅ Corrected logic for filtering students
-  const filteredStudents = students.length > 0
-    ? students.filter(student =>
-        student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  const filteredStudents =
+    students.length > 0
+      ? students.filter((student) =>
+          student.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [];
 
   if (loading) {
     return (
@@ -88,23 +97,45 @@ export default function StudentProfileScreen({ navigation }) {
               onChangeText={(text) => setSearchQuery(text)}
               value={searchQuery}
             />
-            <Feather name="filter" size={24} color="#5A8EF4" style={styles.filterIcon} />
+            <Feather
+              name="filter"
+              size={24}
+              color="#5A8EF4"
+              style={styles.filterIcon}
+            />
           </View>
         </View>
       </View>
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, styles.shadow, styles.dashboard]}>
-          <Feather name="menu" size={20} color="#5A8EF4" style={styles.buttonIcon} />
-          <Text style={[styles.buttonText, styles.buttonTextDashboard]} onPress={() => navigation.navigate("Dashboard")} >View Dashboard</Text>
+        <TouchableOpacity
+          style={[styles.button, styles.shadow, styles.dashboard]}
+        >
+          <Feather
+            name="menu"
+            size={20}
+            color="#5A8EF4"
+            style={styles.buttonIcon}
+          />
+          <Text
+            style={[styles.buttonText, styles.buttonTextDashboard]}
+            onPress={() => navigation.navigate("Dashboard")}
+          >
+            View Dashboard
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.button, styles.shadow]} 
+        <TouchableOpacity
+          style={[styles.button, styles.shadow]}
           onPress={() => navigation.navigate("AddStudent")}
         >
-          <Feather name="plus-circle" size={20} color="#fff" style={styles.buttonIcon} />
+          <Feather
+            name="plus-circle"
+            size={20}
+            color="#fff"
+            style={styles.buttonIcon}
+          />
           <Text style={styles.buttonText}>Add Students</Text>
         </TouchableOpacity>
       </View>
@@ -112,25 +143,40 @@ export default function StudentProfileScreen({ navigation }) {
       {/* Student Cards */}
       {filteredStudents.length > 0 ? (
         <FlatList
-          data={filteredStudents} 
+          data={filteredStudents}
           keyExtractor={(item) => item._id.toString()}
           numColumns={4}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => (
             <View style={styles.cardWrapper}>
-              <View style={styles.studentCard}>
-                <Image source={item.profileImage ? { uri: item.profileImage } : defaultProfile} style={styles.studentImg} />
+              <TouchableOpacity
+                style={styles.studentCard}
+                onPress={() => {
+                  console.log("Navigating to Home with studentId:", item._id); // Debugging
+                  navigation.navigate("Home", {
+                    studentName: item.fullName,
+                    studentId: item._id,
+                  });
+                }}
+              >
+                <Image
+                  source={
+                    item.profileImage
+                      ? { uri: item.profileImage }
+                      : defaultProfile
+                  }
+                  style={styles.studentImg}
+                />
                 <Text style={styles.studentName}>{item.fullName}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           )}
-          showsVerticalScrollIndicator={false} 
+          showsVerticalScrollIndicator={false}
         />
       ) : (
         <Text style={styles.noStudentsText}>No students added yet</Text>
       )}
-
     </View>
   );
 }

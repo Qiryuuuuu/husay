@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import SettingsModal from "../../component/setting"; 
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
-
+import { useNavigation } from "@react-navigation/native";
 
 /* Background image */
 const bgImg = require("../../../assets/gameBackground/blue.png");
@@ -21,14 +21,17 @@ const challengeCard = require("../../../assets/menuCards/home/challenge-card.png
 const settingHeader = require("../../../assets/headerText/setting-header.png");
 
 
-export default function HomeScreen({ navigation }) {
+
+export default function HomeScreen({ route }) {
+  const { width, height } = useWindowDimensions();
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const navigation = useNavigation();
+  const { studentName, studentId } = route.params || {}; // Get studentName from params
+
   useEffect(() => {
     playMusic("appBg");
     return () => stopMusic(); // Stop music when the screen unmounts
   }, []);
-
-  const { width, height } = useWindowDimensions();
-  const [settingsVisible, setSettingsVisible] = useState(false);
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>
@@ -36,10 +39,12 @@ export default function HomeScreen({ navigation }) {
         {/* Header */}
         <View style={styles.header}>
           <Image source={logoImg} style={styles.logo} />
-          
+
           <View style={styles.studentInfo}>
             <Image source={studentImg} style={styles.studentImg} />
-            <Text style={styles.studentName}>Student Name</Text>
+            <Text style={styles.studentName}>
+              {studentName || "Student Name"}
+            </Text>
           </View>
 
           <TouchableOpacity onPress={() => setSettingsVisible(true)}>
@@ -49,32 +54,49 @@ export default function HomeScreen({ navigation }) {
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('Class')}>
+          <TouchableOpacity onPress={() => navigation.navigate("Class")}>
             <Image source={classCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('PracMainScreen')}>
+          <TouchableOpacity
+            onPress={() => {
+              console.log(
+                "Navigating to PracMainScreen with studentId:",
+                studentId
+              ); // Debugging
+              navigation.navigate("PracMainScreen", { studentId });
+            }}
+          >
             <Image source={practiceCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ChallMainScreen')}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("ChallMainScreen", { studentId })
+            }
+          >
             <Image source={challengeCard} style={styles.cards} />
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+          <Text style={styles.footerText}>
+            © 2024 Husay. All Rights Reserved.
+          </Text>
         </View>
 
         {/* Use SettingsModal Component */}
-        <SettingsModal 
-          visible={settingsVisible} 
+        <SettingsModal
+          visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
           headerImage={settingHeader}
           buttonOneText="Switch Profile"
           buttonTwoText="Logout"
-          onButtonOnePress={() => console.log("Switching Profile...")}
+          onButtonOnePress={() => {
+            console.log("Switching Profile...");
+            navigation.navigate("StudentProfile"); // Navigate back to Student Profile
+          }}
           onButtonTwoPress={() => console.log("Logging Out...")}
         />
       </View>

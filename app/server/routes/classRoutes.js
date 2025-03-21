@@ -63,7 +63,7 @@ router.get("/get-students", authenticateUser, async (req, res) => {
     const userClass = await Class.findOne({ employeeNo }).populate({
       path: "students",
       model: "Student",
-      select: "fullName profileImage stars subjects",
+      select: "fullName profileImage stars subjects attendance",
     });
 
     if (!userClass) {

@@ -19,16 +19,14 @@ import moment from 'moment';
 
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
-  const [studentName, setStudentName] = useState("Harry Potter"); //Students
-  const [students, setStudents] = useState([
-    "Harry Potter",
-    "Hermione Granger",
-    "Ron Weasley",
-    "Draco Malfoy",
-  ]); // List of students
+  const [students, setStudents] = useState([]); // ✅ Store students
+  const [selectedStudent, setSelectedStudent] = useState(null); // ✅ Selected student
+  const [dropdownOpen, setDropdownOpen] = useState(false); // ✅ Dropdown state
   const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
-  const [fullName, setFullName] = useState("Harold Puno"); //Teacher Name
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [fullName, setFullName] = useState(""); // ✅ State for teacher's name
+  const [loading, setLoading] = useState(true); // ✅ State for loading
+  const [employeeNo, setEmployeeNo] = useState(""); // ✅ Employee number for fetching students
+  const [menuOpenStudentId, setMenuOpenStudentId] = useState(null); // ✅ Track menu open for student
   const [modeOpen, setModeOpen] = useState(false);
   const [difficultyOpen, setDifficultyOpen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -41,6 +39,157 @@ export default function DashboardScreen({ navigation }) {
 
   const [currentQuarter, setCurrentQuarter] = useState(1);
   const [currentYear, setCurrentYear] = useState(moment().year());
+
+  // ✅ Fetch User Data
+  const fetchUser = async () => {
+    try {
+      console.log("🔍 Fetching user data...");
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        setLoading(false);
+        return;
+      }
+  
+      const response = await fetch("http://10.0.2.2:5000/api/auth/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      const data = await response.json();
+      console.log("🔹 User Data:", data);
+  
+      if (response.ok && data != null) {
+        setFullName(data.fullName || "User");
+        setEmployeeNo(data.employeeNo); // ✅ Store employee number
+        fetchClassData(data.employeeNo); // ✅ Fetch students from class
+      } else {
+        console.error("❌ Error fetching user:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Network error fetching user:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  //✅ Fetch Class Data
+  const fetchClassData = async (employeeNo) => {
+    try {
+      if (!employeeNo) {
+        console.error("❌ Employee number not found. Cannot fetch class.");
+        return;
+      }
+  
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        return;
+      }
+  
+      console.log(`🔍 Fetching class data for employeeNo: ${employeeNo}...`);
+  
+      const response = await fetch(
+        `http://10.0.2.2:5000/api/class/get-students?employeeNo=${employeeNo}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const data = await response.json();
+      console.log("🔹 Class API Response:", data);
+  
+      if (response.ok && data.students.length > 0) {
+        setStudents(data.students);
+        setSelectedStudent(data.students[0]); // ✅ Set default student
+      } else {
+        console.error("❌ No students found:", data.message);
+        setStudents([]); // ✅ Ensure students is an empty array if no data is returned
+      }
+    } catch (error) {
+      console.error("❌ Server error fetching students:", error);
+    }
+  };      
+
+  // ✅ Fetch Students
+  const fetchStudents = async (employeeNo) => {
+    try {
+      console.log("🔍 Fetching students for employeeNo:", employeeNo);
+  
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        return;
+      }
+  
+      const response = await fetch(
+        `http://10.0.2.2:5000/api/students/all?employeeNo=${employeeNo}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const data = await response.json();
+      console.log("🔹 Raw Student API Response:", JSON.stringify(data, null, 2));
+  
+      if (response.ok && data.students && data.students.length > 0) {
+        setStudents(data.students);
+        console.log("✅ Students set successfully:", data.students);
+      } else {
+        console.error("❌ No students found or API returned an error.");
+      }
+    } catch (error) {
+      console.error("❌ Server error fetching students:", error);
+    }
+  };
+  
+  //✅ Fetch Student Details
+  const fetchStudentDetails = async (studentIds) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found. Cannot fetch student details.");
+        return;
+      }
+  
+      console.log("🔍 Fetching student details...");
+      const response = await fetch(`http://10.0.2.2:5000/api/students/getMultiple`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ studentIds }),
+      });
+  
+      const data = await response.json();
+      console.log("🔹 Student Data:", data);
+  
+      if (response.ok && data.students.length > 0) {
+        setStudents(data.students);
+        setSelectedStudent(data.students[0]); // ✅ Default to first student
+      } else {
+        console.error("❌ No students found:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Network error fetching student details:", error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchUser();
+  }, []);  
 
   //Logout
   const handleLogout = async () => {
@@ -60,16 +209,48 @@ export default function DashboardScreen({ navigation }) {
   };
 
   // Sample data generator for demonstration
-  const generateAttendanceData = (year) => {
-    const data = {};
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = moment(`${year}-${month + 1}`, 'YYYY-MM').daysInMonth();
-      data[month] = Array(daysInMonth).fill().map(() => (Math.random() > 0.2 ? 'present' : 'absent'));
+  const getAttendanceData = (students) => {
+    if (!students || students.length === 0) {
+      console.error("❌ getAttendanceData() received empty students array.");
+      return {};
     }
+  
+    console.log("🔹 Processing attendance for students:", students);
+  
+    const data = {};
+  
+    students.forEach((student) => {
+      if (!student.attendance || !Array.isArray(student.attendance)) {
+        console.warn(`⚠️ Student ${student.fullName} has no attendance record.`);
+        return {};
+      }
+  
+      student.attendance.forEach(({ date, status }) => {
+        if (!date) {
+          console.warn(`⚠️ Skipping record with missing date for ${student.fullName}`);
+          return;
+        }
+  
+        const month = new Date(date).getMonth();
+        const day = new Date(date).getDate() - 1;
+  
+        if (!data[month]) {
+          const daysInMonth = moment(`${currentYear}-${month + 1}`, "YYYY-MM").daysInMonth();
+          data[month] = Array(daysInMonth).fill("");
+        }
+  
+        data[month][day] = status ? status.toLowerCase() : "";
+      });
+    });
+  
+    console.log("✅ Final attendanceData:", JSON.stringify(data, null, 2));
     return data;
   };
-
-  const attendanceData = generateAttendanceData(currentYear);
+  
+  // ✅ Get real attendance data from the backend
+  const attendanceData = selectedStudent
+  ? getAttendanceData([selectedStudent]) 
+  : {};
 
   // Quarter handling logic
   const quarters = {
@@ -97,20 +278,20 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  // Render Calendar Day
+  // Render Calendar Day 
   const renderDay = (day, status, month, year) => {
     const today = moment();
     const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
     const isToday = currentDay.isSame(today, 'day');
     const isFuture = currentDay.isAfter(today, 'day');
-    const weekday = currentDay.day(); // 0 (Sunday) - 6 (Saturday)
+    const weekday = currentDay.day();
   
+    // Decide background color
     let backgroundColor;
-  
     if (isFuture || weekday === 0 || weekday === 6) {
-      backgroundColor = '#D3D3D3'; // Light gray for weekends and future days
+      backgroundColor = '#D3D3D3';  // gray for future or weekends
     } else {
-      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
+      backgroundColor = (status === 'present') ? '#4CD964' : '#FF3B30'; 
     }
   
     return (
@@ -119,7 +300,7 @@ export default function DashboardScreen({ navigation }) {
         style={[
           styles.dayItem,
           { backgroundColor },
-          isToday && { borderWidth: 2, borderColor: '#007AFF' },
+          isToday && { borderWidth: 2, borderColor: '#007AFF' }
         ]}
       >
         <Text style={styles.dayText}>{day}</Text>
@@ -151,7 +332,7 @@ export default function DashboardScreen({ navigation }) {
   
   // Toggle menu function
   const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
+    setMenuOpenStudentId(!menuOpen);
     // Close other dropdowns when opening menu
     if (!menuOpen) {
       setModeOpen(false);
@@ -171,7 +352,7 @@ export default function DashboardScreen({ navigation }) {
 
     // Close menu if opening mode dropdown
     if (!modeOpen) {
-      setMenuOpen(false);
+      setMenuOpenStudentId(false);
     }
   };
 
@@ -187,7 +368,7 @@ export default function DashboardScreen({ navigation }) {
 
     // Close menu if opening difficulty dropdown
     if (!difficultyOpen) {
-      setMenuOpen(false);
+      setMenuOpenStudentId(false);
     }
   };
 
@@ -197,31 +378,94 @@ export default function DashboardScreen({ navigation }) {
     if (!studentDropdownOpen) {
       setModeOpen(false);
       setDifficultyOpen(false);
-      setMenuOpen(false);
+      setMenuOpenStudentId(false);
     }
   };
 
   // Select Student from Dropdown
-  const selectStudent = (name) => {
-    setStudentName(name);
+  const selectStudent = (student) => {
+    setSelectedStudent(student);
     setStudentDropdownOpen(false);
+    setMenuOpenStudentId(false);
   };
 
   // Handle edit button press
   const handleEditPress = () => {
+    if (selectedStudent) {
+      setEditName(selectedStudent.fullName || "");
+      setEditAge(selectedStudent.age ? selectedStudent.age.toString() : "");
+      setEditGender(selectedStudent.gender || "");
+    }
     setShowEditModal(true);
-    setMenuOpen(false);
+    setMenuOpenStudentId(null);
   };
+  
 
   // Handle delete button press
   const handleDeletePress = () => {
-    setShowDeleteModal(true);
-    setMenuOpen(false);
-  };
+    setShowDeleteModal(true); // ✅ Opens the confirmation modal
+  };  
 
   // Handle update button press
-  const handleUpdate = () => {
-    setStudentName(editName);
+  const handleUpdate = async () => {
+    if (!selectedStudent) return;
+  
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        return;
+      }
+  
+      console.log(`🔄 Updating student: ${selectedStudent._id}`);
+  
+      const response = await fetch(
+        `http://10.0.2.2:5000/api/students/edit/${selectedStudent._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fullName: editName.trim(),
+            age: parseInt(editAge, 10),
+            gender: editGender.trim(),
+          }),
+        }
+      );
+  
+      const text = await response.text();
+      console.log("🔹 Raw Update Response:", text);
+  
+      const data = JSON.parse(text);
+      if (response.ok) {
+        console.log("✅ Student updated successfully:", data);
+  
+        setStudents((prevStudents) =>
+          prevStudents.map((student) =>
+            student._id === selectedStudent._id
+              ? { ...student, fullName: editName, age: editAge, gender: editGender }
+              : student
+          )
+        );
+  
+        setSelectedStudent((prev) => ({
+          ...prev,
+          fullName: editName,
+          age: editAge,
+          gender: editGender,
+        }));
+  
+        // ✅ Update attendance when the student plays a game
+        // await updateAttendance(selectedStudent._id);
+      } else {
+        console.error("❌ Error updating student:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Network error updating student:", error);
+    }
+  
     setShowEditModal(false);
   };
 
@@ -231,11 +475,61 @@ export default function DashboardScreen({ navigation }) {
   };
 
   // Handle delete confirmation
-  const handleDelete = () => {
-    // Implement delete functionality here
-    setShowDeleteModal(false);
+  const handleDelete = async () => {
+    if (!selectedStudent) {
+      console.error("❌ No student selected.");
+      return;
+    }
+  
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found, user might be logged out.");
+        return;
+      }
+  
+      console.log(`🗑️ Attempting to delete student: ${selectedStudent._id}`);
+  
+      // ✅ Send DELETE request to backend
+      const response = await fetch(
+        `http://10.0.2.2:5000/api/students/delete/${selectedStudent._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const text = await response.text();
+      console.log("🔹 Raw Delete Response:", text); // ✅ Log backend response
+  
+      try {
+        const data = JSON.parse(text);
+        if (response.ok) {
+          console.log("✅ Student deleted successfully:", data);
+  
+          // ✅ Remove student from frontend state
+          setStudents((prevStudents) =>
+            prevStudents.filter((student) => student._id !== selectedStudent._id)
+          );
+  
+          // ✅ Clear selected student
+          setSelectedStudent(null);
+        } else {
+          console.error("❌ Error deleting student:", data.message);
+        }
+      } catch (jsonError) {
+        console.error("❌ JSON Parsing Error:", jsonError, "Response:", text);
+      }
+    } catch (error) {
+      console.error("❌ Network error deleting student:", error);
+    }
+  
+    setShowDeleteModal(false); // ✅ Close delete modal
   };
-
+  
+  
   // Handle delete cancellation
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
@@ -275,132 +569,79 @@ export default function DashboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Edit Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showEditModal}
-        onRequestClose={handleCancel}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            {/* Profile Image */}
-            <TouchableOpacity style={styles.profileImageContainer}>
-              <Image
-                source={require("../../../assets/default-student.png")}
-                style={styles.modalProfileImage}
-              />
-              <Text style={styles.uploadText}>Upload picture</Text>
-            </TouchableOpacity>
+<Modal animationType="fade" transparent={true} visible={showEditModal} onRequestClose={handleCancel}>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContainer}>
+      {/* Profile Image */}
+      <TouchableOpacity style={styles.profileImageContainer}>
+        <Image source={require("../../../assets/default-student.png")} style={styles.modalProfileImage} />
+        <Text style={styles.uploadText}>Upload picture</Text>
+      </TouchableOpacity>
 
-            {/* Student Name Input */}
-            <View style={styles.inputContainer}>
-              <Image
-                source={require("../../../assets/dashboard/user-icon.png")}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.textInput}
-                value={editName}
-                onChangeText={setEditName}
-                placeholder="Student Name"
-              />
-            </View>
+      {/* Student Name Input */}
+      <View style={styles.inputContainer}>
+        <Image source={require("../../../assets/dashboard/user-icon.png")} style={styles.inputIcon} />
+        <TextInput style={styles.textInput} value={editName} onChangeText={setEditName} placeholder="Student Name" />
+      </View>
 
-            {/* Age Input */}
-            <View style={styles.inputRow}>
-              <View style={[styles.inputContainer, styles.halfInput]}>
-                <Image
-                  source={require("../../../assets/dashboard/age-icon.png")}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.textInput}
-                  value={editAge}
-                  onChangeText={setEditAge}
-                  keyboardType="numeric"
-                  placeholder="Age"
-                />
-              </View>
-
-              {/* Gender Input */}
-              <View style={[styles.inputContainer, styles.halfInput]}>
-                <Image
-                  source={require("../../../assets/dashboard/gender-icon.png")}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.textInput}
-                  value={editGender}
-                  onChangeText={setEditGender}
-                  placeholder="Gender"
-                />
-              </View>
-            </View>
-
-            {/* Buttons */}
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.editUpdateButton}
-                onPress={handleUpdate}
-              >
-                <Image
-                  source={require("../../../assets/dashboard/Update.png")}
-                  style={styles.editButtonImage}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.editCancelButton}
-                onPress={handleCancel}
-              >
-                <Image
-                  source={require("../../../assets/dashboard/Cancel.png")}
-                  style={styles.editButtonImage}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* Age & Gender Inputs */}
+      <View style={styles.inputRow}>
+        <View style={[styles.inputContainer, styles.halfInput]}>
+          <Image source={require("../../../assets/dashboard/age-icon.png")} style={styles.inputIcon} />
+          <TextInput
+            style={styles.textInput}
+            value={editAge}
+            onChangeText={setEditAge}
+            keyboardType="numeric"
+            placeholder="Age"
+          />
         </View>
-      </Modal>
+        <View style={[styles.inputContainer, styles.halfInput]}>
+          <Image source={require("../../../assets/dashboard/gender-icon.png")} style={styles.inputIcon} />
+          <TextInput style={styles.textInput} value={editGender} onChangeText={setEditGender} placeholder="Gender" />
+        </View>
+      </View>
+
+      {/* Buttons */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.editUpdateButton} onPress={handleUpdate}>
+          <Image source={require("../../../assets/dashboard/Update.png")} style={styles.editButtonImage} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.editCancelButton} onPress={handleCancel}>
+          <Image source={require("../../../assets/dashboard/Cancel.png")} style={styles.editButtonImage} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showDeleteModal}
-        onRequestClose={handleDeleteCancel}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.deleteModalContainer}>
-            <Text style={styles.warningTitle}>Warning!</Text>
-            <Text style={styles.warningText}>
-              Are you sure you want to delete the student?
-            </Text>
+<Modal
+  animationType="fade"
+  transparent={true}
+  visible={showDeleteModal}
+  onRequestClose={() => setShowDeleteModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.deleteModalContainer}>
+      <Text style={styles.warningTitle}>Warning!</Text>
+      <Text style={styles.warningText}>
+        Are you sure you want to delete {selectedStudent?.fullName}?
+      </Text>
 
-            <View style={styles.deleteButtonRow}>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={handleDelete}
-              >
-                <Image
-                  source={require("../../../assets/dashboard/Delete.png")}
-                  style={styles.deleteButtonImage}
-                />
-              </TouchableOpacity>
+      <View style={styles.deleteButtonRow}>
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Image source={require("../../../assets/dashboard/Delete.png")} style={styles.deleteButtonImage} />
+        </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.deleteCancelButton}
-                onPress={handleDeleteCancel}
-              >
-                <Image
-                  source={require("../../../assets/dashboard/Cancel.png")}
-                  style={styles.deleteButtonImage}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <TouchableOpacity style={styles.deleteCancelButton} onPress={() => setShowDeleteModal(false)}>
+          <Image source={require("../../../assets/dashboard/Cancel.png")} style={styles.deleteButtonImage} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
 
       {/* Left Sidebar */}
       <View style={styles.sidebar}>
@@ -451,79 +692,89 @@ export default function DashboardScreen({ navigation }) {
           </View>
 
           {/* Teacher Name */}
+          {/* ✅ Display logged-in teacher's name */}
           <View style={styles.userContainer}>
-            <Text style={styles.greeting}>
-              Hello, {fullName ? fullName : "User"}!
-            </Text>
-            {/* Teacher Image */}
-            <Image
-              source={require("../../../assets/default-profile.png")}
-              style={styles.profilePic}
-            />
-          </View>
-        </View>
+                <Text style={styles.greeting}>Hello, {fullName}!</Text>
+                <Image source={require('../../../assets/default-profile.png')} style={styles.profilePic} />
+              </View>
+            </View>
 
         {/* Student Name and Menu Button Container */}
-        <View style={styles.studentNameAndMenuContainer}>
-          {/* Student Name Button */}
-          <TouchableOpacity onPress={toggleStudentDropdown} style={styles.studentNameButton}>
-          <Image
-              source={
-                studentDropdownOpen
-                  ? require("../../../assets/dashboard/arrow-up.png")
-                  : require("../../../assets/dashboard/arrow-down.png")
-              }
-              style={styles.dropdownIcon}
-            />
-          <Text style={styles.studentName}>{studentName}</Text>
-          </TouchableOpacity>
-          
-          {studentDropdownOpen && (
-            <View style={styles.studentDropdownMenu}>
-              {students.map((name, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.dropdownItem}
-                  onPress={() => selectStudent(name)}
-                >
-                  <Text style={styles.dropdownItemText}>{name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+<View style={styles.studentNameAndMenuContainer}>
+  {/* Student Name Button */}
+  <TouchableOpacity
+    onPress={() => setStudentDropdownOpen(!studentDropdownOpen)}
+    style={styles.studentNameButton}
+  >
+    <Image
+      source={
+        studentDropdownOpen
+          ? require("../../../assets/dashboard/arrow-up.png")
+          : require("../../../assets/dashboard/arrow-down.png")
+      }
+      style={styles.dropdownIcon}
+    />
+    <Text style={styles.studentName}>
+      {selectedStudent ? selectedStudent.fullName : "Select Student"}
+    </Text>
+  </TouchableOpacity>
 
-          {/* Menu Button with Dropdown */}
-          <View style={styles.menuContainer}>
-            <TouchableOpacity onPress={toggleMenu}>
-              <Image
-                source={
-                  menuOpen
-                    ? require("../../../assets/dashboard/Close.png")
-                    : require("../../../assets/dashboard/menu.png")
-                }
-                style={styles.menuIcon}
-              />
-            </TouchableOpacity>
+  {/* Student Dropdown List */}
+  {studentDropdownOpen && (
+    <View style={styles.studentDropdownMenu}>
+      {students.length > 0 ? (
+        students.map((student) => (
+          <TouchableOpacity
+  key={student._id}
+  style={styles.dropdownItem}
+  onPress={() => {
+    setSelectedStudent(student); // ✅ Correctly selects student
+    setStudentDropdownOpen(false); // ✅ Close dropdown
+    setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
+  }}
+>
+  <Text style={styles.dropdownItemText}>{student.fullName}</Text>
+</TouchableOpacity>
+        ))
+      ) : (
+        <Text style={styles.noStudentText}>No students found</Text>
+      )}
+    </View>
+  )}
 
-            {/* Dropdown Menu */}
-            {menuOpen && (
-              <View style={styles.dropdownMenu}>
-                <TouchableOpacity
-                  style={styles.dropdownItem}
-                  onPress={handleEditPress}
-                >
-                  <Text style={styles.dropdownItemText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.dropdownItem, styles.lastDropdownItem]}
-                  onPress={handleDeletePress}
-                >
-                  <Text style={styles.dropdownItemText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </View>
+  {/* Menu Button with Dropdown (Only for Selected Student) */}
+{selectedStudent && (
+  <View style={styles.menuContainer}>
+    <TouchableOpacity
+      onPress={() => setMenuOpenStudentId(menuOpenStudentId === selectedStudent._id ? null : selectedStudent._id)}
+    >
+      <Image
+        source={
+          menuOpenStudentId === selectedStudent._id
+            ? require("../../../assets/dashboard/Close.png") // 'X' when open
+            : require("../../../assets/dashboard/menu.png") // Burger menu when closed
+        }
+        style={styles.menuIcon}
+      />
+    </TouchableOpacity>
+
+    {/* Edit/Delete Menu */}
+    {menuOpenStudentId === selectedStudent._id && (
+      <View style={styles.dropdownMenu}>
+      <TouchableOpacity style={styles.dropdownItem} onPress={handleEditPress}>
+        <Text style={styles.dropdownItemText}>Edit</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.dropdownItem, styles.lastDropdownItem]}
+        onPress={handleDeletePress}
+      >
+        <Text style={styles.dropdownItemText}>Delete</Text>
+      </TouchableOpacity>
+    </View>
+    )}
+  </View>
+)}
+</View>
 
         {/* Attendance Container */}
         <View style={styles.sectionContainer}>
@@ -540,31 +791,33 @@ export default function DashboardScreen({ navigation }) {
             </View>
           </View>
 
-          <View style={styles.calendarContainer}>
+         <View style={styles.calendarContainer}>
             {quarters[currentQuarter].map((month) => {
               const firstDayOfMonth = moment(`${currentYear}-${month + 1}-01`, 'YYYY-MM-DD').day();
               const daysInMonth = moment(`${currentYear}-${month + 1}`, 'YYYY-MM').daysInMonth();
 
               // Generate empty slots before the first day of the month
               const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
-                key: `empty-${month}-${i}`,  // Unique key for each empty slot before the month starts
+                key: `empty-${month}-${i}`,
                 day: null
               }));
 
-              // Generate actual days with attendance status
+              // Generate the array of day objects
               const daysArray = Array.from({ length: daysInMonth }, (_, i) => ({
-                key: `day-${month}-${i + 1}`, // Unique key for each day
+                key: `day-${month}-${i + 1}`,
                 day: i + 1,
-                status: attendanceData[month][i]
+                // 1) Grab status from attendanceData for THIS month & day
+                status: attendanceData[month]
+                  ? attendanceData[month][i] // i == day - 1
+                  : "" // fallback
               }));
 
-              // Combine empty slots and days into one array
+              // Combine empty slots + days
               const totalSlots = [...blanks, ...daysArray];
 
-              // Ensure every row has exactly 7 elements
+              // Split into rows of 7 days each
               const rows = [];
               let currentWeek = [];
-
               totalSlots.forEach((item, index) => {
                 currentWeek.push(item);
                 if ((index + 1) % 7 === 0) {
@@ -573,33 +826,45 @@ export default function DashboardScreen({ navigation }) {
                 }
               });
 
-              // Push the remaining days in the last row
+              // Fill the last row if it has fewer than 7 slots
               if (currentWeek.length > 0) {
                 const missingDays = 7 - currentWeek.length;
                 for (let i = 0; i < missingDays; i++) {
-                  currentWeek.push({ key: `empty-${month}-extra-${i}`, day: null }); // Ensure unique keys for extra empty slots
+                  currentWeek.push({ 
+                    key: `empty-${month}-extra-${i}`, 
+                    day: null 
+                  });
                 }
                 rows.push(currentWeek);
               }
 
               return (
                 <View key={`month-${month}`} style={styles.monthContainer}>
-                  <Text style={styles.monthTitle}>{moment(month + 1, 'M').format('MMMM')}</Text>
+                  <Text style={styles.monthTitle}>
+                    {moment(month + 1, 'M').format('MMMM')}
+                  </Text>
 
                   {/* Weekday Labels */}
                   <View style={styles.weekdaysContainer}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                      <Text key={`label-${month}-${day}`} style={styles.weekdayLabel}>{day}</Text>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                      <Text key={`label-${month}-${d}`} style={styles.weekdayLabel}>
+                        {d}
+                      </Text>
                     ))}
                   </View>
 
-                  {/* Days Grid (Fixed to always display 7 per row) */}
+                  {/* Days Grid */}
                   {rows.map((row, rowIndex) => (
                     <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
                       {row.map(({ key, day, status }) => {
-                        return day ? renderDay(day, status, month, currentYear) : (
-                          <View key={key} style={[styles.dayItem, { backgroundColor: 'transparent' }]} />
-                        );
+                        return day
+                          ? renderDay(day, status, month, currentYear)
+                          : (
+                            <View
+                              key={key}
+                              style={[styles.dayItem, { backgroundColor: 'transparent' }]}
+                            />
+                          );
                       })}
                     </View>
                   ))}
@@ -607,6 +872,7 @@ export default function DashboardScreen({ navigation }) {
               );
             })}
           </View>
+
 
           {/* Legend at Bottom-left */}
           <View style={styles.legend}>
@@ -1140,7 +1406,7 @@ const styles = StyleSheet.create({
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: "center",
+    justifyContent: 'center',
     marginTop: 15,
     alignSelf: 'center',
   },

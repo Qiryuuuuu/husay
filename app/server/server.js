@@ -30,3 +30,9 @@ app.use("/api/students", studentRoutes); // ✅ Register Student Routes
 // ✅ Server Listening
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// ✅ Handle undefined routes to prevent HTML errors
+app.use((req, res) => {
+  res.status(404).json({ message: "API route not found" });
+});
+

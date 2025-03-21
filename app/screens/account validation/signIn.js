@@ -58,7 +58,7 @@ export default function LoginScreen({ navigation }) {
       console.log("✅ Employee Number:", employeeNo);
   
       Alert.alert("Success", "Login successful!");
-      navigation.navigate("AccountSettings");
+      navigation.navigate("StudentProfile");
     } catch (error) {
       console.error("❌ Login Error:", error);
       Alert.alert("Error", error.response?.data?.message || "Something went wrong");

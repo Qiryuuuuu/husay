@@ -25,6 +25,8 @@ const authenticateUser = async (req, res, next) => {
         return res.status(404).json({ message: "User not found." });
       }
 
+      console.log("🔹 Authenticated User:", { id: user._id, employeeNo: user.employeeNo });
+
       req.user = { id: user._id, employeeNo: user.employeeNo };
       next();
     } catch (verifyError) {
@@ -39,5 +41,6 @@ const authenticateUser = async (req, res, next) => {
     return res.status(403).json({ message: "Invalid token." });
   }
 };
+
 
 module.exports = authenticateUser;
