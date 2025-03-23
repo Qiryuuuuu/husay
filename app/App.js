@@ -117,11 +117,32 @@ export default function App() {
           options={{ title: "PracticeHard" }}
         />
 
-        <Stack.Screen name="ChallengeShape" component={ChallengeShape} />
-        <Stack.Screen name="ChallengeColor" component={ChallengeColor} />
-        <Stack.Screen name="ChallengeNumber" component={ChallengeNumber} />
-        <Stack.Screen name="ChallengeMedium" component={ChallengeMedium} />
-        <Stack.Screen name="ChallengeHard" component={ChallengeHard} />
+        <Stack.Screen
+          name="ChallengeShape"
+          component={ChallengeShape}
+          option={{ title: "ChallShape" }}
+        />
+
+        <Stack.Screen
+          name="ChallengeColor"
+          component={ChallengeColor}
+          option={{ title: "ChallColor" }}
+        />
+        <Stack.Screen
+          name="ChallengeNumber"
+          component={ChallengeNumber}
+          option={{ title: "ChallColor" }}
+        />
+        <Stack.Screen
+          name="ChallengeMedium"
+          component={ChallengeMedium}
+          option={{ title: "ChallMedium" }}
+        />
+        <Stack.Screen
+          name="ChallengeHard"
+          component={ChallengeHard}
+          Option={{ title: "ChallHard" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

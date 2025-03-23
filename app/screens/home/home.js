@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, Text, TouchableOpacity, Image, StyleSheet, 
-  useWindowDimensions, ImageBackground 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  ImageBackground,
 } from "react-native";
-import SettingsModal from "../../component/setting"; 
+import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
 import { useNavigation } from "@react-navigation/native";
 
@@ -19,8 +24,6 @@ const practiceCard = require("../../../assets/menuCards/home/practice-card.png")
 const challengeCard = require("../../../assets/menuCards/home/challenge-card.png");
 
 const settingHeader = require("../../../assets/headerText/setting-header.png");
-
-
 
 export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
@@ -71,9 +74,13 @@ export default function HomeScreen({ route }) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("ChallMainScreen", { studentId })
-            }
+            onPress={() => {
+              console.log(
+                "Navigating to ChallMainScreen with studentId:",
+                studentId
+              ); // Debugging
+              navigation.navigate("ChallMainScreen", { studentId });
+            }}
           >
             <Image source={challengeCard} style={styles.cards} />
           </TouchableOpacity>
