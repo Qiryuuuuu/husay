@@ -63,7 +63,7 @@ const PracticeHardScreen = () => {
           completionNpc={practiceHardCompletionNpc} 
           navigation={navigation} 
           isChallengeMode={true} 
-          totalRounds={5} 
+          totalRounds={11} 
           currentScreen="ChallengeHard"
         />
       )}
