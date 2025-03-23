@@ -8,6 +8,7 @@ import StageCompletion from "../../../../component/stageCompletion";
 import colorDialogues from "../../../../data/colorDialogues";
 import { useNavigation } from "@react-navigation/native";
 import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
+import { useEffect } from "react";
 
 const colorBg = require("../../../../../assets/gameBackground/practice-color-bg.png");
 

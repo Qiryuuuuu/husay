@@ -96,12 +96,14 @@ const PracticeHardScreen = ({ route }) => {
         <PregameDialog {...props} dialogData={practiceHardDialogData} />
       )}
       CountdownComponent={Countdown}
-      //GameComponent={PracticeHard}
       GameComponent={(props) => (
         <PracticeHard
           {...props}
-          onGameComplete={handleGameComplete}
-          setGamePhase={props.setGamePhase} // ✅ Pass setGamePhase from GameFlows.js
+          onGameComplete={
+            (score, timeTaken) =>
+              handleGameComplete(score, timeTaken, props.setGamePhase) // ✅ Ensure setGamePhase is passed
+          }
+          setGamePhase={props.setGamePhase} // ✅ Correctly passing setGamePhase
         />
       )}
       navigation={navigation}

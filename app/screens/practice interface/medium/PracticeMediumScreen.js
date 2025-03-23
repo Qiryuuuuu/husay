@@ -6,8 +6,6 @@ import Countdown from "../../../component/countdown";
 import PracticeMedium from "../../../component/game/Practice/MediumMode/PracticeMedium";
 import StageCompletion from "../../../component/stageCompletion";
 import PracticeMediumDialogues from "../../../data/evaDialogues";
-import { useNavigation } from "@react-navigation/native";
-import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
 
 import { useNavigation } from "@react-navigation/native";
 
