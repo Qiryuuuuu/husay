@@ -14,6 +14,7 @@ import {
 import { PieChart } from 'react-native-svg-charts';
 import { Text as SVGText } from 'react-native-svg';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 import moment from 'moment';
 
@@ -27,15 +28,16 @@ export default function DashboardScreen({ navigation }) {
   const [loading, setLoading] = useState(true); // ✅ State for loading
   const [employeeNo, setEmployeeNo] = useState(""); // ✅ Employee number for fetching students
   const [menuOpenStudentId, setMenuOpenStudentId] = useState(null); // ✅ Track menu open for student
-  const [modeOpen, setModeOpen] = useState(false);
-  const [difficultyOpen, setDifficultyOpen] = useState(false);
+  
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editName, setEditName] = useState("Harry Potter");
-  const [editAge, setEditAge] = useState("3");
-  const [editGender, setEditGender] = useState("Male");
-  const [timeRange, setTimeRange] = useState("Today");
-  
+  const [editName, setEditName] = useState("");
+  const [editAge, setEditAge] = useState("");
+  const [editGender, setEditGender] = useState("");
+  const [familiarityData, setFamiliarityData] = useState(null);
+  const [accuracyData, setAccuracyData] = useState({ correct: 0, incorrect: 0 }); // ✅ Add this
+  const [timeSpentData, setTimeSpentData] = useState({ timeSpent: 0, timeLeft: 60 });
+  const [attendanceData, setAttendanceData] = useState({});
 
   const [currentQuarter, setCurrentQuarter] = useState(1);
   const [currentYear, setCurrentYear] = useState(moment().year());
@@ -141,11 +143,14 @@ export default function DashboardScreen({ navigation }) {
       );
   
       const data = await response.json();
-      console.log("🔹 Raw Student API Response:", JSON.stringify(data, null, 2));
+      console.log("🔹 Fresh Student API Response:", JSON.stringify(data, null, 2));
   
       if (response.ok && data.students && data.students.length > 0) {
         setStudents(data.students);
-        console.log("✅ Students set successfully:", data.students);
+        setSelectedStudent(data.students[0]);
+  
+        // ✅ Fetch and update all related student data
+        updateStudentData(data.students[0]); 
       } else {
         console.error("❌ No students found or API returned an error.");
       }
@@ -154,48 +159,88 @@ export default function DashboardScreen({ navigation }) {
     }
   };
   
-  //✅ Fetch Student Details
-  const fetchStudentDetails = async (studentIds) => {
-    try {
-      const token = await AsyncStorage.getItem("authToken");
-      if (!token) {
-        console.error("❌ No token found. Cannot fetch student details.");
-        return;
+
+  // ✅ Fetch Student Details
+    const fetchStudentDetails = async (studentId) => {
+      try {
+          if (!studentId) {
+              console.error("❌ No student ID provided.");
+              return;
+          }
+
+          console.log(`🔍 Fetching details for student ID: ${studentId}...`);
+
+          const token = await AsyncStorage.getItem("authToken");
+          if (!token) {
+              console.error("❌ No token found. Cannot fetch student details.");
+              return;
+          }
+          
+          const response = await fetch(`http://10.0.2.2:5000/api/students/get/${studentId}`, {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+              },
+          });
+
+          const data = await response.json();
+          console.log("🔹 Full API Response:", JSON.stringify(data, null, 2)); // Full response log
+
+          if (response.ok && data.student) {
+              const student = data.student;
+              console.log("✅ Extracted Student Data:", student);
+
+              // ✅ Fetch and set accuracy directly from API response
+              if (student.accuracy) {
+                  console.log("✅ Found Accuracy Data:", student.accuracy);
+                  setAccuracyData({
+                      correct: student.accuracy.correct || 0,
+                      incorrect: student.accuracy.incorrect || 0,
+                  });
+              } else {
+                  console.warn("⚠️ No Accuracy Data found in API response.");
+                  setAccuracyData({ correct: 0, incorrect: 0 });
+              }
+
+              // ✅ Fetch and set familiarity data
+              if (student.subjects) {
+                  console.log("✅ Found Familiarity Data. Processing...");
+                  fetchFamiliarityData(student);
+              } else {
+                  console.warn("⚠️ No Familiarity Data found in API response.");
+              }
+
+              // ✅ Fetch and set time spent data
+              if (student.gameTime) {
+                  console.log("✅ Found Game Time Data:", student.gameTime);
+                  setTimeSpentData({
+                      timeSpent: student.gameTime.timeSpent || 0,
+                      timeLeft: student.gameTime.timeLeft || 60,
+                  });
+              } else {
+                  console.warn("⚠️ No Game Time Data found in API response.");
+                  setTimeSpentData({ timeSpent: 0, timeLeft: 60 });
+              }
+
+              // ✅ Set Attendance Data
+              setAttendanceData(getAttendanceData([student]));
+              console.log("✅ Student Data Updated Successfully.");
+          } else {
+              console.error("❌ Error fetching student details:", data.message);
+          }
+      } catch (error) {
+          console.error("❌ Network error fetching student details:", error);
       }
-  
-      console.log("🔍 Fetching student details...");
-      const response = await fetch(`http://10.0.2.2:5000/api/students/getMultiple`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ studentIds }),
-      });
-  
-      const data = await response.json();
-      console.log("🔹 Student Data:", data);
-  
-      if (response.ok && data.students.length > 0) {
-        setStudents(data.students);
-        setSelectedStudent(data.students[0]); // ✅ Default to first student
-      } else {
-        console.error("❌ No students found:", data.message);
-      }
-    } catch (error) {
-      console.error("❌ Network error fetching student details:", error);
-    }
   };
-  
-  useEffect(() => {
-    fetchUser();
-  }, []);  
+
+
 
   //Logout
   const handleLogout = async () => {
     try {
       // Remove authentication token from storage
-      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.clear();
   
       // Show alert confirmation and navigate to login
       Alert.alert("Logged Out", "You have been logged out.", [
@@ -208,10 +253,10 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  // Sample data generator for demonstration
+  // ✅ Function to Process Attendance Data
   const getAttendanceData = (students) => {
     if (!students || students.length === 0) {
-      console.error("❌ getAttendanceData() received empty students array.");
+      console.error("❌ No students provided for attendance processing.");
       return {};
     }
   
@@ -221,18 +266,24 @@ export default function DashboardScreen({ navigation }) {
   
     students.forEach((student) => {
       if (!student.attendance || !Array.isArray(student.attendance)) {
-        console.warn(`⚠️ Student ${student.fullName} has no attendance record.`);
-        return {};
+        console.warn(`⚠️ No attendance record for ${student.fullName}.`);
+        return;
       }
   
       student.attendance.forEach(({ date, status }) => {
         if (!date) {
-          console.warn(`⚠️ Skipping record with missing date for ${student.fullName}`);
+          console.warn(`⚠️ Skipping record with missing date for ${student.fullName}.`);
           return;
         }
   
-        const month = new Date(date).getMonth();
-        const day = new Date(date).getDate() - 1;
+        const parsedDate = moment(date, "YYYY-MM-DD HH:mm:ss");
+        if (!parsedDate.isValid()) {
+          console.warn(`⚠️ Invalid date format: ${date} for ${student.fullName}.`);
+          return;
+        }
+  
+        const month = parsedDate.month();
+        const day = parsedDate.date() - 1;
   
         if (!data[month]) {
           const daysInMonth = moment(`${currentYear}-${month + 1}`, "YYYY-MM").daysInMonth();
@@ -243,15 +294,11 @@ export default function DashboardScreen({ navigation }) {
       });
     });
   
-    console.log("✅ Final attendanceData:", JSON.stringify(data, null, 2));
+    console.log("✅ Attendance Data Processed:", data);
     return data;
   };
+   
   
-  // ✅ Get real attendance data from the backend
-  const attendanceData = selectedStudent
-  ? getAttendanceData([selectedStudent]) 
-  : {};
-
   // Quarter handling logic
   const quarters = {
     1: [0, 1, 2],    // Jan-Mar
@@ -279,38 +326,35 @@ export default function DashboardScreen({ navigation }) {
   };
 
   // Render Calendar Day 
-  const renderDay = (day, status, month, year) => {
-    const today = moment();
-    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD');
-    const isToday = currentDay.isSame(today, 'day');
+  const renderDay = (day, status, month, year, student) => {
+    const today = moment().startOf('day'); // Normalize to compare only the date
+    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD').startOf('day'); 
+    const isToday = currentDay.isSame(today, 'day'); // ✅ Check if the day is today
     const isFuture = currentDay.isAfter(today, 'day');
     const weekday = currentDay.day();
   
-    // Decide background color
-    let backgroundColor;
-    if (isFuture || weekday === 0 || weekday === 6) {
-      backgroundColor = '#D3D3D3';  // gray for future or weekends
-    } else {
-      backgroundColor = (status === 'present') ? '#4CD964' : '#FF3B30'; 
+    let backgroundColor = "#D3D3D3"; // Default gray
+    let textColor = "#FFFFFF"; // Default white text
+  
+    if (isToday) {
+      textColor = "#FFFFFF"; // ✅ Ensure text is readable
+    } else if (!isFuture && weekday !== 0 && weekday !== 6) {
+      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
     }
   
     return (
-      <View
-        key={`${year}-${month}-${day}`}
-        style={[
-          styles.dayItem,
-          { backgroundColor },
-          isToday && { borderWidth: 2, borderColor: '#007AFF' }
-        ]}
+      <View 
+        key={`${year}-${month}-${day}`} 
+        style={[styles.dayItem, { backgroundColor, borderWidth: isToday ? 2 : 0, borderColor: isToday ? "#004A99" : "transparent" }]}
       >
-        <Text style={styles.dayText}>{day}</Text>
+        <Text style={[styles.dayText, { color: textColor, fontWeight: isToday ? "bold" : "normal" }]}>{day}</Text>
       </View>
     );
   };
   
-  
   //Pie Chart
-  const LabelsPie = ({ slices }) => {
+  const LabelsPie = ({ slices = [] }) => {
+    if (!slices.length) return null; // Prevent rendering errors
     return slices.map((slice, index) => {
       const { pieCentroid, data } = slice;
       return (
@@ -335,60 +379,108 @@ export default function DashboardScreen({ navigation }) {
     setMenuOpenStudentId(!menuOpen);
     // Close other dropdowns when opening menu
     if (!menuOpen) {
-      setModeOpen(false);
-      setDifficultyOpen(false);
+      setStudentDropdownOpen(false);
     }
   };
 
-  // Toggle mode dropdown function
-  const toggleMode = () => {
-    // Close difficulty dropdown if it's open
-    if (difficultyOpen) {
-      setDifficultyOpen(false);
-    }
-
-    // Toggle mode dropdown
-    setModeOpen(!modeOpen);
-
-    // Close menu if opening mode dropdown
-    if (!modeOpen) {
-      setMenuOpenStudentId(false);
-    }
-  };
-
-  // Toggle difficulty dropdown function
-  const toggleDifficulty = () => {
-    // Close mode dropdown if it's open
-    if (modeOpen) {
-      setModeOpen(false);
-    }
-
-    // Toggle difficulty dropdown
-    setDifficultyOpen(!difficultyOpen);
-
-    // Close menu if opening difficulty dropdown
-    if (!difficultyOpen) {
-      setMenuOpenStudentId(false);
-    }
-  };
 
   // Toggle Student Dropdown
   const toggleStudentDropdown = () => {
     setStudentDropdownOpen(!studentDropdownOpen);
     if (!studentDropdownOpen) {
-      setModeOpen(false);
-      setDifficultyOpen(false);
       setMenuOpenStudentId(false);
     }
   };
 
   // Select Student from Dropdown
-  const selectStudent = (student) => {
+  const selectStudent = async (student) => {
+    if (!student || !student._id) return;
+  
     setSelectedStudent(student);
     setStudentDropdownOpen(false);
-    setMenuOpenStudentId(false);
+    setMenuOpenStudentId(null);
+  
+    // ✅ Fetch and update all related student data
+    await fetchStudentDetails(student._id);
   };
 
+  // ✅ Fetch Familiarity
+  const fetchFamiliarityData = async (student) => {
+      if (!student || !student.subjects) {
+          console.warn("⚠️ No Familiarity Data found. Setting default values.");
+          setFamiliarityData({
+              Shapes: { Square: 0, Triangle: 0, Circle: 0, Rectangle: 0 },
+              Colors: { Red: 0, Yellow: 0, Blue: 0, Green: 0, Black: 0, Gray: 0, White: 0 },
+              Numbers: { "One (1)": 0, "Two (2)": 0, "Three (3)": 0, "Four (4)": 0, "Five (5)": 0,
+                        "Six (6)": 0, "Seven (7)": 0, "Eight (8)": 0, "Nine (9)": 0, "Ten (10)": 0 }
+          });
+          return;
+      }
+
+      console.log("🔍 Fetching Familiarity Data from API:", JSON.stringify(student.subjects, null, 2));
+
+      const familiarityData = {
+          Shapes: {},
+          Colors: {},
+          Numbers: {}
+      };
+
+      // ✅ Correctly map the database field "percentage" for each subject
+      const numberMapping = {
+          One: "One (1)", Two: "Two (2)", Three: "Three (3)", Four: "Four (4)", Five: "Five (5)",
+          Six: "Six (6)", Seven: "Seven (7)", Eight: "Eight (8)", Nine: "Nine (9)", Ten: "Ten (10)"
+      };
+
+      // ✅ Process each category (Shapes, Colors, Numbers)
+      ["Shapes", "Colors", "Numbers"].forEach(category => {
+          if (student.subjects[category]) {
+              Object.entries(student.subjects[category]).forEach(([element, data]) => {
+                  if (element !== "Mastery") {
+                      // ✅ Fetch percentage directly from the database
+                      const percentage = data.percentage || 0;
+
+                      // ✅ Map numbers correctly for display
+                      if (category === "Numbers") {
+                          familiarityData[category][numberMapping[element]] = Math.round(percentage);
+                      } else {
+                          familiarityData[category][element] = Math.round(percentage);
+                      }
+                  }
+              });
+          }
+      });
+
+      console.log("✅ Familiarity Data Processed for UI:", familiarityData);
+      setFamiliarityData(familiarityData);
+  };
+
+  // ✅ Update student data when selecting a student
+  const updateStudentData = async (student) => {
+    if (!student) return;
+  
+    console.log("🎯 Updating student data:", student.fullName);
+  
+    // ✅ Fetch updated familiarity data
+    await fetchFamiliarityData(student);
+  
+    // ✅ Update accuracy data
+    setAccuracyData({
+      correct: student.accuracy?.correct || 0,
+      incorrect: student.accuracy?.incorrect || 0,
+    });
+  
+    // ✅ Update time spent
+    setTimeSpentData({
+      timeSpent: student.gameTime?.timeSpent || 0,
+      timeLeft: student.gameTime?.timeLeft || 60,
+    });
+  
+    // ✅ Update attendance
+    setAttendanceData(getAttendanceData([student]));
+  };
+  
+  
+  
   // Handle edit button press
   const handleEditPress = () => {
     if (selectedStudent) {
@@ -537,34 +629,16 @@ export default function DashboardScreen({ navigation }) {
   
   
 
-  // Sample data for time chart
-  const timeData = [
-    { time: "9 AM", duration: 25 },
-    { time: "10 AM", duration: 40 },
-    { time: "11 AM", duration: 15 },
-    { time: "12 PM", duration: 30 },
-    { time: "1 PM", duration: 45 },
-    { time: "2 PM", duration: 20 },
-    { time: "3 PM", duration: 35 },
-  ];
+  useEffect(() => {
+    fetchUser();
+  }, []); 
 
-  // Render attendance grid item
-  const renderAttendanceItem = (gamesPlayed) => {
-    let backgroundColor;
-    if (gamesPlayed > 0) {
-      backgroundColor = "#4CD964"; // ✅ Green = Present
-    } else {
-      backgroundColor = "#FF3B30"; // ❌ Red = Absent
+  useEffect(() => {
+    if (selectedStudent) {
+      console.log(`🔄 Student changed: ${selectedStudent.fullName}`);
+      fetchStudentDetails(selectedStudent._id);
     }
-  
-    return <View style={[styles.attendanceItem, { backgroundColor }]} />;
-  };
-  
-
-  // Toggle time range dropdown
-  const toggleTimeRange = () => {
-    // Implementation for time range dropdown
-  };
+  }, [selectedStudent]);
 
   return (
     <View style={styles.container}>
@@ -700,81 +774,81 @@ export default function DashboardScreen({ navigation }) {
             </View>
 
         {/* Student Name and Menu Button Container */}
-<View style={styles.studentNameAndMenuContainer}>
-  {/* Student Name Button */}
-  <TouchableOpacity
-    onPress={() => setStudentDropdownOpen(!studentDropdownOpen)}
-    style={styles.studentNameButton}
-  >
-    <Image
-      source={
-        studentDropdownOpen
-          ? require("../../../assets/dashboard/arrow-up.png")
-          : require("../../../assets/dashboard/arrow-down.png")
-      }
-      style={styles.dropdownIcon}
-    />
-    <Text style={styles.studentName}>
-      {selectedStudent ? selectedStudent.fullName : "Select Student"}
-    </Text>
-  </TouchableOpacity>
+          <View style={styles.studentNameAndMenuContainer}>
+            {/* Student Name Button */}
+            <TouchableOpacity
+              onPress={() => setStudentDropdownOpen(!studentDropdownOpen)}
+              style={styles.studentNameButton}
+            >
+              <Image
+                source={
+                  studentDropdownOpen
+                    ? require("../../../assets/dashboard/arrow-up.png")
+                    : require("../../../assets/dashboard/arrow-down.png")
+                }
+                style={styles.dropdownIcon}
+              />
+              <Text style={styles.studentName}>
+                {selectedStudent ? selectedStudent.fullName : "Select Student"}
+              </Text>
+            </TouchableOpacity>
 
-  {/* Student Dropdown List */}
-  {studentDropdownOpen && (
-    <View style={styles.studentDropdownMenu}>
-      {students.length > 0 ? (
-        students.map((student) => (
-          <TouchableOpacity
-  key={student._id}
-  style={styles.dropdownItem}
-  onPress={() => {
-    setSelectedStudent(student); // ✅ Correctly selects student
-    setStudentDropdownOpen(false); // ✅ Close dropdown
-    setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
-  }}
->
-  <Text style={styles.dropdownItemText}>{student.fullName}</Text>
-</TouchableOpacity>
-        ))
-      ) : (
-        <Text style={styles.noStudentText}>No students found</Text>
-      )}
-    </View>
-  )}
+            {/* Student Dropdown List */}
+            {studentDropdownOpen && (
+              <View style={styles.studentDropdownMenu} onPress={toggleMenu}>
+                {students.length > 0 ? (
+                  students.map((student) => (
+                    <TouchableOpacity
+            key={student._id}
+            style={styles.dropdownItem}
+            onPress={() => {
+              setSelectedStudent(student); // ✅ Correctly selects student
+              setStudentDropdownOpen(false); // ✅ Close dropdown
+              setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
+            }}
+          >
+            <Text style={styles.dropdownItemText}>{student.fullName}</Text>
+          </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noStudentText}>No students found</Text>
+                )}
+              </View>
+            )}
 
-  {/* Menu Button with Dropdown (Only for Selected Student) */}
-{selectedStudent && (
-  <View style={styles.menuContainer}>
-    <TouchableOpacity
-      onPress={() => setMenuOpenStudentId(menuOpenStudentId === selectedStudent._id ? null : selectedStudent._id)}
-    >
-      <Image
-        source={
-          menuOpenStudentId === selectedStudent._id
-            ? require("../../../assets/dashboard/Close.png") // 'X' when open
-            : require("../../../assets/dashboard/menu.png") // Burger menu when closed
-        }
-        style={styles.menuIcon}
-      />
-    </TouchableOpacity>
+            {/* Menu Button with Dropdown (Only for Selected Student) */}
+          {selectedStudent && (
+            <View style={styles.menuContainer}>
+              <TouchableOpacity
+                onPress={() => setMenuOpenStudentId(menuOpenStudentId === selectedStudent._id ? null : selectedStudent._id)}
+              >
+                <Image
+                  source={
+                    menuOpenStudentId === selectedStudent._id
+                      ? require("../../../assets/dashboard/Close.png") // 'X' when open
+                      : require("../../../assets/dashboard/menu.png") // Burger menu when closed
+                  }
+                  style={styles.menuIcon}
+                />
+              </TouchableOpacity>
 
-    {/* Edit/Delete Menu */}
-    {menuOpenStudentId === selectedStudent._id && (
-      <View style={styles.dropdownMenu}>
-      <TouchableOpacity style={styles.dropdownItem} onPress={handleEditPress}>
-        <Text style={styles.dropdownItemText}>Edit</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.dropdownItem, styles.lastDropdownItem]}
-        onPress={handleDeletePress}
-      >
-        <Text style={styles.dropdownItemText}>Delete</Text>
-      </TouchableOpacity>
-    </View>
-    )}
-  </View>
-)}
-</View>
+              {/* Edit/Delete Menu */}
+              {menuOpenStudentId === selectedStudent._id && (
+                <View style={styles.dropdownMenu}>
+                <TouchableOpacity style={styles.dropdownItem} onPress={handleEditPress}>
+                  <Text style={styles.dropdownItemText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dropdownItem, styles.lastDropdownItem]}
+                  onPress={handleDeletePress}
+                >
+                  <Text style={styles.dropdownItemText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+              )}
+            </View>
+          )}
+          </View>
 
         {/* Attendance Container */}
         <View style={styles.sectionContainer}>
@@ -888,79 +962,19 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </View>
 
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
-          {/* Mode Button with Dropdown */}
-          <View style={styles.modeContainer}>
-            <TouchableOpacity onPress={toggleMode} style={styles.modeButton}>
-              <Image source={require("../../../assets/dashboard/Mode.png")} />
-            </TouchableOpacity>
-
-            {/* Mode Dropdown Menu */}
-            {modeOpen && (
-              <View style={styles.modeDropdownMenu}>
-                <TouchableOpacity style={styles.modeDropdownItem}>
-                  <Text style={styles.modeDropdownItemText}>Practice</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modeDropdownItem, styles.lastModeDropdownItem]}
-                >
-                  <Text style={styles.modeDropdownItemText}>Challenge</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.difficultyContainer}>
-            <TouchableOpacity
-              onPress={toggleDifficulty}
-              style={styles.difficultyButton}
-            >
-              <Image
-                source={require("../../../assets/dashboard/Difficulty.png")}
-              />
-            </TouchableOpacity>
-
-            {/* Difficulty Dropdown Menu */}
-            {difficultyOpen && (
-              <View style={styles.difficultyDropdownMenu}>
-                <TouchableOpacity style={styles.difficultyDropdownItem}>
-                  <Text style={styles.difficultyDropdownItemText}>Easy</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.difficultyDropdownItem}>
-                  <Text style={styles.difficultyDropdownItemText}>Medium</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.difficultyDropdownItem,
-                    styles.lastDifficultyDropdownItem,
-                  ]}
-                >
-                  <Text style={styles.difficultyDropdownItemText}>Hard</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>  
-        </View>
-
         {/* Charts Section */}
         <View style={styles.chartsContainer}>
+            
           {/* Shape Familiarity Chart */}
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Shape Familiarity</Text>
             <View style={styles.shapeChart}>
               <View style={styles.chartBarsContainer}>
-                {[
-                  { label: "Square", percentage: 80, height: 100 },
-                  { label: "Circle", percentage: 90, height: 120 },
-                  { label: "Triangle", percentage: 60, height: 80 },
-                  { label: "Rectangle", percentage: 85, height: 110 },
-                ].map((item, index) => (
+                {Object.entries(familiarityData?.Shapes || {}).map(([label, percentage], index) => (
                   <View key={`shape-${index}`} style={styles.chartBarGroup}>
-                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
-                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
-                    <Text style={styles.chartLabel}>{item.label}</Text>
+                    <Text style={styles.percentageLabel}>{percentage}%</Text>
+                    <View style={[styles.chartBar, { height: Math.max(percentage * 1.2, 5), backgroundColor: '#FF3B30' }]} />
+                    <Text style={styles.chartLabel}>{label}</Text>
                   </View>
                 ))}
               </View>
@@ -972,19 +986,11 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Color Familiarity</Text>
             <View style={styles.colorChart}>
               <View style={styles.chartBarsContainer}>
-                {[
-                  { label: "Red", percentage: 75, height: 90 },
-                  { label: "Yellow", percentage: 58, height: 70 },
-                  { label: "Blue", percentage: 83, height: 100 },
-                  { label: "Green", percentage: 100, height: 120 },
-                  { label: "Black", percentage: 42, height: 50 },
-                  { label: "Gray", percentage: 67, height: 80 },
-                  { label: "White", percentage: 79, height: 95 },
-                ].map((item, index) => (
+                {Object.entries(familiarityData?.Colors || {}).map(([label, percentage], index) => (
                   <View key={`color-${index}`} style={styles.chartBarGroup}>
-                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
-                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
-                    <Text style={styles.chartLabel}>{item.label}</Text>
+                    <Text style={styles.percentageLabel}>{percentage}%</Text>
+                    <View style={[styles.chartBar, { height: Math.max(percentage * 1.2, 5), backgroundColor: '#5A8EF4' }]} />
+                    <Text style={styles.chartLabel}>{label}</Text>
                   </View>
                 ))}
               </View>
@@ -996,22 +1002,11 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Number Familiarity</Text>
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
-                {[
-                  { label: "One (1)", percentage: 80, height: 100 },
-                  { label: "Two (2)", percentage: 88, height: 110 },
-                  { label: "Three (3)", percentage: 72, height: 90 },
-                  { label: "Four (4)", percentage: 64, height: 80 },
-                  { label: "Five (5)", percentage: 76, height: 95 },
-                  { label: "Six (6)", percentage: 56, height: 70 },
-                  { label: "Seven (7)", percentage: 68, height: 85 },
-                  { label: "Eight (8)", percentage: 76, height: 95 },
-                  { label: "Nine (9)", percentage: 60, height: 75 },
-                  { label: "Ten (10)", percentage: 52, height: 65 },
-                ].map((item, index) => (
+                {Object.entries(familiarityData?.Numbers || {}).map(([label, percentage], index) => (
                   <View key={`number-${index}`} style={styles.chartBarGroup}>
-                    <Text style={styles.percentageLabel}>{item.percentage}%</Text>
-                    <View style={[styles.chartBar, { height: item.height, backgroundColor: '#5A8EF4' }]} />
-                    <Text style={styles.chartLabel}>{item.label}</Text>
+                    <Text style={styles.percentageLabel}>{percentage}%</Text>
+                    <View style={[styles.chartBar, { height: Math.max(percentage * 1.2, 5), backgroundColor: '#4CAF50' }]} />
+                    <Text style={styles.chartLabel}>{label}</Text>
                   </View>
                 ))}
               </View>
@@ -1026,10 +1021,20 @@ export default function DashboardScreen({ navigation }) {
                 <PieChart
                   style={{ height: 250 }}
                   valueAccessor={({ item }) => item.value}
-                  data={[
-                    { key: 1, value: 8, label: '8', svg: { fill: '#4CD964' } },
-                    { key: 2, value: 2, label: '2', svg: { fill: '#FF3B30' } },
-                  ]}
+                  data={
+                    accuracyData.correct === 0 && accuracyData.incorrect === 0
+                      ? [
+                          { key: 1, value: 1, label: 'No Data', svg: { fill: '#D3D3D3' } }, // Gray placeholder
+                        ]
+                      : accuracyData.incorrect > 0 && accuracyData.correct === 0
+                      ? [{ key: 1, value: accuracyData.incorrect, label: `${accuracyData.incorrect}`, svg: { fill: '#FF3B30' } }]
+                      : accuracyData.correct > 0 && accuracyData.incorrect === 0
+                      ? [{ key: 2, value: accuracyData.correct, label: `${accuracyData.correct}`, svg: { fill: '#4CD964' } }]
+                      : [
+                          { key: 1, value: accuracyData.correct, label: `${accuracyData.correct}`, svg: { fill: '#4CD964' } },
+                          { key: 2, value: accuracyData.incorrect, label: `${accuracyData.incorrect}`, svg: { fill: '#FF3B30' } },
+                        ]
+                  }
                   spacing={0}
                   outerRadius={'100%'}
                 >
@@ -1055,8 +1060,13 @@ export default function DashboardScreen({ navigation }) {
                   style={{ height: 250 }}
                   valueAccessor={({ item }) => item.value}
                   data={[
-                    { key: 1, value: 45, label: '45 mins', svg: { fill: '#4CD964' } }, 
-                    { key: 2, value: 15, label: '15 mins', svg: { fill: '#FF3B30' } },
+                    timeSpentData.timeSpent > 0
+                      ? { key: 1, value: timeSpentData.timeSpent, label: `${timeSpentData.timeSpent} mins`, svg: { fill: '#4CD964' } }
+                      : { key: 1, value: timeSpentData.timeSpent, label: '', svg: { fill: '#4CD964' } }, // Hide "0 mins"
+              
+                    timeSpentData.timeLeft > 0
+                      ? { key: 2, value: timeSpentData.timeLeft, label: `${timeSpentData.timeLeft} mins`, svg: { fill: '#FF3B30' } }
+                      : { key: 2, value: timeSpentData.timeLeft, label: '', svg: { fill: '#FF3B30' } }, // Hide "0 mins"
                   ]}
                   spacing={0}
                   outerRadius={'100%'}
@@ -1248,76 +1258,7 @@ const styles = StyleSheet.create({
     color: "#1E1E1E",
     textAlign: "center",
   },
-  modeContainer: {
-    position: 'relative',
-  },
-  modeButton: {
-    padding: 5,
-  },
-  modeDropdownMenu: {
-    position: "absolute",
-    left: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    width: 150,
-    zIndex: 1000,
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
-  },
-  modeDropdownItem: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5EA",
-  },
-  lastModeDropdownItem: {
-    borderBottomWidth: 0,
-  },
-  modeDropdownItemText: {
-    fontSize: 16,
-    color: "#1E1E1E",
-    textAlign: "center",
-  },
-  difficultyContainer: {
-    position: 'relative',
-  },
-  difficultyButton: {
-    padding: 5,
-  },
-  difficultyDropdownMenu: {
-    position: "absolute",
-    left: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    width: 150,
-    zIndex: 1000,
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
-  },
-  difficultyDropdownItem: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5EA",
-  },
-  lastDifficultyDropdownItem: {
-    borderBottomWidth: 0,
-  },
-  difficultyDropdownItemText: {
-    fontSize: 16,
-    color: "#1E1E1E",
-    textAlign: "center",
-  },
+  
   sectionContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -1396,11 +1337,14 @@ const styles = StyleSheet.create({
     margin: 2,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2, // ✅ Ensures proper distinction
+    borderColor: 'white', // ✅ Gives a clearer edge
   },
 
   dayText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: 'bold', // ✅ Makes it more visible
   },
 
   legend: {
@@ -1431,10 +1375,7 @@ const styles = StyleSheet.create({
   },
   // End
 
-  actionButtonsContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
+
   chartsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -2,6 +2,8 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Student = require("../models/Student");
+const Class = require("../models/Class");
 require("dotenv").config();
 
 const router = express.Router();
@@ -12,19 +14,18 @@ const authenticateUser = async (req, res, next) => {
     let token = req.headers.authorization;
 
     if (!token || !token.startsWith("Bearer ")) {
+      console.error("❌ Unauthorized Access Attempt: Token Missing or Invalid");
       return res.status(401).json({ message: "Unauthorized: Token is missing or invalid." });
     }
 
-    token = token.split(" ")[1]; // ✅ Extract actual token
-    console.log("🔹 Extracted Token:", token);
+    token = token.split(" ")[1];
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("🔹 Decoded Token Data:", decoded);
-
       const user = await User.findById(decoded.id).select("-password");
+
       if (!user) {
-        console.error("❌ User not found for token.");
+        console.error("❌ Token Verification Failed: User Not Found");
         return res.status(404).json({ message: "User not found." });
       }
 
@@ -48,6 +49,7 @@ router.get("/user", authenticateUser, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
+      console.error("❌ User Fetch Failed: User Not Found");
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -55,16 +57,14 @@ router.get("/user", authenticateUser, async (req, res) => {
       id: user._id,
       fullName: user.fullName,
       employeeNo: user.employeeNo,
-      phoneNumber: user.phoneNumber || "", // ✅ Ensure phoneNumber is included
+      phoneNumber: user.phoneNumber || "",
       profilePic: user.profilePic || null,
     });
   } catch (error) {
-    console.error("❌ Error fetching user:", error);
+    console.error("❌ Error Fetching User:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
-
-
 
 // ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
@@ -72,7 +72,10 @@ router.post("/signup", async (req, res) => {
     const { email, phoneNumber, fullName, employeeNo, password, securityQuestions } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email Address already in use." });
+    if (existingUser) {
+      console.error("❌ Signup Error: Email Already in Use");
+      return res.status(400).json({ message: "Email Address already in use." });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
@@ -87,122 +90,156 @@ router.post("/signup", async (req, res) => {
     await newUser.save();
     res.status(201).json({ message: "User registered successfully." });
   } catch (error) {
+    console.error("❌ Signup Error:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
 
-// ✅ User Login (Sign In) - Now Returns `employeeNo`
+// ✅ User Login (Sign In)
 router.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // ✅ Find user by email
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials." });
+    if (!user) {
+      console.error("❌ Login Error: Invalid Credentials");
+      return res.status(400).json({ message: "Invalid credentials." });
+    }
 
-    // ✅ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials." });
+    if (!isMatch) {
+      console.error("❌ Login Error: Incorrect Password");
+      return res.status(400).json({ message: "Invalid credentials." });
+    }
 
-    // ✅ Generate JWT token
     const token = jwt.sign(
-      { id: user._id, employeeNo: user.employeeNo }, // ✅ Ensure employeeNo is included in token payload
+      { id: user._id, employeeNo: user.employeeNo },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // ✅ Return token and user details
     res.json({ token, userID: user._id, employeeNo: user.employeeNo });
   } catch (error) {
-    console.error("❌ Sign-in Error:", error);
+    console.error("❌ Login Error:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
 
-
-// Save security questions on first sign-in
+// ✅ Save Security Questions on First Sign-In
 router.post("/save-security", async (req, res) => {
   try {
     const { email, securityQuestions } = req.body;
-  
-    // Check if the user exists
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found." });
-  
-    // If security questions are already set, prevent overwriting
+    if (!user) {
+      console.error("❌ Security Question Error: User Not Found");
+      return res.status(400).json({ message: "User not found." });
+    }
+
     if (user.securityQuestions && user.securityQuestions.length > 0) {
       return res.status(400).json({ message: "Security questions are already set." });
     }
-  
-    // Save security questions for the first time
+
     user.securityQuestions = securityQuestions;
     await user.save();
-  
+
     res.json({ message: "Security questions saved successfully!" });
   } catch (error) {
-    console.error("❌ Error saving security questions:", error);
+    console.error("❌ Error Saving Security Questions:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
 
-// Validate security questions
+// ✅ Validate Security Questions
 router.post("/validate-security", async (req, res) => {
   try {
     const { email, securityAnswers } = req.body;
-  
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found." });
-  
-    let isValid = user.securityQuestions.every(
+    if (!user) {
+      console.error("❌ Security Validation Error: User Not Found");
+      return res.status(400).json({ message: "User not found." });
+    }
+
+    if (!securityAnswers || securityAnswers.length === 0) {
+      return res.status(400).json({ message: "Security answers are required." });
+    }
+
+    const isValid = user.securityQuestions.every(
       (sq, index) => sq.answer.toLowerCase() === securityAnswers[index].answer.toLowerCase()
     );
-  
-    if (!isValid) return res.status(400).json({ message: "Security answers incorrect." });
-  
+
+    if (!isValid) {
+      console.error("❌ Security Validation Error: Incorrect Answers");
+      return res.status(400).json({ message: "Security answers incorrect." });
+    }
+
     res.json({ message: "Security questions verified successfully." });
   } catch (error) {
+    console.error("❌ Error Validating Security Questions:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
 
-// ✅ Get Total Number of Students Assigned to User
+// ✅ Get Total Number of Students Assigned to User (Optimized)
 router.get("/count", authenticateUser, async (req, res) => {
   try {
     const employeeNo = req.user.employeeNo;
-    const studentCount = await Student.countDocuments({ employeeNo });
 
-    res.json({ count: studentCount });
+    const userClass = await Class.findOne({ employeeNo }).populate("students");
+    if (!userClass) {
+      return res.status(200).json({ count: 0 });
+    }
+
+    res.json({ count: userClass.students.length });
   } catch (error) {
-    console.error("❌ Error fetching student count:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error Fetching Student Count:", error);
+    res.status(500).json({ message: "Server error." });
   }
 });
 
-// 
+// ✅ Update User Information
 router.put("/update", authenticateUser, async (req, res) => {
   try {
     const { fullName, phoneNumber } = req.body;
 
-    console.log("🔹 Received Update Request:", req.body); // ✅ Log incoming request
-
     const user = await User.findById(req.user.id);
     if (!user) {
+      console.error("❌ User Update Error: User Not Found");
       return res.status(404).json({ message: "User not found." });
     }
 
     if (fullName) user.fullName = fullName;
     if (phoneNumber) user.phoneNumber = phoneNumber;
 
+    user.updatedAt = formatDate(new Date()); // ✅ Ensure `updatedAt` updates when the user updates their info.
+
     await user.save();
 
     res.json({ message: "User updated successfully." });
   } catch (error) {
-    console.error("❌ Server Error:", error); // ✅ Log full server error
-    res.status(500).json({ message: "Server error.", error: error.message });
+    console.error("❌ Error Updating User:", error);
+    res.status(500).json({ message: "Server error." });
   }
 });
 
+// ✅ Function to format Date and Time in required format (YYYY-MM-DD | HH:MM:SS AM/PM)
+function formatDate(date) {
+  const options = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  };
 
+  // Convert date to YYYY-MM-DD format
+  const formattedDate = date.toLocaleDateString("en-US", options).replace(/\//g, "-");
+  const formattedTime = date.toLocaleTimeString("en-US", options);
 
+  return `Date: ${formattedDate} | Time: ${formattedTime}`;
+}
 
 module.exports = router;
