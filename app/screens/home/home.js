@@ -8,7 +8,6 @@ import {
   useWindowDimensions,
   ImageBackground,
 } from "react-native";
-import { Video } from "expo-av";
 import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
 import { useNavigation } from "@react-navigation/native";
@@ -26,80 +25,53 @@ const challengeCard = require("../../../assets/menuCards/home/challenge-card.png
 
 const settingHeader = require("../../../assets/headerText/setting-header.png");
 
-/* Video path */
-const introVideo = require("../../../assets/gameBackground/introductory-video.MOV");
-
 export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [showVideo, setShowVideo] = useState(true);
   const navigation = useNavigation();
   const { studentName, studentId } = route.params || {}; // Get studentName from params
 
   useEffect(() => {
-    stopMusic(); // Stop background music while video plays
+    playMusic("appBg");
+    return () => stopMusic(); // Stop music when the screen unmounts
   }, []);
 
-  const handleVideoEnd = () => {
-    setShowVideo(false);
-    playMusic("appBg"); // Start background music after video ends
-  };
-
   return (
-    <View style={styles.container}>
-      {showVideo ? (
-        <TouchableOpacity
-          style={styles.videoContainer}
-          onPress={handleVideoEnd} // Skip video when tapped
-          activeOpacity={1}
-        >
-          <Video
-            source={introVideo}
-            style={styles.video}
-            resizeMode="cover"
-            onPlaybackStatusUpdate={(status) => {
-              if (status.didJustFinish) handleVideoEnd();
+    <ImageBackground source={bgImg} style={styles.backgroundImage}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Image source={logoImg} style={styles.logo} />
+
+          <View style={styles.studentInfo}>
+            <Image source={studentImg} style={styles.studentImg} />
+            <Text style={styles.studentName}>
+              {studentName || "Student Name"}
+            </Text>
+          </View>
+
+          <TouchableOpacity onPress={() => setSettingsVisible(true)}>
+            <Image source={settingIcon} style={styles.settingImg} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Main content */}
+        <View style={styles.cardContainer}>
+          <TouchableOpacity onPress={() => navigation.navigate("Class")}>
+            <Image source={classCard} style={styles.cards} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              console.log(
+                "Navigating to PracMainScreen with studentId:",
+                studentId
+              ); // Debugging
+              navigation.navigate("PracMainScreen", { studentId });
             }}
-            shouldPlay
-            isLooping={false}
-          />
-        </TouchableOpacity>
-      ) : (
-        <ImageBackground source={bgImg} style={styles.backgroundImage}>
-          <View style={styles.innerContainer}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Image source={logoImg} style={styles.logo} />
-
-              <View style={styles.studentInfo}>
-                <Image source={studentImg} style={styles.studentImg} />
-                <Text style={styles.studentName}>
-                  {studentName || "Student Name"}
-                </Text>
-              </View>
-
-              <TouchableOpacity onPress={() => setSettingsVisible(true)}>
-                <Image source={settingIcon} style={styles.settingImg} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Main content */}
-            <View style={styles.cardContainer}>
-              <TouchableOpacity onPress={() => navigation.navigate("Class")}>
-                <Image source={classCard} style={styles.cards} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  console.log(
-                    "Navigating to PracMainScreen with studentId:",
-                    studentId
-                  ); // Debugging
-                  navigation.navigate("PracMainScreen", { studentId });
-                }}
-              >
-                <Image source={practiceCard} style={styles.cards} />
-              </TouchableOpacity>
+          >
+            <Image source={practiceCard} style={styles.cards} />
+          </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => {
@@ -114,58 +86,39 @@ export default function HomeScreen({ route }) {
           </TouchableOpacity>
         </View>
 
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                © 2024 Husay. All Rights Reserved.
-              </Text>
-            </View>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            © 2024 Husay. All Rights Reserved.
+          </Text>
+        </View>
 
-            {/* Use SettingsModal Component */}
-            <SettingsModal
-              visible={settingsVisible}
-              onClose={() => setSettingsVisible(false)}
-              headerImage={settingHeader}
-              buttonOneText="Switch Profile"
-              buttonTwoText="Logout"
-              onButtonOnePress={() => {
-                console.log("Switching Profile...");
-                navigation.navigate("StudentProfile"); // Navigate back to Student Profile
-              }}
-              onButtonTwoPress={() => console.log("Logging Out...")}
-            />
-          </View>
-        </ImageBackground>
-      )}
-    </View>
+        {/* Use SettingsModal Component */}
+        <SettingsModal
+          visible={settingsVisible}
+          onClose={() => setSettingsVisible(false)}
+          headerImage={settingHeader}
+          buttonOneText="Switch Profile"
+          buttonTwoText="Logout"
+          onButtonOnePress={() => {
+            console.log("Switching Profile...");
+            navigation.navigate("StudentProfile"); // Navigate back to Student Profile
+          }}
+          onButtonTwoPress={() => console.log("Logging Out...")}
+        />
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
   backgroundImage: {
     flex: 1,
     width: "100%",
     height: "100%",
   },
-  innerContainer: {
+  container: {
     flex: 1,
-  },
-  videoContainer: {
-    flex: 1,
-    backgroundColor: "black",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    height: "100%",
-  },
-  video: {
-    width: "100%",
-    height: "100%",
   },
   /* Header */
   studentImg: {
@@ -199,6 +152,7 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     width: "100%",
   },
+
   /* Main Content */
   cardContainer: {
     flexDirection: "row",
