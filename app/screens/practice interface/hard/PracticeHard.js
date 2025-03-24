@@ -1,14 +1,12 @@
-// PracticeHardScreen.js 
-import React, { useEffect } from "react";
+// PracticeHardScreen.js
+import React from "react";
 import GameFlows from "../../../component/game/GameFlows";
 import PregameDialog from "../../../component/game/PregameDialog";
 import Countdown from "../../../component/countdown";
 import PracticeHard from "../../../component/game/Practice/HardMode/PracticeHard";
 import StageCompletion from "../../../component/stageCompletion";
 import EvaDialouges from "../../../data/evaDialogues";
-import { useNavigation } from '@react-navigation/native';
-import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
-
+import { useNavigation } from "@react-navigation/native";
 
 const practiceHardBg = require("../../../../assets/gameBackground/practice-hard-bg.png");
 
@@ -19,43 +17,102 @@ const practiceHardDialogData = {
   ],
   npcNames: ["Eva", "Eva"],
   npcImages: [
-    { image: require("../../../../assets/eva/eva-loud.png"), width: 500, height: 400 },
-    { image: require("../../../../assets/eva/eva-pointing.png"), width: 460, height: 470 },
+    {
+      image: require("../../../../assets/eva/eva-loud.png"),
+      width: 500,
+      height: 400,
+    },
+    {
+      image: require("../../../../assets/eva/eva-pointing.png"),
+      width: 460,
+      height: 470,
+    },
   ],
-    audioFiles: [
-    [require('../../../../assets/voiceOver/eva/practiceHard/eva-hard-1.mp3')], 
-    [require('../../../../assets/voiceOver/eva/practiceHard/eva-hard-2.mp3')], 
+  audioFiles: [
+    [require("../../../../assets/voiceOver/eva/practiceHard/eva-hard-1.mp3")],
+    [require("../../../../assets/voiceOver/eva/practiceHard/eva-hard-2.mp3")],
   ],
 };
 
 const practiceHardCompletionNpc = {
   name: "Eva",
-  image: require("../../../../assets/eva/eva-excited.png")
+  image: require("../../../../assets/eva/eva-excited.png"),
 };
 
-const PracticeHardScreen = () => {
-  const navigation = useNavigation(); 
+const PracticeHardScreen = ({ route }) => {
+  const navigation = useNavigation();
+  const { studentId } = route.params || {}; // Receive studentId
+  console.log("Practice Hard received studentID: ", studentId);
 
-  useEffect(() => {
-    playMusic("hardBg");
-    return () => stopMusic();
-  }, []);
+  const handleGameComplete = async (score, timeTaken, setGamePhase) => {
+    console.log("Submitting game results...");
+    console.log("Student ID:", studentId);
+    console.log("Score:", score);
+    console.log("Time Taken:", timeTaken);
+
+    const totalRounds = 5; // ✅ Ensure this matches `numRounds` in BaseGame.tsx
+    const mistakes = totalRounds - score; // ✅ Calculate mistakes
+
+    // ✅ New star system based on mistakes
+    const stars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
+
+    try {
+      const response = await fetch(
+        "http://10.0.2.2:5000/api/students/update-score",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            studentId,
+            subject: "",
+            difficulty: "Hard",
+            mode: "practice",
+            points: score,
+            stars,
+          }),
+        }
+      );
+      const data = await response.json();
+      console.log("Score update response:", data);
+
+      // ✅ Transition to Stage Completion
+      if (setGamePhase) {
+        console.log("✅ Updating game phase to 'completed'");
+        setGamePhase("completed");
+      } else {
+        console.error("❌ setGamePhase is undefined!");
+      }
+    } catch (error) {
+      console.error("Error updating score:", error);
+    }
+  };
 
   return (
     <GameFlows
       backgroundImg={practiceHardBg}
-      DialogComponent={(props) => <PregameDialog {...props} dialogData={practiceHardDialogData} />}
+      DialogComponent={(props) => (
+        <PregameDialog {...props} dialogData={practiceHardDialogData} />
+      )}
       CountdownComponent={Countdown}
-      GameComponent={PracticeHard}
-      navigation={navigation} 
+      GameComponent={(props) => (
+        <PracticeHard
+          {...props}
+          onGameComplete={
+            (score, timeTaken) =>
+              handleGameComplete(score, timeTaken, props.setGamePhase) // ✅ Ensure setGamePhase is passed
+          }
+          setGamePhase={props.setGamePhase} // ✅ Correctly passing setGamePhase
+        />
+      )}
+      navigation={navigation}
       StageCompletionComponent={(props) => (
-        <StageCompletion 
-          {...props} 
-          dialoguesData={EvaDialouges} 
-          completionNpc={practiceHardCompletionNpc} 
-          navigation={navigation} 
-          currentScreen="PracticeHard"
-
+        <StageCompletion
+          {...props}
+          dialoguesData={EvaDialouges}
+          completionNpc={practiceHardCompletionNpc}
+          navigation={() => navigation.navigate("PracMainScreen")}
         />
       )}
     />

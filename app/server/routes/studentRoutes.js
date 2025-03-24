@@ -8,7 +8,7 @@ const router = express.Router();
 // ✅ Get total student count for the logged-in user's class
 router.get("/count", authenticateUser, async (req, res) => {
   try {
-    const employeeNo = req.user.employeeNo; // Get employeeNo from the token
+    const employeeNo = req.user.employeeNo;
     if (!employeeNo) {
       return res.status(400).json({ message: "Employee number is missing." });
     }
@@ -24,50 +24,42 @@ router.get("/count", authenticateUser, async (req, res) => {
 // ✅ Get all students for the authenticated teacher
 router.get("/all", authenticateUser, async (req, res) => {
   try {
-    console.log("🔍 Fetching students for employeeNo:", req.user.employeeNo);
+    const students = await Student.find({ employeeNo: req.user.employeeNo }).select(
+      "fullName age gender stars subjects recommendations attendance gameTime accuracy"
+    );
 
-    const students = await Student.find({ employeeNo: req.user.employeeNo }).select("fullName age gender gamesPlayed attendance");
-
-    console.log("🔹 Students fetched:", JSON.stringify(students, null, 2));
-
-    // ✅ Ensure every student has an `attendance` array
-    const updatedStudents = students.map((student) => ({
-      ...student.toObject(),
-      attendance: student.attendance || [],
-    }));
-
-    console.log("✅ Final API Response:", JSON.stringify(updatedStudents, null, 2));
-    res.json({ students: updatedStudents });
+    res.json({ students });
   } catch (error) {
     console.error("❌ Error fetching students:", error);
     res.status(500).json({ message: "Server error fetching students." });
   }
 });
 
-// ✅ Update Student Progress
+// ✅ Update Student Attendance Based on Gameplay
 router.put("/update-attendance/:studentId", authenticateUser, async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { gamesPlayed } = req.body;
-    const today = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const formattedNow = formatDate(now); // ✅ Format date correctly
+    const todayDateOnly = formattedNow.split(" | ")[0];
 
     const student = await Student.findById(studentId);
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ Determine attendance status
-    const status = gamesPlayed > 0 ? "Present" : "Absent";
+    // ✅ Check if attendance already exists for today
+    const existingAttendance = student.attendance.find(
+      (att) => att.date.startsWith(todayDateOnly)
+    );
 
-    // ✅ Check if an attendance record for today already exists
-    const existingRecord = student.attendance.find(
-      (att) => new Date(att.date).toISOString().split("T")[0] === today
-    );      
-
-    if (existingRecord) {
-      existingRecord.status = status; // ✅ Update existing attendance record
+    if (!existingAttendance) {
+      // ✅ Mark student as "Present" using formatted date
+      student.attendance.push({ date: formattedNow, status: "Present" });
+      student.gameTime.sessionStart = formattedNow;
     } else {
-      student.attendance.push({ date: new Date(today), status });
+      // ✅ Update sessionStart but keep the original attendance time
+      student.gameTime.sessionStart = formattedNow;
     }
 
     await student.save();
@@ -78,6 +70,41 @@ router.put("/update-attendance/:studentId", authenticateUser, async (req, res) =
   }
 });
 
+
+// ✅ Update Student Score and Recommendations
+router.put("/update-score", authenticateUser, async (req, res) => {
+  try {
+    const { studentId, subject, correct, incorrect } = req.body;
+
+    if (!studentId || !subject || correct === undefined || incorrect === undefined) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // ✅ Update the score
+    if (student.subjects[subject]) {
+      student.subjects[subject].correct += correct;
+      student.subjects[subject].incorrect += incorrect;
+    }
+
+    // ✅ Recalculate accuracy and percentage
+    student.calculateStats();
+
+    // ✅ Recalculate recommendations
+    student.calculateRecommendations();
+
+    await student.save();
+    
+    res.status(200).json({ message: "Score updated successfully", student });
+  } catch (error) {
+    console.error("❌ Error updating score:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 // ✅ Edit Student Information
 router.put("/edit/:studentId", authenticateUser, async (req, res) => {
@@ -91,7 +118,7 @@ router.put("/edit/:studentId", authenticateUser, async (req, res) => {
 
     const updatedStudent = await Student.findByIdAndUpdate(
       studentId,
-      { fullName, age, gender, profileImage },
+      { fullName, age, gender, profileImage, updatedAt: new Date() },
       { new: true }
     );
 
@@ -105,65 +132,22 @@ router.put("/edit/:studentId", authenticateUser, async (req, res) => {
   }
 });
 
-// ✅ Update Student Attendance Based on Gameplay
-router.put("/update-attendance/:studentId", authenticateUser, async (req, res) => {
-  try {
-    const { studentId } = req.params;
-    const { gamesPlayed } = req.body;
-    const today = new Date().toISOString().split("T")[0];
-
-    const student = await Student.findById(studentId);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
-
-    // ✅ Determine attendance status
-    const status = gamesPlayed > 0 ? "Present" : "Absent";
-
-    // ✅ Check if an attendance record for today already exists
-    const existingRecord = student.attendance.find(
-      (att) => new Date(att.date).toISOString().split("T")[0] === today
-    );      
-
-    if (existingRecord) {
-      existingRecord.status = status; // ✅ Update existing attendance record
-    } else {
-      student.attendance.push({ date: new Date(today), status });
-    }
-
-    await student.save();
-    res.status(200).json({ message: "Attendance updated successfully", student });
-  } catch (error) {
-    console.error("❌ Error updating attendance:", error);
-    res.status(500).json({ message: "Server error updating attendance" });
-  }
-});
-
-// ✅ Delete a Student
+// ✅ Delete a Student and Remove from Class
 router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { employeeNo } = req.user; // ✅ Extract employeeNo from authenticated user
+    const { employeeNo } = req.user;
 
-    console.log(`🗑️ Backend attempting to delete student: ${studentId}`);
-    console.log(`🔹 Logged-in teacher's employeeNo: ${employeeNo}`);
-    
-    // ✅ Log the class that contains the student
-    const classWithStudent = await Class.findOne({ students: studentId }).exec();
-    console.log("🔹 Class Found:", classWithStudent);
-    
-    // ✅ Log the teacher assigned to the class
-    if (classWithStudent.employeeNo !== employeeNo) {
-      console.error("❌ Unauthorized: You do not own this class.");
+    const classWithStudent = await Class.findOne({ students: studentId });
+
+    if (!classWithStudent || classWithStudent.employeeNo !== employeeNo) {
       return res.status(403).json({ message: "Unauthorized: You do not have permission to delete this student." });
     }
-     
 
-    // ✅ Remove student from the class
+    // ✅ Remove student from class
     classWithStudent.students = classWithStudent.students.filter((id) => id.toString() !== studentId);
     await classWithStudent.save();
 
-    // ✅ Delete student from the database
     await Student.findByIdAndDelete(studentId);
 
     res.status(200).json({ message: "Student deleted successfully" });
@@ -173,78 +157,32 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
   }
 });
 
-router.post("/update-score", async (req, res) => {
+// ✅ Fetch a Single Student's Full Data
+router.get("/get/:studentId", authenticateUser, async (req, res) => {
   try {
-    const { studentId, subject, difficulty, mode, points, stars } = req.body;
+    const { studentId } = req.params;
+    
+    const student = await Student.findById(studentId).select(
+      "fullName age gender stars subjects recommendations attendance gameTime accuracy"
+    );
 
-    // Validate inputs
-    if (!studentId || !subject || !difficulty || !mode || points === undefined || stars === undefined) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    // Find the student by ID
-    const student = await Student.findById(studentId);
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // Build the dynamic path for updating the score
-    const scorePath = `subjects.${subject}.${mode}.${difficulty}`;
-
-    // Update the score and stars
-    student.set(`${scorePath}.points`, points);
-    student.set(`${scorePath}.stars`, stars);
-
-    // Save the updated student document
-    await student.save();
-
-    res.status(200).json({ message: "Score updated successfully", student });
+     // ✅ Recalculate accuracy before returning (ensures latest values)
+     student.calculateStats();
+    
+     // ✅ Save the student to ensure database is updated
+     await student.save();
+    
+     console.log("✅ Updated Student Accuracy:", student.accuracy);
+     
+    res.json({ student });
   } catch (error) {
-    console.error("Error updating score:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("❌ Error fetching student data:", error);
+    res.status(500).json({ message: "Server error fetching student" });
   }
-})
-
-//test route for changing a students attendance manually.
-// router.put("/:studentId/attendance", async (req, res) => {
-//   try {
-//     const { studentId } = req.params;
-//     const { date, status } = req.body;
-
-//     // Validate input
-//     if (!date || !status || !["Present", "Absent"].includes(status)) {
-//       return res.status(400).json({ message: "Invalid date or status provided." });
-//     }
-
-//     console.log(`📅 Updating attendance for Student ${studentId} on ${date} as ${status}`);
-
-//     // Find student by ID
-//     const student = await Student.findById(studentId);
-//     if (!student) {
-//       return res.status(404).json({ message: "Student not found." });
-//     }
-
-//     // ✅ Check if the date already exists in attendance
-//     const existingRecord = student.attendance.find((entry) =>
-//       entry.date.toISOString().split("T")[0] === new Date(date).toISOString().split("T")[0]
-//     );
-
-//     if (existingRecord) {
-//       existingRecord.status = status; // ✅ Update existing record
-//     } else {
-//       student.attendance.push({ date: new Date(date), status }); // ✅ Add new attendance record
-//     }
-
-//     // ✅ Save the student record with updated attendance
-//     await student.save();
-
-//     console.log("✅ Attendance updated successfully.");
-//     res.status(200).json({ message: "Attendance updated successfully", student });
-//   } catch (error) {
-//     console.error("❌ Error updating attendance:", error);
-//     res.status(500).json({ message: "Server error updating attendance." });
-//   }
-// });
-
+});
 
 module.exports = router;

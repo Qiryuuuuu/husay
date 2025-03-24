@@ -1,5 +1,5 @@
-import React from 'react';
-import { BaseGame } from '../../EasyBaseGame';
+import React, { useEffect, useState } from "react";
+import { BaseGame } from "../../EasyBaseGame";
 import numberDialogues from "../../../../data/numberDialogues";
 
 const amberIdleImg = require("../../../../../assets/amber/amber-guess.png");
@@ -19,20 +19,33 @@ const numbers = [
   { name: "Ten", image: require("../../../../../assets/numbers/ten.png") },
 ];
 
-const NumberGame = ({ onGameComplete, navigation }) => {
+const NumberGame = ({ onGameComplete, setGamePhase, navigation }) => {
+  const [startTime, setStartTime] = useState(Date.now());
+
+  useEffect(() => {
+    setStartTime(Date.now()); // Start tracking time when game starts
+  }, []);
+
+  const finishGame = (score, timeTaken) => {
+    console.log("✅ Game Finished in ColorGame!");
+    console.log("Time Taken:", timeTaken);
+    console.log("Final Score Received:", score);
+
+    onGameComplete(score, timeTaken, setGamePhase); // ✅ Correct order
+  };
   return (
     <BaseGame
       items={numbers}
-      onGameComplete={onGameComplete}
+      onGameComplete={finishGame}
       navigation={navigation}
       npcConfig={{
         idle: amberIdleImg,
         correct: amberCorrectImg,
         wrong: amberWrongImg,
-        name: "Amber"
+        name: "Amber",
       }}
       dialogues={numberDialogues}
-      />
+    />
   );
 };
 

@@ -19,7 +19,7 @@ const element2 = require("../../../assets/element2.png");
 const element3 = require("../../../assets/element3.png");
 const element4 = require("../../../assets/element4.png");
 
-export default function LoginScreen({ navigation }) { 
+export default function LoginScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,44 +30,50 @@ export default function LoginScreen({ navigation }) {
       Alert.alert("Error", "Please enter both Email Address and password.");
       return;
     }
-  
+
     setLoading(true);
     try {
-      const response = await axios.post("http://10.0.2.2:5000/api/auth/signin", {
-        email,
-        password,
-      });
-  
+      const response = await axios.post(
+        "http://10.0.2.2:5000/api/auth/signin",
+        {
+          email,
+          password,
+        }
+      );
+
       console.log("🧐 Raw Response:", response.data);
-  
+
       // ✅ Extract token and employee number properly
-      const token = response.data.token; 
+      const token = response.data.token;
       const employeeNo = response.data.employeeNo;
-  
+
       if (!token) {
         console.error("❌ No token received. Login failed.");
         Alert.alert("Error", "Invalid credentials or missing token.");
         return;
       }
-  
+
       // ✅ Store token and employee number in AsyncStorage
       await AsyncStorage.setItem("authToken", token);
-      if (employeeNo) await AsyncStorage.setItem("employeeNo", employeeNo.toString());
-  
+      if (employeeNo)
+        await AsyncStorage.setItem("employeeNo", employeeNo.toString());
+
       console.log("✅ Token Stored Successfully:", token);
       console.log("✅ Employee Number:", employeeNo);
-  
+
       Alert.alert("Success", "Login successful!");
       navigation.navigate("StudentProfile");
     } catch (error) {
       console.error("❌ Login Error:", error);
-      Alert.alert("Error", error.response?.data?.message || "Something went wrong");
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Something went wrong"
+      );
     } finally {
       setLoading(false);
     }
   };
-  
-  
+
   return (
     <View style={styles.container}>
       <Image source={element1} style={styles.element1} />
@@ -102,7 +108,7 @@ export default function LoginScreen({ navigation }) {
           onChangeText={setPassword}
         />
       </View>
-      
+
       <View style={styles.forgotContainer}>
         <TouchableOpacity>
           <Text
@@ -138,7 +144,6 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   element1: {
@@ -230,8 +235,8 @@ const styles = StyleSheet.create({
     elevation: 6,
     backgroundColor: "#4A90E2",
   },
-  disabledButton: { 
-    opacity: 0.7 
+  disabledButton: {
+    opacity: 0.7,
   }, // ✅ Style for disabled button
   buttonText: {
     color: "#fff",

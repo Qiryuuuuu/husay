@@ -101,14 +101,18 @@ export default function HomeScreen({ route }) {
                 <Image source={practiceCard} style={styles.cards} />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("ChallMainScreen", { studentId })
-                }
-              >
-                <Image source={challengeCard} style={styles.cards} />
-              </TouchableOpacity>
-            </View>
+          <TouchableOpacity
+            onPress={() => {
+              console.log(
+                "Navigating to ChallMainScreen with studentId:",
+                studentId
+              ); // Debugging
+              navigation.navigate("ChallMainScreen", { studentId });
+            }}
+          >
+            <Image source={challengeCard} style={styles.cards} />
+          </TouchableOpacity>
+        </View>
 
             {/* Footer */}
             <View style={styles.footer}>

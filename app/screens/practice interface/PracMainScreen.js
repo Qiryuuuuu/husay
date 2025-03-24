@@ -79,7 +79,9 @@ export default function PracMainScreen({ route }) {
           <>
             {/* Header */}
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Home", { studentId })}
+              >
                 <Image source={backButton} style={styles.logo} />
               </TouchableOpacity>
 
@@ -96,7 +98,7 @@ export default function PracMainScreen({ route }) {
                     "Navigating to EasyMenuInterface with studentId:",
                     studentId
                   ); // Debugging
-                  navigation.navigate("PracticeColor", { studentId });
+                  navigation.navigate("EasyMenuInteface", { studentId });
                 }}
               >
                 <Image source={easyCard} style={styles.cards} />

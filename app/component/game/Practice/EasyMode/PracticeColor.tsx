@@ -16,7 +16,7 @@ const colors = [
   { name: "White", image: require("../../../../../assets/color/white.png") },
 ];
 
-const ColorGame = ({ onGameComplete, navigation }) => {
+const ColorGame = ({ onGameComplete, setGamePhase, navigation }) => {
   const [startTime, setStartTime] = useState(Date.now());
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const ColorGame = ({ onGameComplete, navigation }) => {
     console.log("Time Taken:", timeTaken);
     console.log("Final Score Received:", score);
 
-    onGameComplete(score, timeTaken); // ✅ Correct order
+    onGameComplete(score, timeTaken, setGamePhase); // ✅ Correct order
   };
 
   return (

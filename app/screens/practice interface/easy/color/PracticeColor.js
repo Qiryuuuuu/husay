@@ -1,14 +1,14 @@
 // PracticeColor.js
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import GameFlows from "../../../../component/game/GameFlows";
 import PregameDialog from "../../../../component/game/PregameDialog";
 import Countdown from "../../../../component/countdown";
 import ColorGame from "../../../../component/game/Practice/EasyMode/PracticeColor";
 import StageCompletion from "../../../../component/stageCompletion";
 import colorDialogues from "../../../../data/colorDialogues";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
-
+import { useEffect } from "react";
 
 const colorBg = require("../../../../../assets/gameBackground/practice-color-bg.png");
 
@@ -65,7 +65,7 @@ const colorCompletionNpc = {
 
 const ColorModeScreen = ({ route }) => {
   const navigation = useNavigation();
-  
+
   useEffect(() => {
     playMusic("easyBg");
     return () => stopMusic();
@@ -73,16 +73,18 @@ const ColorModeScreen = ({ route }) => {
   const { studentId } = route.params || {}; // Receive studentId
   console.log("Practice Color easy received studentID: ", studentId);
 
-  const handleGameComplete = async (score, timeTaken) => {
+  const handleGameComplete = async (score, timeTaken, setGamePhase) => {
     console.log("Submitting game results...");
     console.log("Student ID:", studentId);
     console.log("Score:", score);
     console.log("Time Taken:", timeTaken);
+
     const totalRounds = 5; // ✅ Ensure this matches `numRounds` in BaseGame.tsx
     const mistakes = totalRounds - score; // ✅ Calculate mistakes
 
     // ✅ New star system based on mistakes
     const stars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
+
     try {
       const response = await fetch(
         "http://10.0.2.2:5000/api/students/update-score",
@@ -102,8 +104,15 @@ const ColorModeScreen = ({ route }) => {
         }
       );
       const data = await response.json();
-      navigation.navigate("PracMainScreen");
       console.log("Score update response:", data);
+
+      // ✅ Transition to Stage Completion
+      if (setGamePhase) {
+        console.log("✅ Updating game phase to 'completed'");
+        setGamePhase("completed");
+      } else {
+        console.error("❌ setGamePhase is undefined!");
+      }
     } catch (error) {
       console.error("Error updating score:", error);
     }
@@ -117,7 +126,11 @@ const ColorModeScreen = ({ route }) => {
       )}
       CountdownComponent={Countdown}
       GameComponent={(props) => (
-        <ColorGame {...props} onGameComplete={handleGameComplete} />
+        <ColorGame
+          {...props}
+          onGameComplete={handleGameComplete}
+          setGamePhase={props.setGamePhase} // ✅ Pass setGamePhase from GameFlows.js
+        />
       )}
       navigation={navigation}
       StageCompletionComponent={(props) => (
@@ -125,11 +138,11 @@ const ColorModeScreen = ({ route }) => {
           {...props}
           dialoguesData={colorDialogues}
           completionNpc={colorCompletionNpc}
-          navigation={() => navigation.navigate("PracMainScreen")} // ✅ Use a function
-          currentScreen="PracticeColor"
+          navigation={() => navigation.navigate("PracMainScreen")}
         />
       )}
     />
   );
 };
+
 export default ColorModeScreen;
