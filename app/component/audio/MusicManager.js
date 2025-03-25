@@ -14,11 +14,11 @@ let voiceObject = null; // For voice audio (e.g., dialog)
 let fadeDuration = 1000; // 1 second fade
 
 const volumeLevels = {
-  appBg: 0.7,
-  gameInterfaceBg: 0.5,
+  appBg: 0.8,
+  gameInterfaceBg: 0.6,
   easyBg: 0.7,
   mediumBg: 0.7,
-  hardBg: 0.4,
+  hardBg: 0.5,
 };
 
 // Fade out background music
