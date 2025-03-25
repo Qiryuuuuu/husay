@@ -1,9 +1,17 @@
 //ChallHardBase.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Animated,
+  Vibration,
+} from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
-import AudioPlayer from "../../component/audio/AudioPlayer"; 
+import AudioPlayer from "../../component/audio/AudioPlayer";
 import AudioChall from "../audio/ChallAudio";
 import { FrameType } from "../game/challenge/HardMode/ChallengeHard";
 import figures from "../../data/hardQuestions";
@@ -16,7 +24,7 @@ const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
 const shapeOptions = ["Rectangle", "Triangle", "Square", "Circle"];
 const colorOptions = ["Red", "Blue", "Green", "Yellow"];
-const countOptions = ["1", "2", "3", "4", "5"]; 
+const countOptions = ["1", "2", "3", "4", "5"];
 
 interface FigureProperties {
   shape: string;
@@ -27,15 +35,15 @@ interface FigureProperties {
 interface Figure {
   source: any;
   properties: FigureProperties;
-  questionType?: 'shape' | 'color' | 'count';
+  questionType?: "shape" | "color" | "count";
   correctAnswer?: string;
 }
 
 interface NpcConfig {
   [key: string]: {
     idle: any;
-    correct?: any; 
-    wrong?: any;   
+    correct?: any;
+    wrong?: any;
     name: string;
   };
 }
@@ -94,13 +102,18 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isClickable, setIsClickable] = useState(true);
   const [feedbackText, setFeedbackText] = useState(
-    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!"
+    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+      "Let's begin!"
   );
   const [isGameRunning, setIsGameRunning] = useState(true);
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
-  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(null);
-  const [questionType, setQuestionType] = useState<'shape' | 'color' | 'count'>('shape');
+  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(
+    null
+  );
+  const [questionType, setQuestionType] = useState<"shape" | "color" | "count">(
+    "shape"
+  );
 
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
@@ -111,24 +124,25 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const generateRounds = useCallback(() => {
     const figureTypes = Object.keys(figures);
     if (figureTypes.length === 0) return;
-    
-    const randomFigureType = figureTypes[Math.floor(Math.random() * figureTypes.length)];
+
+    const randomFigureType =
+      figureTypes[Math.floor(Math.random() * figureTypes.length)];
     setSelectedFigureType(randomFigureType);
-    
+
     const selectedFigures = figures[randomFigureType];
     if (!selectedFigures || !selectedFigures[0]?.properties) {
-      console.error('Invalid figure data:', randomFigureType, selectedFigures);
+      console.error("Invalid figure data:", randomFigureType, selectedFigures);
       return;
     }
-    
+
     let allRounds: Figure[] = [];
 
     // Generate shape rounds (1-5)
     for (let i = 0; i < numShapeRounds; i++) {
       allRounds.push({
         ...selectedFigures[i + 1],
-        questionType: 'shape',
-        correctAnswer: selectedFigures[i + 1].properties.shape
+        questionType: "shape",
+        correctAnswer: selectedFigures[i + 1].properties.shape,
       });
     }
 
@@ -136,8 +150,8 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     for (let i = 0; i < numColorRounds; i++) {
       allRounds.push({
         ...selectedFigures[i + 1],
-        questionType: 'color',
-        correctAnswer: selectedFigures[i + 1].properties.color
+        questionType: "color",
+        correctAnswer: selectedFigures[i + 1].properties.color,
       });
     }
 
@@ -145,11 +159,11 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     if (includeCountRound) {
       allRounds.push({
         ...selectedFigures[0],
-        questionType: 'count',
-        correctAnswer: selectedFigures[0].properties.count
+        questionType: "count",
+        correctAnswer: selectedFigures[0].properties.count,
       });
     }
-    
+
     setRounds(allRounds);
     resetGameState();
   }, [figures, numShapeRounds, numColorRounds, includeCountRound]);
@@ -158,7 +172,10 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     setCurrentRound(0);
     setIsCorrect(null);
     setIsClickable(true);
-    setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!");
+    setFeedbackText(
+      dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+        "Let's begin!"
+    );
     setNpcImage(npcConfig.idle);
     setIsGameRunning(true);
     setCorrectFirstTry(0);
@@ -177,29 +194,32 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     if (rounds.length > 0 && currentRound < rounds.length) {
       const currentQuestion = rounds[currentRound];
       if (!currentQuestion) {
-        console.error('Invalid round data:', currentRound, rounds);
+        console.error("Invalid round data:", currentRound, rounds);
         return;
       }
-      
-      setQuestionType(currentQuestion.questionType || 'shape');
-      
+
+      setQuestionType(currentQuestion.questionType || "shape");
+
       let roundOptions: string[] = [];
       switch (currentQuestion.questionType) {
-        case 'shape':
+        case "shape":
           roundOptions = [...shapeOptions];
           break;
-        case 'color':
+        case "color":
           roundOptions = [...colorOptions];
           break;
-        case 'count':
+        case "count":
           roundOptions = [...countOptions];
           break;
       }
-      
+
       setOptions(roundOptions.sort(() => Math.random() - 0.5));
       setIsCorrect(null);
       setIsClickable(true);
-      setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's continue!");
+      setFeedbackText(
+        dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+          "Let's continue!"
+      );
       setNpcImage(npcConfig.idle);
       setHasTried(false);
 
@@ -213,106 +233,155 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     }
   }, [currentRound, rounds, dialogues?.idle, npcConfig.idle, storyScenes]);
 
-const handleSelection = useCallback((selectedAnswer: string) => {
-  if (!isClickable || currentRound >= rounds.length) return;
+  const handleSelection = useCallback(
+    (selectedAnswer: string) => {
+      if (!isClickable || currentRound >= rounds.length) return;
 
-  const normalizedSelection = selectedAnswer.toLowerCase();
-  const normalizedCorrectAnswer = (rounds[currentRound].correctAnswer || '').toLowerCase();
+      const normalizedSelection = selectedAnswer.toLowerCase();
+      const normalizedCorrectAnswer = (
+        rounds[currentRound].correctAnswer || ""
+      ).toLowerCase();
 
-  if (normalizedSelection === normalizedCorrectAnswer) {
-    handleCorrectAnswer();
-  } else {
-    handleWrongAnswer();
-  }
-}, [currentRound, rounds, isClickable]);
+      if (normalizedSelection === normalizedCorrectAnswer) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [currentRound, rounds, isClickable]
+  );
 
-const handleCorrectAnswer = () => {
-  setIsCorrect(true);
-  const randomCorrectDialogue = dialogues?.correct?.[Math.floor(Math.random() * dialogues.correct.length)] || "Correct!";
-  setFeedbackText(randomCorrectDialogue);
-  animateNpcBounce();
-  const characterKey = currentFrame?.character.toUpperCase();
-  setNpcImage(npcConfig[characterKey]?.correct || npcConfig["EVA"].correct);
-  fadeInAnimation();
-  setIsClickable(false);
+  const handleCorrectAnswer = () => {
+    setIsCorrect(true);
+    const randomCorrectDialogue =
+      dialogues?.correct?.[
+        Math.floor(Math.random() * dialogues.correct.length)
+      ] || "Correct!";
+    setFeedbackText(randomCorrectDialogue);
+    animateNpcBounce();
+    const characterKey = currentFrame?.character.toUpperCase();
+    setNpcImage(npcConfig[characterKey]?.correct || npcConfig["EVA"].correct);
+    fadeInAnimation();
+    setIsClickable(false);
 
-  // Check the ref instead of state
-  if (!hasTriedRef.current) {
-    setCorrectFirstTry(prevScore => {
-      console.log(`Round ${currentRound + 1}: Correct on first try! Score: ${prevScore + 1}`);
-      return prevScore + 1;
-    });
-  }
-
-  // Reset the ref for the next round
-  hasTriedRef.current = false;
-
-  if (currentRound === 4 || currentRound === 9 || currentRound === 10) {
-    const roundKey = `round${currentRound + 1}`;
-    const correctFrame = storyScenes[roundKey].find(frame => frame.type === FrameType.CORRECT_ANSWER);
-    if (correctFrame) {
-      setCurrentFrame(correctFrame);
-      setIsWaitingForTap(true);
-      return;
-    }
-  } else {
+    // Check the ref instead of state
     if (!hasTriedRef.current) {
-      setTimeout(() => {
-        setCurrentRound(prevRound => {
-          console.log(`Moving to Round ${prevRound + 2}`);
-          hasTriedRef.current = false;
-          return prevRound + 1;
-        });
-      }, 1500);
-    } else {
-      console.log(`Round ${currentRound + 1}: Correct but not first try. Restarting round.`);
-      setTimeout(() => {
-        setIsClickable(true);
-        setIsCorrect(null);
-        hasTriedRef.current = false;
-        const roundKey = `round${currentRound + 1}`;
-        const questionFrame = storyScenes[roundKey].find(frame => frame.type === FrameType.QUESTION);
-        if (questionFrame) {
-          setCurrentFrame(questionFrame);
-        }
-      }, 1500);
+      setCorrectFirstTry((prevScore) => {
+        console.log(
+          `Round ${currentRound + 1}: Correct on first try! Score: ${
+            prevScore + 1
+          }`
+        );
+        return prevScore + 1;
+      });
     }
-  }
-};
 
+    // Reset the ref for the next round
+    hasTriedRef.current = false;
 
-const handleWrongAnswer = () => {
-  setIsCorrect(false);
-  setFeedbackText(dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] || "Try again!");
-  const characterKey = currentFrame?.character.toUpperCase();
-  setNpcImage(npcConfig[characterKey]?.wrong || npcConfig["EVA"].wrong);
-  fadeInAnimation();
-  animateNpcBounce();
-  triggerShake();
-  Vibration.vibrate(100);
+    if (currentRound === 4 || currentRound === 9 || currentRound === 10) {
+      const roundKey = `round${currentRound + 1}`;
+      const correctFrame = storyScenes[roundKey].find(
+        (frame) => frame.type === FrameType.CORRECT_ANSWER
+      );
+      if (correctFrame) {
+        setCurrentFrame(correctFrame);
+        setIsWaitingForTap(true);
+        return;
+      }
+    } else {
+      if (!hasTriedRef.current) {
+        setTimeout(() => {
+          setCurrentRound((prevRound) => {
+            console.log(`Moving to Round ${prevRound + 2}`);
+            hasTriedRef.current = false;
+            return prevRound + 1;
+          });
+        }, 1500);
+      } else {
+        console.log(
+          `Round ${
+            currentRound + 1
+          }: Correct but not first try. Restarting round.`
+        );
+        setTimeout(() => {
+          setIsClickable(true);
+          setIsCorrect(null);
+          hasTriedRef.current = false;
+          const roundKey = `round${currentRound + 1}`;
+          const questionFrame = storyScenes[roundKey].find(
+            (frame) => frame.type === FrameType.QUESTION
+          );
+          if (questionFrame) {
+            setCurrentFrame(questionFrame);
+          }
+        }, 1500);
+      }
+    }
+  };
 
-  // Mark that the player has tried using the ref
-  hasTriedRef.current = true;
-  console.log(`Round ${currentRound + 1}: Wrong answer. hasTriedRef set to true.`);
-};
+  const handleWrongAnswer = () => {
+    setIsCorrect(false);
+    setFeedbackText(
+      dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] ||
+        "Try again!"
+    );
+    const characterKey = currentFrame?.character.toUpperCase();
+    setNpcImage(npcConfig[characterKey]?.wrong || npcConfig["EVA"].wrong);
+    fadeInAnimation();
+    animateNpcBounce();
+    triggerShake();
+    Vibration.vibrate(100);
 
-
-
+    // Mark that the player has tried using the ref
+    hasTriedRef.current = true;
+    console.log(
+      `Round ${currentRound + 1}: Wrong answer. hasTriedRef set to true.`
+    );
+  };
 
   const triggerShake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
   const animateNpcBounce = () => {
     Animated.sequence([
-      Animated.timing(npcBounceAnim, { toValue: 1.1, duration: 150, useNativeDriver: true }),
-      Animated.timing(npcBounceAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1.1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -326,13 +395,13 @@ const handleWrongAnswer = () => {
 
   const getQuestionText = () => {
     if (!rounds[currentRound]) return "";
-    
-    switch(questionType) {
-      case 'shape':
+
+    switch (questionType) {
+      case "shape":
         return "Identify the shape";
-      case 'color':
+      case "color":
         return "Identify the color";
-      case 'count':
+      case "count":
         return "How many shapes do you see?";
       default:
         return "";
@@ -348,11 +417,11 @@ const handleWrongAnswer = () => {
       setPlaySound(false);
     }
   }, []);
-    
+
   const startOutroSequence = (finalScore) => {
     setIsInOutroSequence(true);
     const outroScenes = storyScenes["outro"];
-  
+
     if (outroScenes && outroScenes.length > 0) {
       setCurrentFrameIndex(0);
       setCurrentFrame(outroScenes[0]);
@@ -365,17 +434,17 @@ const handleWrongAnswer = () => {
 
   useEffect(() => {
     if (currentFrame?.type === FrameType.QUESTION) {
-      startTimer();  // ✅ Start when in a question
+      startTimer(); // ✅ Start when in a question
     } else {
-      stopTimer();   // ✅ Stop when leaving a question
+      stopTimer(); // ✅ Stop when leaving a question
     }
-  
+
     return () => {
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
       }
     };
-  }, [currentFrame?.type]); 
+  }, [currentFrame?.type]);
 
   const stopTimer = () => {
     if (timerInterval.current) {
@@ -387,17 +456,17 @@ const handleWrongAnswer = () => {
   const startTimer = () => {
     if (!timerInterval.current) {
       timerInterval.current = setInterval(() => {
-        setTotalTime(prev => prev + 1);
+        setTotalTime((prev) => prev + 1);
       }, 1000);
     }
   };
-  
+
   const endGame = (finalScore) => {
     if (!gameEnded) {
       setGameEnded(true);
       setIsGameRunning(false);
       stopTimer();
-  
+
       if (onGameComplete) {
         // Use the score passed to this function
         onGameComplete(totalTime, finalScore);
@@ -415,29 +484,31 @@ const handleWrongAnswer = () => {
 
   useEffect(() => {
     if (currentFrame?.audio) {
-        console.log("🎼 New Frame Audio Detected:", currentFrame.audio);
-        setCurrentAudioSources([...currentFrame.audio]); // ✅ Ensure all audios are set
+      console.log("🎼 New Frame Audio Detected:", currentFrame.audio);
+      setCurrentAudioSources([...currentFrame.audio]); // ✅ Ensure all audios are set
     } else {
-        setCurrentAudioSources([]); // ✅ Clear audio if the frame has no sound
+      setCurrentAudioSources([]); // ✅ Clear audio if the frame has no sound
     }
-}, [currentFrame]);
+  }, [currentFrame]);
 
-useEffect(() => {
-  console.log("🆕 Frame Changed:", currentFrame?.type, "Character:", currentFrame?.character);
-  if (currentFrame?.audio) {
+  useEffect(() => {
+    console.log(
+      "🆕 Frame Changed:",
+      currentFrame?.type,
+      "Character:",
+      currentFrame?.character
+    );
+    if (currentFrame?.audio) {
       console.log("🔊 Frame has audio files:", currentFrame.audio);
-  }
-}, [currentFrame]);
+    }
+  }, [currentFrame]);
 
-useEffect(() => {
-  if (currentFrame?.character) {
-    const characterKey = currentFrame.character.toUpperCase();
-    setNpcImage(npcConfig[characterKey]?.idle || npcConfig["EVA"].idle);
-  }
-}, [currentFrame]);
-
-
-
+  useEffect(() => {
+    if (currentFrame?.character) {
+      const characterKey = currentFrame.character.toUpperCase();
+      setNpcImage(npcConfig[characterKey]?.idle || npcConfig["EVA"].idle);
+    }
+  }, [currentFrame]);
 
   return (
     <View style={styles.container}>
@@ -449,37 +520,45 @@ useEffect(() => {
       )}
 
       {playSound && currentSound && (
-        <AudioPlayer 
+        <AudioPlayer
           audioSource={currentSound}
           onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
           autoPlay={true}
         />
       )}
 
-      <TouchableOpacity 
-        style={styles.pauseContainer} 
+      <TouchableOpacity
+        style={styles.pauseContainer}
         onPress={() => {
           setIsPaused(true);
           setIsGameRunning(false);
-        }}>
+        }}
+      >
         <Image source={pauseBtn} style={styles.pause} />
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.fullScreenTouchable} 
+      <TouchableOpacity
+        style={styles.fullScreenTouchable}
         onPress={() => {
           if (gameEnded) return;
-        
+
           if (isWaitingForTap) {
             setIsWaitingForTap(false);
-        
-            if (currentFrame?.type === FrameType.CORRECT_ANSWER || currentFrame?.type === FrameType.INCORRECT_ANSWER) {
+
+            if (
+              currentFrame?.type === FrameType.CORRECT_ANSWER ||
+              currentFrame?.type === FrameType.INCORRECT_ANSWER
+            ) {
               const roundKey = `round${currentRound + 1}`;
-              const followingFrames = storyScenes[roundKey].filter(frame => frame.type === FrameType.FOLLOWING);
-              
+              const followingFrames = storyScenes[roundKey].filter(
+                (frame) => frame.type === FrameType.FOLLOWING
+              );
+
               if (followingFrames.length > 0) {
                 // Find the first FOLLOWING frame
-                const nextIndex = storyScenes[roundKey].findIndex(frame => frame.type === FrameType.FOLLOWING);
+                const nextIndex = storyScenes[roundKey].findIndex(
+                  (frame) => frame.type === FrameType.FOLLOWING
+                );
                 setCurrentFrameIndex(nextIndex);
                 setCurrentFrame(storyScenes[roundKey][nextIndex]);
                 setIsWaitingForTap(true);
@@ -493,18 +572,24 @@ useEffect(() => {
               }
               return;
             }
-        
+
             if (currentFrame?.type === FrameType.FOLLOWING) {
               const roundKey = `round${currentRound + 1}`;
-              const currentFrameIndex = storyScenes[roundKey].findIndex(frame => frame === currentFrame);
-              const nextFollowingFrames = storyScenes[roundKey].filter((frame, index) => 
-                frame.type === FrameType.FOLLOWING && index > currentFrameIndex
+              const currentFrameIndex = storyScenes[roundKey].findIndex(
+                (frame) => frame === currentFrame
               );
-              
+              const nextFollowingFrames = storyScenes[roundKey].filter(
+                (frame, index) =>
+                  frame.type === FrameType.FOLLOWING &&
+                  index > currentFrameIndex
+              );
+
               if (nextFollowingFrames.length > 0) {
                 // Find the next FOLLOWING frame
-                const nextIndex = storyScenes[roundKey].findIndex((frame, index) => 
-                  frame.type === FrameType.FOLLOWING && index > currentFrameIndex
+                const nextIndex = storyScenes[roundKey].findIndex(
+                  (frame, index) =>
+                    frame.type === FrameType.FOLLOWING &&
+                    index > currentFrameIndex
                 );
                 setCurrentFrameIndex(nextIndex);
                 setCurrentFrame(storyScenes[roundKey][nextIndex]);
@@ -519,10 +604,10 @@ useEffect(() => {
               }
               return;
             }
-        
+
             if (isInOutroSequence) {
               const outroScenes = storyScenes["outro"];
-              
+
               if (currentFrameIndex < outroScenes.length - 1) {
                 const nextIndex = currentFrameIndex + 1;
                 setCurrentFrameIndex(nextIndex);
@@ -538,11 +623,11 @@ useEffect(() => {
               return;
             }
           }
-        
+
           if (currentFrame?.type === FrameType.QUESTION) {
             return;
           }
-        
+
           if (!isInOutroSequence) {
             const roundKey = `round${currentRound + 1}`;
             const roundStory = storyScenes[roundKey];
@@ -553,46 +638,61 @@ useEffect(() => {
               setIsWaitingForTap(true);
             }
           }
-        }}>
-
-        <Image source={currentFrame?.background} style={styles.backgroundImage} />
+        }}
+      >
+        <Image
+          source={currentFrame?.background}
+          style={styles.backgroundImage}
+        />
 
         <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
-          <Animated.Image 
-            source={npcImage} 
-            style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]} 
+          <Animated.Image
+            source={npcImage}
+            style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]}
           />
           <View style={styles.dialogueContainer}>
-            <Text style={styles.npcName}>{currentFrame?.character || "Unknown"}</Text>
-            <Text style={styles.npcDialogue}>{currentFrame?.dialogues?.[0] || ""}</Text>
+            <Text style={styles.npcName}>
+              {currentFrame?.character || "Unknown"}
+            </Text>
+            <Text style={styles.npcDialogue}>
+              {currentFrame?.dialogues?.[0] || ""}
+            </Text>
           </View>
         </Animated.View>
 
         {currentFrame?.type === FrameType.QUESTION && (
           <View style={styles.validationContainer}>
             {isCorrect !== null && (
-              <Image source={isCorrect ? correctImg : wrongImg} style={styles.validationImage} />
+              <Image
+                source={isCorrect ? correctImg : wrongImg}
+                style={styles.validationImage}
+              />
             )}
           </View>
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
-          <Stopwatch 
+          <Stopwatch
             isRunning={true}
             onStop={(finalTime) => setTotalTime(finalTime)}
           />
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
-          <Text style={styles.roundText}>Round {currentRound + 1} of {numRounds}</Text>
+          <Text style={styles.roundText}>
+            Round {currentRound + 1} of {numRounds}
+          </Text>
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
           <>
             <View style={styles.itemContainer}>
-              <Animated.Image 
-                source={rounds[currentRound]?.source} 
-                style={[styles.itemImage, { transform: [{ translateX: shakeAnim }] }]} 
+              <Animated.Image
+                source={rounds[currentRound]?.source}
+                style={[
+                  styles.itemImage,
+                  { transform: [{ translateX: shakeAnim }] },
+                ]}
               />
             </View>
 
@@ -601,10 +701,7 @@ useEffect(() => {
                 <TouchableOpacity
                   key={index}
                   onPress={() => handleSelection(option)}
-                  style={[
-                    styles.button,
-                    !isClickable && styles.disabledButton
-                  ]}
+                  style={[styles.button, !isClickable && styles.disabledButton]}
                   disabled={!isClickable}
                 >
                   <Text style={styles.buttonText}>{option}</Text>
@@ -615,8 +712,8 @@ useEffect(() => {
         )}
       </TouchableOpacity>
 
-      <SettingsModal 
-        visible={isPaused} 
+      <SettingsModal
+        visible={isPaused}
         onClose={() => {
           setIsPaused(false);
           setIsGameRunning(true);
@@ -630,14 +727,13 @@ useEffect(() => {
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home');
+          navigation.navigate("Home");
           setIsPaused(false);
         }}
       />
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   backgroundImage: {
@@ -652,14 +748,14 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1,  // Ensures it receives taps
-    flex: 1
+    zIndex: 1, // Ensures it receives taps
+    flex: 1,
   },
   pauseContainer: {
     zIndex: 100,
     position: "absolute",
     top: 40,
-    left: 50
+    left: 50,
   },
   container: {
     flex: 1,
@@ -673,7 +769,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     paddingBottom: 150,
-    zIndex: 10
+    zIndex: 10,
   },
   validationContainer: {
     height: 50,
@@ -733,7 +829,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   button: {
     backgroundColor: "#5A8EF4",
@@ -743,7 +839,7 @@ const styles = StyleSheet.create({
     width: 120,
     alignItems: "center",
     zIndex: 20,
-    marginBottom: 10
+    marginBottom: 10,
   },
   npcContainer: {
     position: "absolute",
@@ -771,7 +867,7 @@ const styles = StyleSheet.create({
     maxWidth: 800,
     elevation: 3,
     borderWidth: 4,
-    borderColor: "white"
+    borderColor: "white",
   },
   npcName: {
     fontWeight: "bold",
@@ -779,7 +875,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     paddingLeft: 85,
     paddingRight: 85,
-    fontSize: 20
+    fontSize: 20,
   },
   npcDialogue: {
     lineHeight: 30,
@@ -789,11 +885,11 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   disabledButton: {
-    backgroundColor: "#A0A0A0", 
+    backgroundColor: "#A0A0A0",
   },
   pause: {
     width: 80,
     height: 80,
-    resizeMode: "contain"
-  }
+    resizeMode: "contain",
+  },
 });

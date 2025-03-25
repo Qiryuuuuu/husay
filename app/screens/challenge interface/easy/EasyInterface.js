@@ -1,7 +1,14 @@
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
-import { 
-  View, Text, TouchableOpacity, Image, StyleSheet, Modal, 
-  useWindowDimensions, ImageBackground 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Modal,
+  useWindowDimensions,
+  ImageBackground,
 } from "react-native";
 
 /* Background image */
@@ -14,8 +21,10 @@ const shapeCard = require("../../../../assets/menuCards/challenge/easy/shape-eas
 const colorCard = require("../../../../assets/menuCards/challenge/easy/color-easy.png");
 const numberCard = require("../../../../assets/menuCards/challenge/easy/number-easy.png");
 
-
-export default function EasyInterface({ navigation }) {
+export default function EasyInterface({ route }) {
+  const navigation = useNavigation();
+  const { studentId } = route.params || {}; // Receive studentId
+  console.log("Easy Interface received studentID: ", studentId);
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
 
@@ -24,37 +33,48 @@ export default function EasyInterface({ navigation }) {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-         <TouchableOpacity onPress={() => navigation.navigate('ChallMainScreen')}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("ChallMainScreen", { studentId })
+            }
+          >
             <Image source={backButton} style={styles.logo} />
-         </TouchableOpacity>
+          </TouchableOpacity>
 
           <View style={styles.titleContainer}>
             <Image source={practiceHeader} style={styles.studentImg} />
           </View>
-
         </View>
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('ChallengeShape')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ChallengeShape", { studentId })}
+          >
             <Image source={shapeCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ChallengeColor')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("ChallengeColor", { studentId })}
+          >
             <Image source={colorCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ChallengeNumber')}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("ChallengeNumber", { studentId })
+            }
+          >
             <Image source={numberCard} style={styles.cards} />
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+          <Text style={styles.footerText}>
+            © 2024 Husay. All Rights Reserved.
+          </Text>
         </View>
-
-
       </View>
     </ImageBackground>
   );
@@ -73,16 +93,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start", 
+    justifyContent: "flex-start",
     paddingHorizontal: 50,
     paddingVertical: 30,
     width: "100%",
   },
   titleContainer: {
     position: "absolute",
-    left: "44%",  
+    left: "44%",
     top: 15,
-    transform: [{ translateX: -100 }], 
+    transform: [{ translateX: -100 }],
   },
 
   /* Main Content */
@@ -102,5 +122,4 @@ const styles = StyleSheet.create({
     color: "#555",
     textAlign: "center",
   },
-
 });

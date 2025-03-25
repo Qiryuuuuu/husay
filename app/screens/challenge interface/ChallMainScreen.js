@@ -1,11 +1,22 @@
 // ChallMainScreen.js
+import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
-import { 
-  View, Text, TouchableOpacity, Image, StyleSheet, 
-  useWindowDimensions, ImageBackground, Pressable 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  ImageBackground,
+  Pressable,
 } from "react-native";
 import PregameDialog from "../../component/game/dialogBg";
-import { playMusic, stopMusic, playAudio } from "../../component/audio/MusicManager"; // Import playAudio
+import {
+  playMusic,
+  stopMusic,
+  playAudio,
+} from "../../component/audio/MusicManager"; // Import playAudio
 
 /* Background images */
 const bg1 = require("../../../assets/gameBackground/challenge-interface-bg.png");
@@ -28,34 +39,58 @@ const dialogData = {
   dialogues: [
     "Nyahahahaha! I have your friends, finally! One by one, I will delete their memories and all of the fun and joy you had will be gone, leaving them a lifeless piece of metal. If you want to rescue them, conquer my lair.",
     "Ohhh nooo! He got my friends...",
-    "You can do it EVA!!!", 
+    "You can do it EVA!!!",
     "Will you help me? I am hoping you will.",
-    "First, we need to follow this forest path and cross the river. Then, we must pass through the forest to the Evil Inventor's Lair and hopefully we defeat the Evil Inventor."
+    "First, we need to follow this forest path and cross the river. Then, we must pass through the forest to the Evil Inventor's Lair and hopefully we defeat the Evil Inventor.",
   ],
   npcNames: ["Evil Inventor", "EVA", "Kids", "EVA", "EVA"],
   npcImages: [
-    { image: require("../../../assets/inventor/inventor-laughing.png"), width: 600, height: 500 },
-    { image: require("../../../assets/eva/eva-sad.png"), width: 344, height: 566 },
-    { image: require("../../../assets/eva/eva-smile.png"), width: 0, height: 0 },
-    { image: require("../../../assets/eva/eva-smile.png"), width: 344, height: 566 },
-    { image: require("../../../assets/eva/eva-pointing.png"), width: 600, height: 500 },
+    {
+      image: require("../../../assets/inventor/inventor-laughing.png"),
+      width: 600,
+      height: 500,
+    },
+    {
+      image: require("../../../assets/eva/eva-sad.png"),
+      width: 344,
+      height: 566,
+    },
+    {
+      image: require("../../../assets/eva/eva-smile.png"),
+      width: 0,
+      height: 0,
+    },
+    {
+      image: require("../../../assets/eva/eva-smile.png"),
+      width: 344,
+      height: 566,
+    },
+    {
+      image: require("../../../assets/eva/eva-pointing.png"),
+      width: 600,
+      height: 500,
+    },
   ],
   audioFiles: [
     require("../../../assets/voiceOver/inventor/challengeIntro/inventor-narrative-1.mp3"),
-    require('../../../assets/voiceOver/eva/challengeIntro/eva-narrative-1.mp3'),
+    require("../../../assets/voiceOver/eva/challengeIntro/eva-narrative-1.mp3"),
     require("../../../assets/voiceOver/misc/kids.mp3"),
     require("../../../assets/voiceOver/eva/challengeIntro/eva-narrative-2.mp3"),
-    require('../../../assets/voiceOver/eva/challengeIntro/eva-narrative-3.mp3'), // Audio for the journey map dialog
+    require("../../../assets/voiceOver/eva/challengeIntro/eva-narrative-3.mp3"), // Audio for the journey map dialog
   ],
 };
 
-export default function ChallMainScreen({ navigation }) {
+export default function ChallMainScreen({ route }) {
+  const navigation = useNavigation();
   const [dialogIndex, setDialogIndex] = useState(0);
   const [showDialog, setShowDialog] = useState(true);
   const [currentBackground, setCurrentBackground] = useState(bg1);
-
+  const { studentId } = route.params || {}; // Receive studentId
   const getBackgroundForSpeaker = (npcName, dialogue) => {
-    if (dialogue === "First, we need to follow this forest path and cross the river. Then, we must pass through the forest to the Evil Inventor's Lair and hopefully we defeat the Evil Inventor.") {
+    if (
+      dialogue ===
+      "First, we need to follow this forest path and cross the river. Then, we must pass through the forest to the Evil Inventor's Lair and hopefully we defeat the Evil Inventor."
+    ) {
       return journeyMap;
     }
     switch (npcName) {
@@ -108,8 +143,8 @@ export default function ChallMainScreen({ navigation }) {
   const isJourneyMap = currentBackground === journeyMap;
 
   return (
-    <ImageBackground 
-      source={currentBackground} 
+    <ImageBackground
+      source={currentBackground}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
@@ -126,7 +161,9 @@ export default function ChallMainScreen({ navigation }) {
             {/* Header */}
             {!isJourneyMap && ( // Only show header if it's not the journey map
               <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Home", { studentId })}
+                >
                   <Image source={backButton} style={styles.logo} />
                 </TouchableOpacity>
 
@@ -137,26 +174,43 @@ export default function ChallMainScreen({ navigation }) {
             )}
 
             {/* Main content */}
-            {!showDialog && !isJourneyMap && ( // Only show main content if it's not the journey map
-              <View style={styles.cardContainer}>
-                <TouchableOpacity onPress={() => navigation.navigate('ChallengeEasyInterface')}>
-                  <Image source={easyCard} style={styles.cards} />
-                </TouchableOpacity>
+            {!showDialog &&
+              !isJourneyMap && ( // Only show main content if it's not the journey map
+                <View style={styles.cardContainer}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("ChallengeEasyInterface", {
+                        studentId,
+                      })
+                    }
+                  >
+                    <Image source={easyCard} style={styles.cards} />
+                  </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate('ChallengeMedium')}>
-                  <Image source={mediumCard} style={styles.cards} />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("ChallengeMedium", { studentId })
+                    }
+                  >
+                    <Image source={mediumCard} style={styles.cards} />
+                  </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate('ChallengeHard')}>
-                  <Image source={hardCard} style={styles.cards} />
-                </TouchableOpacity>
-              </View>
-            )}
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("ChallengeHard", { studentId })
+                    }
+                  >
+                    <Image source={hardCard} style={styles.cards} />
+                  </TouchableOpacity>
+                </View>
+              )}
 
             {/* Footer */}
             {!isJourneyMap && ( // Only show footer if it's not the journey map
               <View style={styles.footer}>
-                <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+                <Text style={styles.footerText}>
+                  © 2024 Husay. All Rights Reserved.
+                </Text>
               </View>
             )}
 
@@ -196,9 +250,9 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     position: "absolute",
-    left: "32%",  
+    left: "32%",
     top: 30,
-    transform: [{ translateX: -100 }], 
+    transform: [{ translateX: -100 }],
   },
   cardContainer: {
     flexDirection: "row",

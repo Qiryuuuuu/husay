@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, ImageBackground, Animated, Easing } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ImageBackground,
+  Animated,
+  Easing,
+} from "react-native";
 
 const GameFlows = ({
   backgroundImg,
@@ -7,26 +13,25 @@ const GameFlows = ({
   CountdownComponent,
   GameComponent,
   StageCompletionComponent,
-  navigation
+  navigation,
 }) => {
   const [gamePhase, setGamePhase] = useState("dialog");
   const [finalTime, setFinalTime] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
-  const [gameState, setGameState] = useState("question"); 
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const [gameState, setGameState] = useState("question"); // ✅ Challenge-specific logic retained
+  const overlayOpacity = useRef(new Animated.Value(1)).current;
   const backgroundOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    let overlayToValue = 1;
-    let overlayDuration = 1500;
-  
+    let toValue = 1;
+    let duration = 1500;
+
     if (gamePhase === "countdown") {
-      overlayToValue = 0;
-      overlayDuration = 2000;
+      toValue = 0;
+      duration = 2000;
     } else if (gamePhase === "game") {
-      overlayToValue = 0;
-      overlayDuration = 500;
-      // Fade out background when transitioning to game phase
+      toValue = 0;
+      duration = 500;
       Animated.timing(backgroundOpacity, {
         toValue: 0,
         duration: 500,
@@ -34,24 +39,24 @@ const GameFlows = ({
         useNativeDriver: false,
       }).start();
     } else if (gamePhase === "completed") {
-      // Instantly show background in completion phase
       backgroundOpacity.setValue(1);
     }
 
-    console.log(`Game Phase: ${gamePhase}, Game State: ${gameState}, Opacity: ${overlayToValue}`);
+    console.log(`Game Phase: ${gamePhase}, Game State: ${gameState}`);
 
     Animated.timing(overlayOpacity, {
-      toValue: overlayToValue,
-      duration: overlayDuration,
+      toValue,
+      duration,
       easing: Easing.out(Easing.quad),
       useNativeDriver: false,
     }).start();
-  }, [gamePhase, gameState, overlayOpacity, backgroundOpacity]);
+  }, [gamePhase, gameState]);
 
   const handleGameComplete = (timeTaken, score) => {
+    console.log("✅ Transitioning to Stage Completion...");
     setFinalTime(timeTaken);
     setFinalScore(score);
-    setGamePhase("completed");
+    setGamePhase("completed"); // ✅ Ensures proper transition
   };
 
   const handleGameStateChange = (state) => {
@@ -61,41 +66,48 @@ const GameFlows = ({
 
   return (
     <View style={styles.container}>
-      {/* Background Image with Overlay */}
-      <Animated.View style={[styles.backgroundContainer, { opacity: backgroundOpacity }]}>
+      {/* ✅ Background Image with Overlay */}
+      <Animated.View
+        style={[styles.backgroundContainer, { opacity: backgroundOpacity }]}
+      >
         <ImageBackground source={backgroundImg} style={styles.background}>
           <Animated.View
             style={[
               styles.overlay,
-              { 
+              {
                 opacity: overlayOpacity,
-                pointerEvents: gameState === 'question' ? 'none' : 'auto',
+                pointerEvents: gameState === "question" ? "none" : "auto",
               },
             ]}
           />
         </ImageBackground>
       </Animated.View>
 
-      {/* Game Content */}
+      {/* ✅ Game Content */}
       <View style={styles.contentContainer}>
         {gamePhase === "dialog" && (
           <View style={styles.fullscreenContainer}>
-            <DialogComponent onDialogComplete={() => setGamePhase("countdown")} />
+            <DialogComponent
+              onDialogComplete={() => setGamePhase("countdown")}
+            />
           </View>
         )}
 
         {gamePhase === "countdown" && (
           <View style={[styles.fullscreenContainer, { zIndex: 10 }]}>
-            <CountdownComponent onCountDownComplete={() => setGamePhase("game")} />
+            <CountdownComponent
+              onCountDownComplete={() => setGamePhase("game")}
+            />
           </View>
         )}
 
         {gamePhase === "game" && (
           <View style={styles.fullscreenContainer}>
-            <GameComponent 
-              onGameComplete={handleGameComplete} 
+            <GameComponent
+              onGameComplete={handleGameComplete}
+              setGamePhase={setGamePhase} // ✅ Ensures game phase updates properly
               navigation={navigation}
-              onStateChange={handleGameStateChange}
+              onStateChange={handleGameStateChange} // ✅ Keeps challenge-specific state tracking
             />
           </View>
         )}
@@ -105,7 +117,7 @@ const GameFlows = ({
             <StageCompletionComponent
               timeTaken={`${Math.floor(finalTime / 60)}:${finalTime % 60}`}
               correctAnswers={finalScore}
-              onRestart={() => setGamePhase("countdown")}
+              onRestart={() => setGamePhase("countdown")} // ✅ Restart works properly
               navigation={navigation}
             />
           </View>
@@ -118,8 +130,8 @@ const GameFlows = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative',
-    backgroundColor: 'white', // Add white background as default
+    position: "relative",
+    backgroundColor: "white", // Add white background as default
   },
   backgroundContainer: {
     ...StyleSheet.absoluteFillObject,

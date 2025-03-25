@@ -15,6 +15,10 @@ const StageCompletion = ({
   dialoguesData,
   completionNpc,
   isChallengeMode,
+  mode, // ✅ Added mode prop ("practice" or "challenge")
+  level, // ✅ Added level prop ("Shape", "Color", etc.")
+  studentId, // ✅ Added studentId prop to be passed when navigating
+  studentName, // ✅ Added studentName prop
 }) => {
   const navigation = useNavigation();
   const [displayedText, setDisplayedText] = useState("");
@@ -22,7 +26,7 @@ const StageCompletion = ({
   const typingSpeed = 30;
   const [playCompletionSound, setPlayCompletionSound] = useState(true);
 
-  // Define the mapping for the next levels
+  // ✅ Define the mapping for the next levels
   const nextLevelMap = {
     // Practice mode levels
     PracticeShape: "PracticeColor",
@@ -39,15 +43,20 @@ const StageCompletion = ({
     ChallengeHard: null, // No Next button for last stage
   };
 
-  // Function to handle next button press
+  // ✅ Function to handle next button press
   const handleNext = () => {
+    const currentScreen =
+      mode === "challenge" ? `Challenge${level}` : `Practice${level}`;
     const nextScreen = nextLevelMap[currentScreen];
-    if (nextScreen && navigation) {
-      navigation.navigate(nextScreen);
+
+    if (nextScreen) {
+      navigation.navigate(nextScreen, { studentId }); // ✅ Pass studentId if needed
+    } else {
+      console.log("🚫 No next level. This is the last stage.");
     }
   };
 
-  // Handle audio playback status
+  // ✅ Handle audio playback status
   const handlePlaybackStatusUpdate = (status) => {
     if (status.didJustFinish) {
       setPlayCompletionSound(false);
@@ -89,10 +98,10 @@ const StageCompletion = ({
     };
   }, [dialoguesData]);
 
-  // Calculate mistakes
+  // ✅ Calculate mistakes
   const mistakes = totalRounds - correctAnswers;
 
-  // Determine star count
+  // ✅ Determine star count
   let starCount = 1; // Default: 1 star
   if (mistakes === 0) {
     starCount = 3;
@@ -102,7 +111,7 @@ const StageCompletion = ({
 
   return (
     <View style={styles.containerStage}>
-      {/* Add AudioPlayer component */}
+      {/* ✅ Add AudioPlayer component */}
       {playCompletionSound && (
         <AudioPlayer
           audioSource={completionSound}
@@ -121,7 +130,7 @@ const StageCompletion = ({
           style={styles.headerStage}
         />
 
-        {/* Star Display */}
+        {/* ✅ Star Display - Only for Challenge Mode */}
         {isChallengeMode && (
           <View style={styles.starContainer}>
             {[...Array(starCount)].map((_, index) => (
@@ -146,34 +155,38 @@ const StageCompletion = ({
         </View>
 
         <View style={styles.buttonContainer}>
+          {/* ✅ Retry Button */}
           <TouchableOpacity style={styles.button} onPress={onRestart}>
             <Image
               source={require("../../assets/stageCompletion/retry-btn.png")}
               style={styles.image}
             />
           </TouchableOpacity>
+
+          {/* ✅ Home Button - Pass studentId */}
           <TouchableOpacity
             style={styles.button}
-            onPress={() => {
-              navigation.navigate("Home");
-            }}
+            onPress={() =>
+              navigation.navigate("Home", { studentId, studentName })
+            }
           >
             <Image
               source={require("../../assets/stageCompletion/home-btn.png")}
               style={styles.image}
             />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              navigation.navigate("PracMainScreen");
-            }}
-          >
-            <Image
-              source={require("../../assets/stageCompletion/next-btn.png")}
-              style={styles.image}
-            />
-          </TouchableOpacity>
+
+          {/* ✅ Next Button - Only show if there's a next level */}
+          {nextLevelMap[
+            mode === "challenge" ? `Challenge${level}` : `Practice${level}`
+          ] && (
+            <TouchableOpacity style={styles.button} onPress={handleNext}>
+              <Image
+                source={require("../../assets/stageCompletion/next-btn.png")}
+                style={styles.image}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.chatContainer}>
