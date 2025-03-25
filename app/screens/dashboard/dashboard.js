@@ -11,12 +11,12 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import { PieChart } from 'react-native-svg-charts';
-import { Text as SVGText } from 'react-native-svg';
+import { PieChart } from "react-native-svg-charts";
+import { Text as SVGText } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-import moment from 'moment';
+import moment from "moment";
 
 export default function DashboardScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
@@ -28,15 +28,21 @@ export default function DashboardScreen({ navigation }) {
   const [loading, setLoading] = useState(true); // ✅ State for loading
   const [employeeNo, setEmployeeNo] = useState(""); // ✅ Employee number for fetching students
   const [menuOpenStudentId, setMenuOpenStudentId] = useState(null); // ✅ Track menu open for student
-  
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editName, setEditName] = useState("");
   const [editAge, setEditAge] = useState("");
   const [editGender, setEditGender] = useState("");
   const [familiarityData, setFamiliarityData] = useState(null);
-  const [accuracyData, setAccuracyData] = useState({ correct: 0, incorrect: 0 }); // ✅ Add this
-  const [timeSpentData, setTimeSpentData] = useState({ timeSpent: 0, timeLeft: 60 });
+  const [accuracyData, setAccuracyData] = useState({
+    correct: 0,
+    incorrect: 0,
+  }); // ✅ Add this
+  const [timeSpentData, setTimeSpentData] = useState({
+    timeSpent: 0,
+    timeLeft: 60,
+  });
   const [attendanceData, setAttendanceData] = useState({});
 
   const [currentQuarter, setCurrentQuarter] = useState(1);
@@ -52,18 +58,18 @@ export default function DashboardScreen({ navigation }) {
         setLoading(false);
         return;
       }
-  
+
       const response = await fetch("http://10.0.2.2:5000/api/auth/user", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-  
+
       const data = await response.json();
       console.log("🔹 User Data:", data);
-  
+
       if (response.ok && data != null) {
         setFullName(data.fullName || "User");
         setEmployeeNo(data.employeeNo); // ✅ Store employee number
@@ -77,7 +83,7 @@ export default function DashboardScreen({ navigation }) {
       setLoading(false);
     }
   };
-  
+
   //✅ Fetch Class Data
   const fetchClassData = async (employeeNo) => {
     try {
@@ -85,29 +91,29 @@ export default function DashboardScreen({ navigation }) {
         console.error("❌ Employee number not found. Cannot fetch class.");
         return;
       }
-  
+
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
         console.error("❌ No token found, user might be logged out.");
         return;
       }
-  
+
       console.log(`🔍 Fetching class data for employeeNo: ${employeeNo}...`);
-  
+
       const response = await fetch(
         `http://10.0.2.2:5000/api/class/get-students?employeeNo=${employeeNo}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-  
+
       const data = await response.json();
       console.log("🔹 Class API Response:", data);
-  
+
       if (response.ok && data.students.length > 0) {
         setStudents(data.students);
         setSelectedStudent(data.students[0]); // ✅ Set default student
@@ -118,39 +124,42 @@ export default function DashboardScreen({ navigation }) {
     } catch (error) {
       console.error("❌ Server error fetching students:", error);
     }
-  };      
+  };
 
   // ✅ Fetch Students
   const fetchStudents = async (employeeNo) => {
     try {
       console.log("🔍 Fetching students for employeeNo:", employeeNo);
-  
+
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
         console.error("❌ No token found, user might be logged out.");
         return;
       }
-  
+
       const response = await fetch(
         `http://10.0.2.2:5000/api/students/all?employeeNo=${employeeNo}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-  
+
       const data = await response.json();
-      console.log("🔹 Fresh Student API Response:", JSON.stringify(data, null, 2));
-  
+      console.log(
+        "🔹 Fresh Student API Response:",
+        JSON.stringify(data, null, 2)
+      );
+
       if (response.ok && data.students && data.students.length > 0) {
         setStudents(data.students);
         setSelectedStudent(data.students[0]);
-  
+
         // ✅ Fetch and update all related student data
-        updateStudentData(data.students[0]); 
+        updateStudentData(data.students[0]);
       } else {
         console.error("❌ No students found or API returned an error.");
       }
@@ -158,95 +167,95 @@ export default function DashboardScreen({ navigation }) {
       console.error("❌ Server error fetching students:", error);
     }
   };
-  
 
   // ✅ Fetch Student Details
-    const fetchStudentDetails = async (studentId) => {
-      try {
-          if (!studentId) {
-              console.error("❌ No student ID provided.");
-              return;
-          }
-
-          console.log(`🔍 Fetching details for student ID: ${studentId}...`);
-
-          const token = await AsyncStorage.getItem("authToken");
-          if (!token) {
-              console.error("❌ No token found. Cannot fetch student details.");
-              return;
-          }
-          
-          const response = await fetch(`http://10.0.2.2:5000/api/students/get/${studentId}`, {
-              method: "GET",
-              headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${token}`,
-              },
-          });
-
-          const data = await response.json();
-          console.log("🔹 Full API Response:", JSON.stringify(data, null, 2)); // Full response log
-
-          if (response.ok && data.student) {
-              const student = data.student;
-              console.log("✅ Extracted Student Data:", student);
-
-              // ✅ Fetch and set accuracy directly from API response
-              if (student.accuracy) {
-                  console.log("✅ Found Accuracy Data:", student.accuracy);
-                  setAccuracyData({
-                      correct: student.accuracy.correct || 0,
-                      incorrect: student.accuracy.incorrect || 0,
-                  });
-              } else {
-                  console.warn("⚠️ No Accuracy Data found in API response.");
-                  setAccuracyData({ correct: 0, incorrect: 0 });
-              }
-
-              // ✅ Fetch and set familiarity data
-              if (student.subjects) {
-                  console.log("✅ Found Familiarity Data. Processing...");
-                  fetchFamiliarityData(student);
-              } else {
-                  console.warn("⚠️ No Familiarity Data found in API response.");
-              }
-
-              // ✅ Fetch and set time spent data
-              if (student.gameTime) {
-                  console.log("✅ Found Game Time Data:", student.gameTime);
-                  setTimeSpentData({
-                      timeSpent: student.gameTime.timeSpent || 0,
-                      timeLeft: student.gameTime.timeLeft || 60,
-                  });
-              } else {
-                  console.warn("⚠️ No Game Time Data found in API response.");
-                  setTimeSpentData({ timeSpent: 0, timeLeft: 60 });
-              }
-
-              // ✅ Set Attendance Data
-              setAttendanceData(getAttendanceData([student]));
-              console.log("✅ Student Data Updated Successfully.");
-          } else {
-              console.error("❌ Error fetching student details:", data.message);
-          }
-      } catch (error) {
-          console.error("❌ Network error fetching student details:", error);
+  const fetchStudentDetails = async (studentId) => {
+    try {
+      if (!studentId) {
+        console.error("❌ No student ID provided.");
+        return;
       }
+
+      console.log(`🔍 Fetching details for student ID: ${studentId}...`);
+
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No token found. Cannot fetch student details.");
+        return;
+      }
+
+      const response = await fetch(
+        `http://10.0.2.2:5000/api/students/get/${studentId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      console.log("🔹 Full API Response:", JSON.stringify(data, null, 2)); // Full response log
+
+      if (response.ok && data.student) {
+        const student = data.student;
+        console.log("✅ Extracted Student Data:", student);
+
+        // ✅ Fetch and set accuracy directly from API response
+        if (student.accuracy) {
+          console.log("✅ Found Accuracy Data:", student.accuracy);
+          setAccuracyData({
+            correct: student.accuracy.correct || 0,
+            incorrect: student.accuracy.incorrect || 0,
+          });
+        } else {
+          console.warn("⚠️ No Accuracy Data found in API response.");
+          setAccuracyData({ correct: 0, incorrect: 0 });
+        }
+
+        // ✅ Fetch and set familiarity data
+        if (student.subjects) {
+          console.log("✅ Found Familiarity Data. Processing...");
+          fetchFamiliarityData(student);
+        } else {
+          console.warn("⚠️ No Familiarity Data found in API response.");
+        }
+
+        // ✅ Fetch and set time spent data
+        if (student.gameTime) {
+          console.log("✅ Found Game Time Data:", student.gameTime);
+          setTimeSpentData({
+            timeSpent: student.gameTime.timeSpent || 0,
+            timeLeft: student.gameTime.timeLeft || 60,
+          });
+        } else {
+          console.warn("⚠️ No Game Time Data found in API response.");
+          setTimeSpentData({ timeSpent: 0, timeLeft: 60 });
+        }
+
+        // ✅ Set Attendance Data
+        setAttendanceData(getAttendanceData([student]));
+        console.log("✅ Student Data Updated Successfully.");
+      } else {
+        console.error("❌ Error fetching student details:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Network error fetching student details:", error);
+    }
   };
-
-
 
   //Logout
   const handleLogout = async () => {
     try {
       // Remove authentication token from storage
       await AsyncStorage.clear();
-  
+
       // Show alert confirmation and navigate to login
       Alert.alert("Logged Out", "You have been logged out.", [
-        { text: "OK", onPress: () => navigation.replace("Login") }
+        { text: "OK", onPress: () => navigation.replace("Login") },
       ]);
-  
+
       console.log("✅ User successfully logged out.");
     } catch (error) {
       console.error("❌ Error logging out:", error);
@@ -259,52 +268,58 @@ export default function DashboardScreen({ navigation }) {
       console.error("❌ No students provided for attendance processing.");
       return {};
     }
-  
+
     console.log("🔹 Processing attendance for students:", students);
-  
+
     const data = {};
-  
+
     students.forEach((student) => {
       if (!student.attendance || !Array.isArray(student.attendance)) {
         console.warn(`⚠️ No attendance record for ${student.fullName}.`);
         return;
       }
-  
+
       student.attendance.forEach(({ date, status }) => {
         if (!date) {
-          console.warn(`⚠️ Skipping record with missing date for ${student.fullName}.`);
+          console.warn(
+            `⚠️ Skipping record with missing date for ${student.fullName}.`
+          );
           return;
         }
-  
+
         const parsedDate = moment(date, "YYYY-MM-DD HH:mm:ss");
         if (!parsedDate.isValid()) {
-          console.warn(`⚠️ Invalid date format: ${date} for ${student.fullName}.`);
+          console.warn(
+            `⚠️ Invalid date format: ${date} for ${student.fullName}.`
+          );
           return;
         }
-  
+
         const month = parsedDate.month();
         const day = parsedDate.date() - 1;
-  
+
         if (!data[month]) {
-          const daysInMonth = moment(`${currentYear}-${month + 1}`, "YYYY-MM").daysInMonth();
+          const daysInMonth = moment(
+            `${currentYear}-${month + 1}`,
+            "YYYY-MM"
+          ).daysInMonth();
           data[month] = Array(daysInMonth).fill("");
         }
-  
+
         data[month][day] = status ? status.toLowerCase() : "";
       });
     });
-  
+
     console.log("✅ Attendance Data Processed:", data);
     return data;
   };
-   
-  
+
   // Quarter handling logic
   const quarters = {
-    1: [0, 1, 2],    // Jan-Mar
-    2: [3, 4, 5],    // Apr-Jun
-    3: [6, 7, 8],    // Jul-Sep
-    4: [9, 10, 11],  // Oct-Dec
+    1: [0, 1, 2], // Jan-Mar
+    2: [3, 4, 5], // Apr-Jun
+    3: [6, 7, 8], // Jul-Sep
+    4: [9, 10, 11], // Oct-Dec
   };
 
   const handleNextQuarter = () => {
@@ -325,33 +340,50 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  // Render Calendar Day 
+  // Render Calendar Day
   const renderDay = (day, status, month, year, student) => {
-    const today = moment().startOf('day'); // Normalize to compare only the date
-    const currentDay = moment(`${year}-${month + 1}-${day}`, 'YYYY-MM-DD').startOf('day'); 
-    const isToday = currentDay.isSame(today, 'day'); // ✅ Check if the day is today
-    const isFuture = currentDay.isAfter(today, 'day');
+    const today = moment().startOf("day"); // Normalize to compare only the date
+    const currentDay = moment(
+      `${year}-${month + 1}-${day}`,
+      "YYYY-MM-DD"
+    ).startOf("day");
+    const isToday = currentDay.isSame(today, "day"); // ✅ Check if the day is today
+    const isFuture = currentDay.isAfter(today, "day");
     const weekday = currentDay.day();
-  
+
     let backgroundColor = "#D3D3D3"; // Default gray
     let textColor = "#FFFFFF"; // Default white text
-  
+
     if (isToday) {
       textColor = "#FFFFFF"; // ✅ Ensure text is readable
     } else if (!isFuture && weekday !== 0 && weekday !== 6) {
-      backgroundColor = status === 'present' ? '#4CD964' : '#FF3B30';
+      backgroundColor = status === "present" ? "#4CD964" : "#FF3B30";
     }
-  
+
     return (
-      <View 
-        key={`${year}-${month}-${day}`} 
-        style={[styles.dayItem, { backgroundColor, borderWidth: isToday ? 2 : 0, borderColor: isToday ? "#004A99" : "transparent" }]}
+      <View
+        key={`${year}-${month}-${day}`}
+        style={[
+          styles.dayItem,
+          {
+            backgroundColor,
+            borderWidth: isToday ? 2 : 0,
+            borderColor: isToday ? "#004A99" : "transparent",
+          },
+        ]}
       >
-        <Text style={[styles.dayText, { color: textColor, fontWeight: isToday ? "bold" : "normal" }]}>{day}</Text>
+        <Text
+          style={[
+            styles.dayText,
+            { color: textColor, fontWeight: isToday ? "bold" : "normal" },
+          ]}
+        >
+          {day}
+        </Text>
       </View>
     );
   };
-  
+
   //Pie Chart
   const LabelsPie = ({ slices = [] }) => {
     if (!slices.length) return null; // Prevent rendering errors
@@ -373,7 +405,7 @@ export default function DashboardScreen({ navigation }) {
       );
     });
   };
-  
+
   // Toggle menu function
   const toggleMenu = () => {
     setMenuOpenStudentId(!menuOpen);
@@ -382,7 +414,6 @@ export default function DashboardScreen({ navigation }) {
       setStudentDropdownOpen(false);
     }
   };
-
 
   // Toggle Student Dropdown
   const toggleStudentDropdown = () => {
@@ -395,92 +426,122 @@ export default function DashboardScreen({ navigation }) {
   // Select Student from Dropdown
   const selectStudent = async (student) => {
     if (!student || !student._id) return;
-  
+
     setSelectedStudent(student);
     setStudentDropdownOpen(false);
     setMenuOpenStudentId(null);
-  
+
     // ✅ Fetch and update all related student data
     await fetchStudentDetails(student._id);
   };
 
   // ✅ Fetch Familiarity
   const fetchFamiliarityData = async (student) => {
-      if (!student || !student.subjects) {
-          console.warn("⚠️ No Familiarity Data found. Setting default values.");
-          setFamiliarityData({
-              Shapes: { Square: 0, Triangle: 0, Circle: 0, Rectangle: 0 },
-              Colors: { Red: 0, Yellow: 0, Blue: 0, Green: 0, Black: 0, Gray: 0, White: 0 },
-              Numbers: { "One (1)": 0, "Two (2)": 0, "Three (3)": 0, "Four (4)": 0, "Five (5)": 0,
-                        "Six (6)": 0, "Seven (7)": 0, "Eight (8)": 0, "Nine (9)": 0, "Ten (10)": 0 }
-          });
-          return;
-      }
-
-      console.log("🔍 Fetching Familiarity Data from API:", JSON.stringify(student.subjects, null, 2));
-
-      const familiarityData = {
-          Shapes: {},
-          Colors: {},
-          Numbers: {}
-      };
-
-      // ✅ Correctly map the database field "percentage" for each subject
-      const numberMapping = {
-          One: "One (1)", Two: "Two (2)", Three: "Three (3)", Four: "Four (4)", Five: "Five (5)",
-          Six: "Six (6)", Seven: "Seven (7)", Eight: "Eight (8)", Nine: "Nine (9)", Ten: "Ten (10)"
-      };
-
-      // ✅ Process each category (Shapes, Colors, Numbers)
-      ["Shapes", "Colors", "Numbers"].forEach(category => {
-          if (student.subjects[category]) {
-              Object.entries(student.subjects[category]).forEach(([element, data]) => {
-                  if (element !== "Mastery") {
-                      // ✅ Fetch percentage directly from the database
-                      const percentage = data.percentage || 0;
-
-                      // ✅ Map numbers correctly for display
-                      if (category === "Numbers") {
-                          familiarityData[category][numberMapping[element]] = Math.round(percentage);
-                      } else {
-                          familiarityData[category][element] = Math.round(percentage);
-                      }
-                  }
-              });
-          }
+    if (!student || !student.subjects) {
+      console.warn("⚠️ No Familiarity Data found. Setting default values.");
+      setFamiliarityData({
+        Shapes: { Square: 0, Triangle: 0, Circle: 0, Rectangle: 0 },
+        Colors: {
+          Red: 0,
+          Yellow: 0,
+          Blue: 0,
+          Green: 0,
+          Black: 0,
+          Gray: 0,
+          White: 0,
+        },
+        Numbers: {
+          "One (1)": 0,
+          "Two (2)": 0,
+          "Three (3)": 0,
+          "Four (4)": 0,
+          "Five (5)": 0,
+          "Six (6)": 0,
+          "Seven (7)": 0,
+          "Eight (8)": 0,
+          "Nine (9)": 0,
+          "Ten (10)": 0,
+        },
       });
+      return;
+    }
 
-      console.log("✅ Familiarity Data Processed for UI:", familiarityData);
-      setFamiliarityData(familiarityData);
+    console.log(
+      "🔍 Fetching Familiarity Data from API:",
+      JSON.stringify(student.subjects, null, 2)
+    );
+
+    const familiarityData = {
+      Shapes: {},
+      Colors: {},
+      Numbers: {},
+    };
+
+    // ✅ Correctly map the database field "percentage" for each subject
+    const numberMapping = {
+      One: "One (1)",
+      Two: "Two (2)",
+      Three: "Three (3)",
+      Four: "Four (4)",
+      Five: "Five (5)",
+      Six: "Six (6)",
+      Seven: "Seven (7)",
+      Eight: "Eight (8)",
+      Nine: "Nine (9)",
+      Ten: "Ten (10)",
+    };
+
+    // ✅ Process each category (Shapes, Colors, Numbers)
+    ["Shapes", "Colors", "Numbers"].forEach((category) => {
+      if (student.subjects[category]) {
+        Object.entries(student.subjects[category]).forEach(
+          ([element, data]) => {
+            if (element !== "Mastery") {
+              // ✅ Fetch percentage directly from the database
+              const percentage = data.percentage || 0;
+
+              // ✅ Map numbers correctly for display
+              if (category === "Numbers") {
+                familiarityData[category][numberMapping[element]] =
+                  Math.round(percentage);
+              } else {
+                familiarityData[category][element] = Math.round(percentage);
+              }
+            }
+          }
+        );
+      }
+    });
+
+    console.log("✅ Familiarity Data Processed for UI:", familiarityData);
+    setFamiliarityData(familiarityData);
   };
 
   // ✅ Update student data when selecting a student
   const updateStudentData = async (student) => {
     if (!student) return;
-  
+
     console.log("🎯 Updating student data:", student.fullName);
-  
+
     // ✅ Fetch updated familiarity data
     await fetchFamiliarityData(student);
-  
+
     // ✅ Update accuracy data
     setAccuracyData({
       correct: student.accuracy?.correct || 0,
       incorrect: student.accuracy?.incorrect || 0,
     });
-  
+
     // ✅ Update time spent
     setTimeSpentData({
       timeSpent: student.gameTime?.timeSpent || 0,
       timeLeft: student.gameTime?.timeLeft || 60,
     });
-  
+
     // ✅ Update attendance
     setAttendanceData(getAttendanceData([student]));
   };
-  
-  
-  
+
   // Handle edit button press
   const handleEditPress = () => {
     if (selectedStudent) {
@@ -491,33 +552,32 @@ export default function DashboardScreen({ navigation }) {
     setShowEditModal(true);
     setMenuOpenStudentId(null);
   };
-  
 
   // Handle delete button press
   const handleDeletePress = () => {
     setShowDeleteModal(true); // ✅ Opens the confirmation modal
-  };  
+  };
 
   // Handle update button press
   const handleUpdate = async () => {
     if (!selectedStudent) return;
-  
+
     try {
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
         console.error("❌ No token found, user might be logged out.");
         return;
       }
-  
+
       console.log(`🔄 Updating student: ${selectedStudent._id}`);
-  
+
       const response = await fetch(
         `http://10.0.2.2:5000/api/students/edit/${selectedStudent._id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             fullName: editName.trim(),
@@ -526,29 +586,34 @@ export default function DashboardScreen({ navigation }) {
           }),
         }
       );
-  
+
       const text = await response.text();
       console.log("🔹 Raw Update Response:", text);
-  
+
       const data = JSON.parse(text);
       if (response.ok) {
         console.log("✅ Student updated successfully:", data);
-  
+
         setStudents((prevStudents) =>
           prevStudents.map((student) =>
             student._id === selectedStudent._id
-              ? { ...student, fullName: editName, age: editAge, gender: editGender }
+              ? {
+                  ...student,
+                  fullName: editName,
+                  age: editAge,
+                  gender: editGender,
+                }
               : student
           )
         );
-  
+
         setSelectedStudent((prev) => ({
           ...prev,
           fullName: editName,
           age: editAge,
           gender: editGender,
         }));
-  
+
         // ✅ Update attendance when the student plays a game
         // await updateAttendance(selectedStudent._id);
       } else {
@@ -557,7 +622,7 @@ export default function DashboardScreen({ navigation }) {
     } catch (error) {
       console.error("❌ Network error updating student:", error);
     }
-  
+
     setShowEditModal(false);
   };
 
@@ -572,40 +637,42 @@ export default function DashboardScreen({ navigation }) {
       console.error("❌ No student selected.");
       return;
     }
-  
+
     try {
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
         console.error("❌ No token found, user might be logged out.");
         return;
       }
-  
+
       console.log(`🗑️ Attempting to delete student: ${selectedStudent._id}`);
-  
+
       // ✅ Send DELETE request to backend
       const response = await fetch(
         `http://10.0.2.2:5000/api/students/delete/${selectedStudent._id}`,
         {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-  
+
       const text = await response.text();
       console.log("🔹 Raw Delete Response:", text); // ✅ Log backend response
-  
+
       try {
         const data = JSON.parse(text);
         if (response.ok) {
           console.log("✅ Student deleted successfully:", data);
-  
+
           // ✅ Remove student from frontend state
           setStudents((prevStudents) =>
-            prevStudents.filter((student) => student._id !== selectedStudent._id)
+            prevStudents.filter(
+              (student) => student._id !== selectedStudent._id
+            )
           );
-  
+
           // ✅ Clear selected student
           setSelectedStudent(null);
         } else {
@@ -617,21 +684,18 @@ export default function DashboardScreen({ navigation }) {
     } catch (error) {
       console.error("❌ Network error deleting student:", error);
     }
-  
+
     setShowDeleteModal(false); // ✅ Close delete modal
   };
-  
-  
+
   // Handle delete cancellation
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
   };
-  
-  
 
   useEffect(() => {
     fetchUser();
-  }, []); 
+  }, []);
 
   useEffect(() => {
     if (selectedStudent) {
@@ -643,79 +707,129 @@ export default function DashboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Edit Modal */}
-<Modal animationType="fade" transparent={true} visible={showEditModal} onRequestClose={handleCancel}>
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContainer}>
-      {/* Profile Image */}
-      <TouchableOpacity style={styles.profileImageContainer}>
-        <Image source={require("../../../assets/default-student.png")} style={styles.modalProfileImage} />
-        <Text style={styles.uploadText}>Upload picture</Text>
-      </TouchableOpacity>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showEditModal}
+        onRequestClose={handleCancel}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Profile Image */}
+            <TouchableOpacity style={styles.profileImageContainer}>
+              <Image
+                source={require("../../../assets/default-student.png")}
+                style={styles.modalProfileImage}
+              />
+              <Text style={styles.uploadText}>Upload picture</Text>
+            </TouchableOpacity>
 
-      {/* Student Name Input */}
-      <View style={styles.inputContainer}>
-        <Image source={require("../../../assets/dashboard/user-icon.png")} style={styles.inputIcon} />
-        <TextInput style={styles.textInput} value={editName} onChangeText={setEditName} placeholder="Student Name" />
-      </View>
+            {/* Student Name Input */}
+            <View style={styles.inputContainer}>
+              <Image
+                source={require("../../../assets/dashboard/user-icon.png")}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.textInput}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Student Name"
+              />
+            </View>
 
-      {/* Age & Gender Inputs */}
-      <View style={styles.inputRow}>
-        <View style={[styles.inputContainer, styles.halfInput]}>
-          <Image source={require("../../../assets/dashboard/age-icon.png")} style={styles.inputIcon} />
-          <TextInput
-            style={styles.textInput}
-            value={editAge}
-            onChangeText={setEditAge}
-            keyboardType="numeric"
-            placeholder="Age"
-          />
+            {/* Age & Gender Inputs */}
+            <View style={styles.inputRow}>
+              <View style={[styles.inputContainer, styles.halfInput]}>
+                <Image
+                  source={require("../../../assets/dashboard/age-icon.png")}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.textInput}
+                  value={editAge}
+                  onChangeText={setEditAge}
+                  keyboardType="numeric"
+                  placeholder="Age"
+                />
+              </View>
+              <View style={[styles.inputContainer, styles.halfInput]}>
+                <Image
+                  source={require("../../../assets/dashboard/gender-icon.png")}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.textInput}
+                  value={editGender}
+                  onChangeText={setEditGender}
+                  placeholder="Gender"
+                />
+              </View>
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.editUpdateButton}
+                onPress={handleUpdate}
+              >
+                <Image
+                  source={require("../../../assets/dashboard/Update.png")}
+                  style={styles.editButtonImage}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.editCancelButton}
+                onPress={handleCancel}
+              >
+                <Image
+                  source={require("../../../assets/dashboard/Cancel.png")}
+                  style={styles.editButtonImage}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-        <View style={[styles.inputContainer, styles.halfInput]}>
-          <Image source={require("../../../assets/dashboard/gender-icon.png")} style={styles.inputIcon} />
-          <TextInput style={styles.textInput} value={editGender} onChangeText={setEditGender} placeholder="Gender" />
-        </View>
-      </View>
-
-      {/* Buttons */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.editUpdateButton} onPress={handleUpdate}>
-          <Image source={require("../../../assets/dashboard/Update.png")} style={styles.editButtonImage} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.editCancelButton} onPress={handleCancel}>
-          <Image source={require("../../../assets/dashboard/Cancel.png")} style={styles.editButtonImage} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-<Modal
-  animationType="fade"
-  transparent={true}
-  visible={showDeleteModal}
-  onRequestClose={() => setShowDeleteModal(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.deleteModalContainer}>
-      <Text style={styles.warningTitle}>Warning!</Text>
-      <Text style={styles.warningText}>
-        Are you sure you want to delete {selectedStudent?.fullName}?
-      </Text>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDeleteModal}
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.deleteModalContainer}>
+            <Text style={styles.warningTitle}>Warning!</Text>
+            <Text style={styles.warningText}>
+              Are you sure you want to delete {selectedStudent?.fullName}?
+            </Text>
 
-      <View style={styles.deleteButtonRow}>
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Image source={require("../../../assets/dashboard/Delete.png")} style={styles.deleteButtonImage} />
-        </TouchableOpacity>
+            <View style={styles.deleteButtonRow}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDelete}
+              >
+                <Image
+                  source={require("../../../assets/dashboard/Delete.png")}
+                  style={styles.deleteButtonImage}
+                />
+              </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteCancelButton} onPress={() => setShowDeleteModal(false)}>
-          <Image source={require("../../../assets/dashboard/Cancel.png")} style={styles.deleteButtonImage} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
-
+              <TouchableOpacity
+                style={styles.deleteCancelButton}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Image
+                  source={require("../../../assets/dashboard/Cancel.png")}
+                  style={styles.deleteButtonImage}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Left Sidebar */}
       <View style={styles.sidebar}>
@@ -746,7 +860,7 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity  onPress={handleLogout}>
+        <TouchableOpacity onPress={handleLogout}>
           <Image
             style={styles.logoutButton}
             source={require("../../../assets/dashboard/Logout.png")}
@@ -768,59 +882,70 @@ export default function DashboardScreen({ navigation }) {
           {/* Teacher Name */}
           {/* ✅ Display logged-in teacher's name */}
           <View style={styles.userContainer}>
-                <Text style={styles.greeting}>Hello, {fullName}!</Text>
-                <Image source={require('../../../assets/default-profile.png')} style={styles.profilePic} />
-              </View>
-            </View>
+            <Text style={styles.greeting}>Hello, {fullName}!</Text>
+            <Image
+              source={require("../../../assets/default-profile.png")}
+              style={styles.profilePic}
+            />
+          </View>
+        </View>
 
         {/* Student Name and Menu Button Container */}
-          <View style={styles.studentNameAndMenuContainer}>
-            {/* Student Name Button */}
-            <TouchableOpacity
-              onPress={() => setStudentDropdownOpen(!studentDropdownOpen)}
-              style={styles.studentNameButton}
-            >
-              <Image
-                source={
-                  studentDropdownOpen
-                    ? require("../../../assets/dashboard/arrow-up.png")
-                    : require("../../../assets/dashboard/arrow-down.png")
-                }
-                style={styles.dropdownIcon}
-              />
-              <Text style={styles.studentName}>
-                {selectedStudent ? selectedStudent.fullName : "Select Student"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Student Dropdown List */}
-            {studentDropdownOpen && (
-              <View style={styles.studentDropdownMenu} onPress={toggleMenu}>
-                {students.length > 0 ? (
-                  students.map((student) => (
-                    <TouchableOpacity
-            key={student._id}
-            style={styles.dropdownItem}
-            onPress={() => {
-              setSelectedStudent(student); // ✅ Correctly selects student
-              setStudentDropdownOpen(false); // ✅ Close dropdown
-              setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
-            }}
+        <View style={styles.studentNameAndMenuContainer}>
+          {/* Student Name Button */}
+          <TouchableOpacity
+            onPress={() => setStudentDropdownOpen(!studentDropdownOpen)}
+            style={styles.studentNameButton}
           >
-            <Text style={styles.dropdownItemText}>{student.fullName}</Text>
+            <Image
+              source={
+                studentDropdownOpen
+                  ? require("../../../assets/dashboard/arrow-up.png")
+                  : require("../../../assets/dashboard/arrow-down.png")
+              }
+              style={styles.dropdownIcon}
+            />
+            <Text style={styles.studentName}>
+              {selectedStudent ? selectedStudent.fullName : "Select Student"}
+            </Text>
           </TouchableOpacity>
-                  ))
-                ) : (
-                  <Text style={styles.noStudentText}>No students found</Text>
-                )}
-              </View>
-            )}
 
-            {/* Menu Button with Dropdown (Only for Selected Student) */}
+          {/* Student Dropdown List */}
+          {studentDropdownOpen && (
+            <View style={styles.studentDropdownMenu} onPress={toggleMenu}>
+              {students.length > 0 ? (
+                students.map((student) => (
+                  <TouchableOpacity
+                    key={student._id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setSelectedStudent(student); // ✅ Correctly selects student
+                      setStudentDropdownOpen(false); // ✅ Close dropdown
+                      setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
+                    }}
+                  >
+                    <Text style={styles.dropdownItemText}>
+                      {student.fullName}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noStudentText}>No students found</Text>
+              )}
+            </View>
+          )}
+
+          {/* Menu Button with Dropdown (Only for Selected Student) */}
           {selectedStudent && (
             <View style={styles.menuContainer}>
               <TouchableOpacity
-                onPress={() => setMenuOpenStudentId(menuOpenStudentId === selectedStudent._id ? null : selectedStudent._id)}
+                onPress={() =>
+                  setMenuOpenStudentId(
+                    menuOpenStudentId === selectedStudent._id
+                      ? null
+                      : selectedStudent._id
+                  )
+                }
               >
                 <Image
                   source={
@@ -835,46 +960,66 @@ export default function DashboardScreen({ navigation }) {
               {/* Edit/Delete Menu */}
               {menuOpenStudentId === selectedStudent._id && (
                 <View style={styles.dropdownMenu}>
-                <TouchableOpacity style={styles.dropdownItem} onPress={handleEditPress}>
-                  <Text style={styles.dropdownItemText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.dropdownItem, styles.lastDropdownItem]}
-                  onPress={handleDeletePress}
-                >
-                  <Text style={styles.dropdownItemText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={handleEditPress}
+                  >
+                    <Text style={styles.dropdownItemText}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.dropdownItem, styles.lastDropdownItem]}
+                    onPress={handleDeletePress}
+                  >
+                    <Text style={styles.dropdownItemText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           )}
-          </View>
+        </View>
 
         {/* Attendance Container */}
         <View style={styles.sectionContainer}>
           <View style={styles.attendanceHeader}>
             <Text style={styles.sectionTitle}>Attendance</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity style={styles.paginationButton} onPress={handlePrevQuarter}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevQuarter}
+              >
                 <Text style={styles.paginationButtonText}>◀︎</Text>
               </TouchableOpacity>
-              <Text style={styles.quarterLabel}>Q{currentQuarter} {currentYear}</Text>
-              <TouchableOpacity style={styles.paginationButton} onPress={handleNextQuarter}>
+              <Text style={styles.quarterLabel}>
+                Q{currentQuarter} {currentYear}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextQuarter}
+              >
                 <Text style={styles.paginationButtonText}>▶︎</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-         <View style={styles.calendarContainer}>
+          <View style={styles.calendarContainer}>
             {quarters[currentQuarter].map((month) => {
-              const firstDayOfMonth = moment(`${currentYear}-${month + 1}-01`, 'YYYY-MM-DD').day();
-              const daysInMonth = moment(`${currentYear}-${month + 1}`, 'YYYY-MM').daysInMonth();
+              const firstDayOfMonth = moment(
+                `${currentYear}-${month + 1}-01`,
+                "YYYY-MM-DD"
+              ).day();
+              const daysInMonth = moment(
+                `${currentYear}-${month + 1}`,
+                "YYYY-MM"
+              ).daysInMonth();
 
               // Generate empty slots before the first day of the month
-              const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => ({
-                key: `empty-${month}-${i}`,
-                day: null
-              }));
+              const blanks = Array.from(
+                { length: firstDayOfMonth },
+                (_, i) => ({
+                  key: `empty-${month}-${i}`,
+                  day: null,
+                })
+              );
 
               // Generate the array of day objects
               const daysArray = Array.from({ length: daysInMonth }, (_, i) => ({
@@ -883,7 +1028,7 @@ export default function DashboardScreen({ navigation }) {
                 // 1) Grab status from attendanceData for THIS month & day
                 status: attendanceData[month]
                   ? attendanceData[month][i] // i == day - 1
-                  : "" // fallback
+                  : "", // fallback
               }));
 
               // Combine empty slots + days
@@ -904,9 +1049,9 @@ export default function DashboardScreen({ navigation }) {
               if (currentWeek.length > 0) {
                 const missingDays = 7 - currentWeek.length;
                 for (let i = 0; i < missingDays; i++) {
-                  currentWeek.push({ 
-                    key: `empty-${month}-extra-${i}`, 
-                    day: null 
+                  currentWeek.push({
+                    key: `empty-${month}-extra-${i}`,
+                    day: null,
                   });
                 }
                 rows.push(currentWeek);
@@ -915,30 +1060,41 @@ export default function DashboardScreen({ navigation }) {
               return (
                 <View key={`month-${month}`} style={styles.monthContainer}>
                   <Text style={styles.monthTitle}>
-                    {moment(month + 1, 'M').format('MMMM')}
+                    {moment(month + 1, "M").format("MMMM")}
                   </Text>
 
                   {/* Weekday Labels */}
                   <View style={styles.weekdaysContainer}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                      <Text key={`label-${month}-${d}`} style={styles.weekdayLabel}>
-                        {d}
-                      </Text>
-                    ))}
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                      (d) => (
+                        <Text
+                          key={`label-${month}-${d}`}
+                          style={styles.weekdayLabel}
+                        >
+                          {d}
+                        </Text>
+                      )
+                    )}
                   </View>
 
                   {/* Days Grid */}
                   {rows.map((row, rowIndex) => (
-                    <View key={`row-${month}-${rowIndex}`} style={styles.weekRow}>
+                    <View
+                      key={`row-${month}-${rowIndex}`}
+                      style={styles.weekRow}
+                    >
                       {row.map(({ key, day, status }) => {
-                        return day
-                          ? renderDay(day, status, month, currentYear)
-                          : (
-                            <View
-                              key={key}
-                              style={[styles.dayItem, { backgroundColor: 'transparent' }]}
-                            />
-                          );
+                        return day ? (
+                          renderDay(day, status, month, currentYear)
+                        ) : (
+                          <View
+                            key={key}
+                            style={[
+                              styles.dayItem,
+                              { backgroundColor: "transparent" },
+                            ]}
+                          />
+                        );
                       })}
                     </View>
                   ))}
@@ -947,16 +1103,19 @@ export default function DashboardScreen({ navigation }) {
             })}
           </View>
 
-
           {/* Legend at Bottom-left */}
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
+              <View
+                style={[styles.legendColor, { backgroundColor: "#4CD964" }]}
+              />
               <Text style={styles.legendText}>Present</Text>
             </View>
 
             <View style={[styles.legendItem, { marginLeft: 20 }]}>
-              <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
+              <View
+                style={[styles.legendColor, { backgroundColor: "#FF3B30" }]}
+              />
               <Text style={styles.legendText}>Absent</Text>
             </View>
           </View>
@@ -964,19 +1123,28 @@ export default function DashboardScreen({ navigation }) {
 
         {/* Charts Section */}
         <View style={styles.chartsContainer}>
-            
           {/* Shape Familiarity Chart */}
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Shape Familiarity</Text>
             <View style={styles.shapeChart}>
               <View style={styles.chartBarsContainer}>
-                {Object.entries(familiarityData?.Shapes || {}).map(([label, percentage], index) => (
-                  <View key={`shape-${index}`} style={styles.chartBarGroup}>
-                    <Text style={styles.percentageLabel}>{percentage}%</Text>
-                    <View style={[styles.chartBar, { height: Math.max(percentage * 1.2, 5), backgroundColor: '#FF3B30' }]} />
-                    <Text style={styles.chartLabel}>{label}</Text>
-                  </View>
-                ))}
+                {Object.entries(familiarityData?.Shapes || {}).map(
+                  ([label, percentage], index) => (
+                    <View key={`shape-${index}`} style={styles.chartBarGroup}>
+                      <Text style={styles.percentageLabel}>{percentage}%</Text>
+                      <View
+                        style={[
+                          styles.chartBar,
+                          {
+                            height: Math.max(percentage * 1.2, 5),
+                            backgroundColor: "#FF3B30",
+                          },
+                        ]}
+                      />
+                      <Text style={styles.chartLabel}>{label}</Text>
+                    </View>
+                  )
+                )}
               </View>
             </View>
           </View>
@@ -986,13 +1154,23 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Color Familiarity</Text>
             <View style={styles.colorChart}>
               <View style={styles.chartBarsContainer}>
-                {Object.entries(familiarityData?.Colors || {}).map(([label, percentage], index) => (
-                  <View key={`color-${index}`} style={styles.chartBarGroup}>
-                    <Text style={styles.percentageLabel}>{percentage}%</Text>
-                    <View style={[styles.chartBar, { height: Math.max(percentage * 1.2, 5), backgroundColor: '#5A8EF4' }]} />
-                    <Text style={styles.chartLabel}>{label}</Text>
-                  </View>
-                ))}
+                {Object.entries(familiarityData?.Colors || {}).map(
+                  ([label, percentage], index) => (
+                    <View key={`color-${index}`} style={styles.chartBarGroup}>
+                      <Text style={styles.percentageLabel}>{percentage}%</Text>
+                      <View
+                        style={[
+                          styles.chartBar,
+                          {
+                            height: Math.max(percentage * 1.2, 5),
+                            backgroundColor: "#5A8EF4",
+                          },
+                        ]}
+                      />
+                      <Text style={styles.chartLabel}>{label}</Text>
+                    </View>
+                  )
+                )}
               </View>
             </View>
           </View>
@@ -1002,91 +1180,161 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Number Familiarity</Text>
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
-                {Object.entries(familiarityData?.Numbers || {}).map(([label, percentage], index) => (
-                  <View key={`number-${index}`} style={styles.chartBarGroup}>
-                    <Text style={styles.percentageLabel}>{percentage}%</Text>
-                    <View style={[styles.chartBar, { height: Math.max(percentage * 1.2, 5), backgroundColor: '#4CAF50' }]} />
-                    <Text style={styles.chartLabel}>{label}</Text>
-                  </View>
-                ))}
+                {Object.entries(familiarityData?.Numbers || {}).map(
+                  ([label, percentage], index) => (
+                    <View key={`number-${index}`} style={styles.chartBarGroup}>
+                      <Text style={styles.percentageLabel}>{percentage}%</Text>
+                      <View
+                        style={[
+                          styles.chartBar,
+                          {
+                            height: Math.max(percentage * 1.2, 5),
+                            backgroundColor: "#4CAF50",
+                          },
+                        ]}
+                      />
+                      <Text style={styles.chartLabel}>{label}</Text>
+                    </View>
+                  )
+                )}
               </View>
             </View>
           </View>
 
           {/* Accuracy and Time Spent Pie Chart */}
           <View style={styles.accuracyTimeContainer}>
-              {/* Accuracy Pie Chart */}
-              <View style={styles.pieChartContainer}>
-                <Text style={styles.chartTitle}>Accuracy</Text>
-                <PieChart
-                  style={{ height: 250 }}
-                  valueAccessor={({ item }) => item.value}
-                  data={
-                    accuracyData.correct === 0 && accuracyData.incorrect === 0
-                      ? [
-                          { key: 1, value: 1, label: 'No Data', svg: { fill: '#D3D3D3' } }, // Gray placeholder
-                        ]
-                      : accuracyData.incorrect > 0 && accuracyData.correct === 0
-                      ? [{ key: 1, value: accuracyData.incorrect, label: `${accuracyData.incorrect}`, svg: { fill: '#FF3B30' } }]
-                      : accuracyData.correct > 0 && accuracyData.incorrect === 0
-                      ? [{ key: 2, value: accuracyData.correct, label: `${accuracyData.correct}`, svg: { fill: '#4CD964' } }]
-                      : [
-                          { key: 1, value: accuracyData.correct, label: `${accuracyData.correct}`, svg: { fill: '#4CD964' } },
-                          { key: 2, value: accuracyData.incorrect, label: `${accuracyData.incorrect}`, svg: { fill: '#FF3B30' } },
-                        ]
-                  }
-                  spacing={0}
-                  outerRadius={'100%'}
-                >
-                  <LabelsPie />
-                </PieChart>
+            {/* Accuracy Pie Chart */}
+            <View style={styles.pieChartContainer}>
+              <Text style={styles.chartTitle}>Accuracy</Text>
+              <PieChart
+                style={{ height: 250 }}
+                valueAccessor={({ item }) => item.value}
+                data={
+                  accuracyData.correct === 0 && accuracyData.incorrect === 0
+                    ? [
+                        {
+                          key: 1,
+                          value: 1,
+                          label: "No Data",
+                          svg: { fill: "#D3D3D3" },
+                        }, // Gray placeholder
+                      ]
+                    : accuracyData.incorrect > 0 && accuracyData.correct === 0
+                    ? [
+                        {
+                          key: 1,
+                          value: accuracyData.incorrect,
+                          label: `${accuracyData.incorrect}`,
+                          svg: { fill: "#FF3B30" },
+                        },
+                      ]
+                    : accuracyData.correct > 0 && accuracyData.incorrect === 0
+                    ? [
+                        {
+                          key: 2,
+                          value: accuracyData.correct,
+                          label: `${accuracyData.correct}`,
+                          svg: { fill: "#4CD964" },
+                        },
+                      ]
+                    : [
+                        {
+                          key: 1,
+                          value: accuracyData.correct,
+                          label: `${accuracyData.correct}`,
+                          svg: { fill: "#4CD964" },
+                        },
+                        {
+                          key: 2,
+                          value: accuracyData.incorrect,
+                          label: `${accuracyData.incorrect}`,
+                          svg: { fill: "#FF3B30" },
+                        },
+                      ]
+                }
+                spacing={0}
+                outerRadius={"100%"}
+              >
+                <LabelsPie />
+              </PieChart>
 
-                <View style={styles.legend}>
-                  <View style={[styles.legendItem, {marginTop: 15}]}>
-                    <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
-                    <Text style={styles.legendText}>Correct</Text>
-                  </View>
-                  <View style={[styles.legendItem, { marginLeft: 15, marginTop: 15}]}>
-                    <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
-                    <Text style={styles.legendText}>Incorrect</Text>
-                  </View>
+              <View style={styles.legend}>
+                <View style={[styles.legendItem, { marginTop: 15 }]}>
+                  <View
+                    style={[styles.legendColor, { backgroundColor: "#4CD964" }]}
+                  />
+                  <Text style={styles.legendText}>Correct</Text>
+                </View>
+                <View
+                  style={[styles.legendItem, { marginLeft: 15, marginTop: 15 }]}
+                >
+                  <View
+                    style={[styles.legendColor, { backgroundColor: "#FF3B30" }]}
+                  />
+                  <Text style={styles.legendText}>Incorrect</Text>
                 </View>
               </View>
+            </View>
 
-              {/* Time Spent Pie Chart */}
-              <View style={styles.pieChartContainer}>
-                <Text style={styles.chartTitle}>Time Spent (Today)</Text>
-                <PieChart
-                  style={{ height: 250 }}
-                  valueAccessor={({ item }) => item.value}
-                  data={[
-                    timeSpentData.timeSpent > 0
-                      ? { key: 1, value: timeSpentData.timeSpent, label: `${timeSpentData.timeSpent} mins`, svg: { fill: '#4CD964' } }
-                      : { key: 1, value: timeSpentData.timeSpent, label: '', svg: { fill: '#4CD964' } }, // Hide "0 mins"
-              
-                    timeSpentData.timeLeft > 0
-                      ? { key: 2, value: timeSpentData.timeLeft, label: `${timeSpentData.timeLeft} mins`, svg: { fill: '#FF3B30' } }
-                      : { key: 2, value: timeSpentData.timeLeft, label: '', svg: { fill: '#FF3B30' } }, // Hide "0 mins"
-                  ]}
-                  spacing={0}
-                  outerRadius={'100%'}
+            {/* Time Spent Pie Chart */}
+            <View style={styles.pieChartContainer}>
+              <Text style={styles.chartTitle}>Time Spent (Today)</Text>
+              <PieChart
+                style={{ height: 250 }}
+                valueAccessor={({ item }) => item.value}
+                data={[
+                  timeSpentData.timeSpent > 0
+                    ? {
+                        key: 1,
+                        value: timeSpentData.timeSpent,
+                        label: `${timeSpentData.timeSpent} mins`,
+                        svg: { fill: "#4CD964" },
+                      }
+                    : {
+                        key: 1,
+                        value: timeSpentData.timeSpent,
+                        label: "",
+                        svg: { fill: "#4CD964" },
+                      }, // Hide "0 mins"
+
+                  timeSpentData.timeLeft > 0
+                    ? {
+                        key: 2,
+                        value: timeSpentData.timeLeft,
+                        label: `${timeSpentData.timeLeft} mins`,
+                        svg: { fill: "#FF3B30" },
+                      }
+                    : {
+                        key: 2,
+                        value: timeSpentData.timeLeft,
+                        label: "",
+                        svg: { fill: "#FF3B30" },
+                      }, // Hide "0 mins"
+                ]}
+                spacing={0}
+                outerRadius={"100%"}
+              >
+                <LabelsPie />
+              </PieChart>
+
+              <View style={styles.legend}>
+                <View style={[styles.legendItem, { marginTop: 15 }]}>
+                  <View
+                    style={[styles.legendColor, { backgroundColor: "#4CD964" }]}
+                  />
+                  <Text style={styles.legendText}>Spent</Text>
+                </View>
+                <View
+                  style={[styles.legendItem, { marginLeft: 15, marginTop: 15 }]}
                 >
-                  <LabelsPie />
-                </PieChart>
-
-                <View style={styles.legend}>
-                  <View style={[styles.legendItem, {marginTop: 15}]}>
-                    <View style={[styles.legendColor, { backgroundColor: '#4CD964' }]} />
-                    <Text style={styles.legendText}>Spent</Text>
-                  </View>
-                  <View style={[styles.legendItem, { marginLeft: 15, marginTop: 15}]}>
-                    <View style={[styles.legendColor, { backgroundColor: '#FF3B30' }]} />
-                    <Text style={styles.legendText}>Left</Text>
-                  </View>
+                  <View
+                    style={[styles.legendColor, { backgroundColor: "#FF3B30" }]}
+                  />
+                  <Text style={styles.legendText}>Left</Text>
                 </View>
               </View>
+            </View>
           </View>
-
         </View>
 
         {/* Footer */}
@@ -1180,19 +1428,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   studentNameButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#5A8EF4',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#5A8EF4",
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderWidth: 4,
-    borderColor: '#FFFFFF', 
-    shadowColor: '#000',  
-    shadowOffset: { width: 0, height: 2 }, 
+    borderColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    elevation: 4, 
+    elevation: 4,
   },
   dropdownIcon: {
     width: 16,
@@ -1258,7 +1506,7 @@ const styles = StyleSheet.create({
     color: "#1E1E1E",
     textAlign: "center",
   },
-  
+
   sectionContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -1273,33 +1521,33 @@ const styles = StyleSheet.create({
 
   //Attendance Container Style
   attendanceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
 
   quarterLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginHorizontal: 10,
   },
-  
+
   paginationButton: {
     paddingHorizontal: 10,
   },
-  
+
   paginationButtonText: {
     fontSize: 18,
-    color: '#000',
+    color: "#000",
   },
 
   calendarContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
-  
+
   monthContainer: {
     flex: 1,
     marginHorizontal: 10,
@@ -1307,27 +1555,27 @@ const styles = StyleSheet.create({
 
   monthTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
     marginBottom: 10,
   },
 
   weekdaysContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 5,
   },
 
   weekdayLabel: {
     fontSize: 12,
-    color: '#8E8E93',
-    textAlign: 'center',
+    color: "#8E8E93",
+    textAlign: "center",
     flex: 1,
   },
 
   weekRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
 
   dayItem: {
@@ -1335,29 +1583,29 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 4,
     margin: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2, // ✅ Ensures proper distinction
-    borderColor: 'white', // ✅ Gives a clearer edge
+    borderColor: "white", // ✅ Gives a clearer edge
   },
 
   dayText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: 'bold', // ✅ Makes it more visible
+    fontWeight: "bold", // ✅ Makes it more visible
   },
 
   legend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 15,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
 
   legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginHorizontal: 10,
   },
 
@@ -1370,22 +1618,20 @@ const styles = StyleSheet.create({
 
   legendText: {
     fontSize: 14,
-    color: '#1E1E1E',
-    textAlign: 'center',
+    color: "#1E1E1E",
+    textAlign: "center",
   },
   // End
 
-
   chartsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
 
   percentageLabel: {
     fontSize: 12,
-    color: '#000',
+    color: "#000",
     marginBottom: 4,
   },
   chartCard: {
@@ -1484,14 +1730,14 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   accuracyTimeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
-    width: '100%'
+    width: "100%",
   },
   pieChartContainer: {
-    width: '49%',
-    backgroundColor: '#FFFFFF',
+    width: "49%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 20,
   },

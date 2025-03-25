@@ -15,7 +15,9 @@ const authenticateUser = async (req, res, next) => {
 
     if (!token || !token.startsWith("Bearer ")) {
       console.error("❌ Unauthorized Access Attempt: Token Missing or Invalid");
-      return res.status(401).json({ message: "Unauthorized: Token is missing or invalid." });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Token is missing or invalid." });
     }
 
     token = token.split(" ")[1];
@@ -34,7 +36,9 @@ const authenticateUser = async (req, res, next) => {
     } catch (verifyError) {
       console.error("❌ JWT Verification Error:", verifyError);
       if (verifyError.name === "TokenExpiredError") {
-        return res.status(401).json({ message: "Token has expired. Please log in again." });
+        return res
+          .status(401)
+          .json({ message: "Token has expired. Please log in again." });
       }
       return res.status(403).json({ message: "Invalid token." });
     }
@@ -69,7 +73,14 @@ router.get("/user", authenticateUser, async (req, res) => {
 // ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
   try {
-    const { email, phoneNumber, fullName, employeeNo, password, securityQuestions } = req.body;
+    const {
+      email,
+      phoneNumber,
+      fullName,
+      employeeNo,
+      password,
+      securityQuestions,
+    } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -137,7 +148,9 @@ router.post("/save-security", async (req, res) => {
     }
 
     if (user.securityQuestions && user.securityQuestions.length > 0) {
-      return res.status(400).json({ message: "Security questions are already set." });
+      return res
+        .status(400)
+        .json({ message: "Security questions are already set." });
     }
 
     user.securityQuestions = securityQuestions;
@@ -162,11 +175,14 @@ router.post("/validate-security", async (req, res) => {
     }
 
     if (!securityAnswers || securityAnswers.length === 0) {
-      return res.status(400).json({ message: "Security answers are required." });
+      return res
+        .status(400)
+        .json({ message: "Security answers are required." });
     }
 
     const isValid = user.securityQuestions.every(
-      (sq, index) => sq.answer.toLowerCase() === securityAnswers[index].answer.toLowerCase()
+      (sq, index) =>
+        sq.answer.toLowerCase() === securityAnswers[index].answer.toLowerCase()
     );
 
     if (!isValid) {
@@ -236,7 +252,9 @@ function formatDate(date) {
   };
 
   // Convert date to YYYY-MM-DD format
-  const formattedDate = date.toLocaleDateString("en-US", options).replace(/\//g, "-");
+  const formattedDate = date
+    .toLocaleDateString("en-US", options)
+    .replace(/\//g, "-");
   const formattedTime = date.toLocaleTimeString("en-US", options);
 
   return `Date: ${formattedDate} | Time: ${formattedTime}`;

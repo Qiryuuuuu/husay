@@ -109,7 +109,9 @@ function formatDate(date) {
   };
 
   // Convert to the required format
-  const formattedDate = date.toLocaleDateString("en-US", options).replace(/\//g, "-");
+  const formattedDate = date
+    .toLocaleDateString("en-US", options)
+    .replace(/\//g, "-");
   const formattedTime = date.toLocaleTimeString("en-US", options);
 
   return `Date: ${formattedDate} | Time: ${formattedTime}`;
@@ -125,7 +127,10 @@ StudentSchema.methods.updateGameTime = function () {
       (now - new Date(this.gameTime.sessionStart.split("|")[0])) / 60000
     );
 
-    this.gameTime.timeSpent = Math.min(60, this.gameTime.timeSpent + sessionMinutes);
+    this.gameTime.timeSpent = Math.min(
+      60,
+      this.gameTime.timeSpent + sessionMinutes
+    );
     this.gameTime.timeLeft = Math.max(0, 60 - this.gameTime.timeSpent);
     this.gameTime.sessionEnd = formattedNow; // ✅ Always update sessionEnd with last session time
 
@@ -137,39 +142,47 @@ StudentSchema.methods.updateGameTime = function () {
   }
 };
 
-
 // ✅ Mark Attendance as Absent if No Gameplay
 StudentSchema.methods.markAbsentIfNoPlay = function () {
   const now = new Date();
   const formattedToday = formatDate(now);
   const todayDateOnly = formattedToday.split(" | ")[0];
 
-  const existingAttendance = this.attendance.find(a => a.date.startsWith(todayDateOnly));
+  const existingAttendance = this.attendance.find((a) =>
+    a.date.startsWith(todayDateOnly)
+  );
 
   // ✅ If sessionStart exists and no attendance recorded, mark "Present" at sessionStart time
   if (this.gameTime.sessionStart && !existingAttendance) {
-    this.attendance.push({ date: this.gameTime.sessionStart, status: "Present" });
-  } 
+    this.attendance.push({
+      date: this.gameTime.sessionStart,
+      status: "Present",
+    });
+  }
   // ✅ If no sessionStart and no attendance, mark "Absent"
   else if (!this.gameTime.sessionStart && !existingAttendance) {
     this.attendance.push({ date: formattedToday, status: "Absent" });
-    this.gameTime.sessionEnd = null;  // Ensure sessionEnd is null when absent
+    this.gameTime.sessionEnd = null; // Ensure sessionEnd is null when absent
   }
 };
 
-
-
-
 // ✅ Calculate Stats (Accuracy & Percentage)
 StudentSchema.methods.calculateStats = function () {
-  let totalCorrect = 0, totalIncorrect = 0;
-  ["Shapes", "Colors", "Numbers"].forEach(category => {
-    Object.values(this.subjects[category]).forEach(entry => {
+  let totalCorrect = 0,
+    totalIncorrect = 0;
+  ["Shapes", "Colors", "Numbers"].forEach((category) => {
+    Object.values(this.subjects[category]).forEach((entry) => {
       entry.correct = Number(entry.correct) || 0;
       entry.incorrect = Number(entry.incorrect) || 0;
-      entry.percentage = entry.correct + entry.incorrect > 0
-        ? parseFloat(((entry.correct / (entry.correct + entry.incorrect)) * 100).toFixed(2))
-        : 0;
+      entry.percentage =
+        entry.correct + entry.incorrect > 0
+          ? parseFloat(
+              (
+                (entry.correct / (entry.correct + entry.incorrect)) *
+                100
+              ).toFixed(2)
+            )
+          : 0;
       totalCorrect += entry.correct;
       totalIncorrect += entry.incorrect;
     });
@@ -181,21 +194,43 @@ StudentSchema.methods.calculateStats = function () {
 // ✅ Calculate Recommendations
 StudentSchema.methods.calculateRecommendations = function () {
   const getLowest = (data, n) =>
-    Object.entries(data).sort(([,a],[,b]) => a.percentage - b.percentage).slice(0,n).map(([k])=>k);
+    Object.entries(data)
+      .sort(([, a], [, b]) => a.percentage - b.percentage)
+      .slice(0, n)
+      .map(([k]) => k);
 
   this.recommendations = {
     Easy: {
-      Shapes: ["Square","Triangle","Rectangle","Circle",...getLowest(this.subjects.Shapes,1)],
-      Numbers: getLowest(this.subjects.Numbers,5),
-      Colors: getLowest(this.subjects.Colors,5),
+      Shapes: [
+        "Square",
+        "Triangle",
+        "Rectangle",
+        "Circle",
+        ...getLowest(this.subjects.Shapes, 1),
+      ],
+      Numbers: getLowest(this.subjects.Numbers, 5),
+      Colors: getLowest(this.subjects.Colors, 5),
     },
     Medium: {
-      Mixed: getLowest({...this.subjects.Shapes, ...this.subjects.Colors, ...this.subjects.Numbers}, 5),
+      Mixed: getLowest(
+        {
+          ...this.subjects.Shapes,
+          ...this.subjects.Colors,
+          ...this.subjects.Numbers,
+        },
+        5
+      ),
     },
     Hard: {
-      Shapes: ["Square","Triangle","Rectangle","Circle",...getLowest(this.subjects.Shapes,1)],
-      Numbers: getLowest(this.subjects.Numbers,1),
-      Colors: getLowest(this.subjects.Colors,5),
+      Shapes: [
+        "Square",
+        "Triangle",
+        "Rectangle",
+        "Circle",
+        ...getLowest(this.subjects.Shapes, 1),
+      ],
+      Numbers: getLowest(this.subjects.Numbers, 1),
+      Colors: getLowest(this.subjects.Colors, 5),
     },
   };
 };

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, Text, TextInput, Image, StyleSheet, TouchableOpacity, 
-  Alert, ActivityIndicator 
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
@@ -39,7 +45,10 @@ export default function AddStudentScreen({ navigation }) {
         const storedEmployeeNo = await AsyncStorage.getItem("employeeNo");
 
         if (!token || !storedEmployeeNo) {
-          Alert.alert("Error", "Unauthorized: No token or employee number found.");
+          Alert.alert(
+            "Error",
+            "Unauthorized: No token or employee number found."
+          );
           navigation.navigate("Login");
           return;
         }
@@ -59,7 +68,10 @@ export default function AddStudentScreen({ navigation }) {
   const selectImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission Denied", "You need to allow access to your photos.");
+      Alert.alert(
+        "Permission Denied",
+        "You need to allow access to your photos."
+      );
       return;
     }
 
@@ -91,6 +103,7 @@ export default function AddStudentScreen({ navigation }) {
 
     setLoading(true);
 
+    //Saving the student data to the Database (MongoDB)
     try {
       const token = await AsyncStorage.getItem("authToken");
 
@@ -119,7 +132,10 @@ export default function AddStudentScreen({ navigation }) {
       }
     } catch (error) {
       console.error("❌ Error adding student:", error);
-      Alert.alert("Error", error.response?.data?.message || "Failed to add student.");
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to add student."
+      );
     } finally {
       setLoading(false);
     }
@@ -144,8 +160,8 @@ export default function AddStudentScreen({ navigation }) {
       <Image source={element5} style={styles.element5} />
 
       {/* Back Button */}
-      <TouchableOpacity 
-        onPress={() => navigation.navigate("StudentProfile")} 
+      <TouchableOpacity
+        onPress={() => navigation.navigate("StudentProfile")}
         style={styles.backButton}
       >
         <Image source={backIcon} style={styles.backIcon} />
@@ -162,19 +178,23 @@ export default function AddStudentScreen({ navigation }) {
           {/* Profile Picture Upload */}
           <View style={styles.uploadContainer}>
             <TouchableOpacity onPress={selectImage}>
-              <Image 
-                source={profileImage ? { uri: profileImage } : defaultProfile} 
-                style={styles.profileImage} 
+              <Image
+                source={profileImage ? { uri: profileImage } : defaultProfile}
+                style={styles.profileImage}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={selectImage} style={styles.uploadTextContainer}>
+            <TouchableOpacity
+              onPress={selectImage}
+              style={styles.uploadTextContainer}
+            >
               <Text style={styles.uploadText}>Upload picture</Text>
             </TouchableOpacity>
           </View>
 
           {/* Form Fields */}
           <View style={styles.inputsContainer}>
-            <View style={styles.inputWrapper}><Image source={userIcon} style={styles.icon}/>
+            <View style={styles.inputWrapper}>
+              <Image source={userIcon} style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="Student Name"
@@ -182,7 +202,6 @@ export default function AddStudentScreen({ navigation }) {
                 onChangeText={setFullName}
                 placeholderTextColor="#999"
               />
-              
             </View>
 
             <View style={styles.rowInputs}>
@@ -190,22 +209,18 @@ export default function AddStudentScreen({ navigation }) {
                 <Image source={ageIcon} style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  
                   placeholder="Age"
                   value={age}
                   onChangeText={setAge}
                   keyboardType="numeric"
                   placeholderTextColor="#999"
-                  
-                  
                 />
-                
               </View>
               <View style={[styles.inputWrapper, styles.halfInput]}>
-                 <Image source={genderIcon} style={styles.inputIcon} />
+                <Image source={genderIcon} style={styles.inputIcon} />
                 <Picker
                   selectedValue={gender}
-                  style={styles.picker} 
+                  style={styles.picker}
                   onValueChange={(itemValue) => setGender(itemValue)}
                 >
                   <Picker.Item label="Gender" value="" />
@@ -213,12 +228,11 @@ export default function AddStudentScreen({ navigation }) {
                   <Picker.Item label="Female" value="Female" />
                   <Picker.Item label="Other" value="Other" />
                 </Picker>
-                
               </View>
             </View>
 
-            <TouchableOpacity 
-              style={styles.addButton} 
+            <TouchableOpacity
+              style={styles.addButton}
               onPress={addStudent}
               disabled={loading}
             >
@@ -244,90 +258,90 @@ export default function AddStudentScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
-    position: 'relative',
+    backgroundColor: "#F5F7FA",
+    position: "relative",
   },
   // Decorative Elements
   element1: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 500,
     right: -210,
     width: 500,
     height: 300,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   element2: {
-    position: 'absolute',
+    position: "absolute",
     top: 300,
     right: -120,
     width: 300,
     height: 300,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   element3: {
-    position: 'absolute',
+    position: "absolute",
     left: 1000,
     top: 620,
     width: 200,
     height: 200,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   element4: {
-    position: 'absolute',
+    position: "absolute",
     right: 1090,
     top: 250,
     width: 300,
     height: 300,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   element5: {
-    position: 'absolute',
+    position: "absolute",
     bottom: -70,
     left: 40,
     width: 200,
     height: 200,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   // Back Button
   backButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 60,
     left: 70,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     zIndex: 10,
   },
   backIcon: {
     width: 100,
     height: 65,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   // Header
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 50,
     marginBottom: 20,
   },
   logo: {
-    resizeMode: 'contain',
+    resizeMode: "contain",
     marginBottom: 30,
   },
-  
+
   // Main Container
   mainContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
   },
   formCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 30,
-    width: '100%',
+    width: "100%",
     maxWidth: 500,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -338,16 +352,16 @@ const styles = StyleSheet.create({
   },
   // Upload Container
   uploadContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
     position: "relative",
   },
   uploadTextContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingVertical: 7,
     paddingHorizontal: 29,
     borderRadius: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -365,19 +379,19 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 3,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: "#F0F0F0",
     marginBottom: -5,
     zIndex: 1,
   },
   uploadText: {
-    color: '#666666',
+    color: "#666666",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   // Form Inputs
   inputsContainer: {
     marginTop: 10,
-    width: '100%',
+    width: "100%",
   },
   inputWrapper: {
     flexDirection: "row",
@@ -403,12 +417,12 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   rowInputs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   halfInput: {
-    width: '48%',
+    width: "48%",
   },
   picker: {
     flex: 1,
@@ -429,33 +443,33 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 4,
     borderColor: "#FFFFFF",
-    shadowColor: "#000",  
-    shadowOffset: { width: 0, height: 2 }, 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    elevation: 4, 
+    elevation: 4,
   },
   addButtonContent: {
     flexDirection: "row",
     alignItems: "center",
   },
-  
+
   addButtonIcon: {
-    width: 25, 
+    width: 25,
     height: 25,
-    marginRight: 8, 
+    marginRight: 8,
     resizeMode: "contain",
   },
 
   addButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   // Footer
   footer: {
-    textAlign: 'center',
-    color: '#666666',
+    textAlign: "center",
+    color: "#666666",
     marginBottom: 20,
     marginTop: 50,
     fontSize: 18,

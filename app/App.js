@@ -79,7 +79,11 @@ export default function App() {
           component={PracMainScreen}
           options={{ title: "Practice" }}
         />
-        <Stack.Screen name="ChallMainScreen" component={ChallMainScreen} />
+        <Stack.Screen
+          name="ChallMainScreen"
+          component={ChallMainScreen}
+          options={{ title: "ChallengeMenu" }}
+        />
 
         <Stack.Screen
           name="EasyMenuInteface"
@@ -120,28 +124,28 @@ export default function App() {
         <Stack.Screen
           name="ChallengeShape"
           component={ChallengeShape}
-          option={{ title: "ChallShape" }}
+          options={{ title: "ChallShape" }}
         />
 
         <Stack.Screen
           name="ChallengeColor"
           component={ChallengeColor}
-          option={{ title: "ChallColor" }}
+          options={{ title: "ChallColor" }}
         />
         <Stack.Screen
           name="ChallengeNumber"
           component={ChallengeNumber}
-          option={{ title: "ChallColor" }}
+          options={{ title: "ChallColor" }}
         />
         <Stack.Screen
           name="ChallengeMedium"
           component={ChallengeMedium}
-          option={{ title: "ChallMedium" }}
+          options={{ title: "ChallMedium" }}
         />
         <Stack.Screen
           name="ChallengeHard"
           component={ChallengeHard}
-          Option={{ title: "ChallHard" }}
+          options={{ title: "ChallHard" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -24,7 +24,9 @@ router.get("/count", authenticateUser, async (req, res) => {
 // ✅ Get all students for the authenticated teacher
 router.get("/all", authenticateUser, async (req, res) => {
   try {
-    const students = await Student.find({ employeeNo: req.user.employeeNo }).select(
+    const students = await Student.find({
+      employeeNo: req.user.employeeNo,
+    }).select(
       "fullName age gender stars subjects recommendations attendance gameTime accuracy"
     );
 
@@ -36,47 +38,57 @@ router.get("/all", authenticateUser, async (req, res) => {
 });
 
 // ✅ Update Student Attendance Based on Gameplay
-router.put("/update-attendance/:studentId", authenticateUser, async (req, res) => {
-  try {
-    const { studentId } = req.params;
-    const now = new Date();
-    const formattedNow = formatDate(now); // ✅ Format date correctly
-    const todayDateOnly = formattedNow.split(" | ")[0];
+router.put(
+  "/update-attendance/:studentId",
+  authenticateUser,
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const now = new Date();
+      const formattedNow = formatDate(now); // ✅ Format date correctly
+      const todayDateOnly = formattedNow.split(" | ")[0];
 
-    const student = await Student.findById(studentId);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // ✅ Check if attendance already exists for today
+      const existingAttendance = student.attendance.find((att) =>
+        att.date.startsWith(todayDateOnly)
+      );
+
+      if (!existingAttendance) {
+        // ✅ Mark student as "Present" using formatted date
+        student.attendance.push({ date: formattedNow, status: "Present" });
+        student.gameTime.sessionStart = formattedNow;
+      } else {
+        // ✅ Update sessionStart but keep the original attendance time
+        student.gameTime.sessionStart = formattedNow;
+      }
+
+      await student.save();
+      res
+        .status(200)
+        .json({ message: "Attendance updated successfully", student });
+    } catch (error) {
+      console.error("❌ Error updating attendance:", error);
+      res.status(500).json({ message: "Server error updating attendance" });
     }
-
-    // ✅ Check if attendance already exists for today
-    const existingAttendance = student.attendance.find(
-      (att) => att.date.startsWith(todayDateOnly)
-    );
-
-    if (!existingAttendance) {
-      // ✅ Mark student as "Present" using formatted date
-      student.attendance.push({ date: formattedNow, status: "Present" });
-      student.gameTime.sessionStart = formattedNow;
-    } else {
-      // ✅ Update sessionStart but keep the original attendance time
-      student.gameTime.sessionStart = formattedNow;
-    }
-
-    await student.save();
-    res.status(200).json({ message: "Attendance updated successfully", student });
-  } catch (error) {
-    console.error("❌ Error updating attendance:", error);
-    res.status(500).json({ message: "Server error updating attendance" });
   }
-});
-
+);
 
 // ✅ Update Student Score and Recommendations
 router.put("/update-score", authenticateUser, async (req, res) => {
   try {
     const { studentId, subject, correct, incorrect } = req.body;
 
-    if (!studentId || !subject || correct === undefined || incorrect === undefined) {
+    if (
+      !studentId ||
+      !subject ||
+      correct === undefined ||
+      incorrect === undefined
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -98,7 +110,7 @@ router.put("/update-score", authenticateUser, async (req, res) => {
     student.calculateRecommendations();
 
     await student.save();
-    
+
     res.status(200).json({ message: "Score updated successfully", student });
   } catch (error) {
     console.error("❌ Error updating score:", error);
@@ -113,7 +125,9 @@ router.put("/edit/:studentId", authenticateUser, async (req, res) => {
     const { fullName, age, gender, profileImage } = req.body;
 
     if (!fullName || !age || !gender) {
-      return res.status(400).json({ message: "Full Name, Age, and Gender are required." });
+      return res
+        .status(400)
+        .json({ message: "Full Name, Age, and Gender are required." });
     }
 
     const updatedStudent = await Student.findByIdAndUpdate(
@@ -126,7 +140,12 @@ router.put("/edit/:studentId", authenticateUser, async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    res.status(200).json({ message: "Student information updated successfully", student: updatedStudent });
+    res
+      .status(200)
+      .json({
+        message: "Student information updated successfully",
+        student: updatedStudent,
+      });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -141,11 +160,18 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
     const classWithStudent = await Class.findOne({ students: studentId });
 
     if (!classWithStudent || classWithStudent.employeeNo !== employeeNo) {
-      return res.status(403).json({ message: "Unauthorized: You do not have permission to delete this student." });
+      return res
+        .status(403)
+        .json({
+          message:
+            "Unauthorized: You do not have permission to delete this student.",
+        });
     }
 
     // ✅ Remove student from class
-    classWithStudent.students = classWithStudent.students.filter((id) => id.toString() !== studentId);
+    classWithStudent.students = classWithStudent.students.filter(
+      (id) => id.toString() !== studentId
+    );
     await classWithStudent.save();
 
     await Student.findByIdAndDelete(studentId);
@@ -161,7 +187,7 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
 router.get("/get/:studentId", authenticateUser, async (req, res) => {
   try {
     const { studentId } = req.params;
-    
+
     const student = await Student.findById(studentId).select(
       "fullName age gender stars subjects recommendations attendance gameTime accuracy"
     );
@@ -170,14 +196,14 @@ router.get("/get/:studentId", authenticateUser, async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-     // ✅ Recalculate accuracy before returning (ensures latest values)
-     student.calculateStats();
-    
-     // ✅ Save the student to ensure database is updated
-     await student.save();
-    
-     console.log("✅ Updated Student Accuracy:", student.accuracy);
-     
+    // ✅ Recalculate accuracy before returning (ensures latest values)
+    student.calculateStats();
+
+    // ✅ Save the student to ensure database is updated
+    await student.save();
+
+    console.log("✅ Updated Student Accuracy:", student.accuracy);
+
     res.json({ student });
   } catch (error) {
     console.error("❌ Error fetching student data:", error);

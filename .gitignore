@@ -9,13 +9,16 @@ dist/
 web-build/
 expo-env.d.ts
 
+
 # Native
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
+*.py
 *.mobileprovision
+C:\Users\Alfonso\Desktop\husay-1\Asssit
 
 # Metro
 .metro-health-check*
@@ -34,3 +37,4 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+

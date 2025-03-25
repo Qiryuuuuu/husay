@@ -1,19 +1,24 @@
 const mongoose = require("mongoose");
 
 const ClassSchema = new mongoose.Schema({
-  employeeNo: { type: String, required: true, unique: true, index: true },  // ✅ Indexed for fast lookup
+  employeeNo: { type: String, required: true, unique: true, index: true }, // ✅ Indexed for fast lookup
 
   students: [
     {
       type: mongoose.Schema.Types.ObjectId, // ✅ Store ObjectId references to Student
       ref: "Student", // ✅ Reference to the Student model
-      index: true,  // ✅ Index for optimized performance when querying students
+      index: true, // ✅ Index for optimized performance when querying students
     },
   ],
 
   subjects: [
     {
-      name: { type: String, enum: ["Colors", "Shapes", "Numbers"], required: true, index: true },  // ✅ Indexed for fast lookup
+      name: {
+        type: String,
+        enum: ["Colors", "Shapes", "Numbers"],
+        required: true,
+        index: true,
+      }, // ✅ Indexed for fast lookup
     },
   ],
 
@@ -34,7 +39,9 @@ function formatDate(date) {
   };
 
   // Convert date to YYYY-MM-DD format
-  const formattedDate = date.toLocaleDateString("en-US", options).replace(/\//g, "-");
+  const formattedDate = date
+    .toLocaleDateString("en-US", options)
+    .replace(/\//g, "-");
   const formattedTime = date.toLocaleTimeString("en-US", options);
 
   return `Date: ${formattedDate} | Time: ${formattedTime}`;
@@ -42,7 +49,8 @@ function formatDate(date) {
 
 // ✅ Update `updatedAt` whenever any change happens in the document
 ClassSchema.pre("save", function (next) {
-  if (this.isModified()) {  // ✅ Update timestamp only if changes are detected
+  if (this.isModified()) {
+    // ✅ Update timestamp only if changes are detected
     this.updatedAt = formatDate(new Date());
   }
   next();

@@ -6,12 +6,14 @@ const authenticateUser = require("../middleware/authMiddleware");
 const router = express.Router();
 
 // ✅ Add a student (Creates class if none exists)
-router.post("/add-student", authenticateUser, async (req, res) => { 
+router.post("/add-student", authenticateUser, async (req, res) => {
   try {
     const { fullName, age, gender, profileImage } = req.body;
 
     if (!req.user || !req.user.employeeNo) {
-      return res.status(403).json({ message: "Unauthorized: Employee number is missing." });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Employee number is missing." });
     }
 
     const employeeNo = req.user.employeeNo;
@@ -22,11 +24,15 @@ router.post("/add-student", authenticateUser, async (req, res) => {
 
     let userClass = await Class.findOne({ employeeNo }).populate("students");
 
-    const existingStudent = userClass?.students.find(student => student.fullName === fullName);
+    const existingStudent = userClass?.students.find(
+      (student) => student.fullName === fullName
+    );
     if (existingStudent) {
-      return res.status(400).json({ message: "A student with this name already exists." });
+      return res
+        .status(400)
+        .json({ message: "A student with this name already exists." });
     }
-    
+
     if (!userClass) {
       userClass = new Class({
         employeeNo,
@@ -47,8 +53,27 @@ router.post("/add-student", authenticateUser, async (req, res) => {
       // ✅ Initialize Subjects with Default Scores
       subjects: {
         Shapes: { Rectangle: {}, Triangle: {}, Circle: {}, Square: {} },
-        Colors: { Red: {}, Yellow: {}, Green: {}, Blue: {}, Black: {}, Gray: {}, White: {} },
-        Numbers: { One: {}, Two: {}, Three: {}, Four: {}, Five: {}, Six: {}, Seven: {}, Eight: {}, Nine: {}, Ten: {} }
+        Colors: {
+          Red: {},
+          Yellow: {},
+          Green: {},
+          Blue: {},
+          Black: {},
+          Gray: {},
+          White: {},
+        },
+        Numbers: {
+          One: {},
+          Two: {},
+          Three: {},
+          Four: {},
+          Five: {},
+          Six: {},
+          Seven: {},
+          Eight: {},
+          Nine: {},
+          Ten: {},
+        },
       },
 
       // ✅ Initialize Stars
@@ -82,8 +107,9 @@ router.post("/add-student", authenticateUser, async (req, res) => {
     userClass.students.push(newStudent);
     await userClass.save();
 
-    res.status(201).json({ message: "Student added successfully!", student: newStudent });
-
+    res
+      .status(201)
+      .json({ message: "Student added successfully!", student: newStudent });
   } catch (error) {
     res.status(500).json({ message: "Server error.", error: error.message });
   }
@@ -97,7 +123,8 @@ router.get("/get-students", authenticateUser, async (req, res) => {
     const userClass = await Class.findOne({ employeeNo }).populate({
       path: "students",
       model: "Student",
-      select: "fullName profileImage stars subjects attendance recommendations gameTime accuracy updatedAt",
+      select:
+        "fullName profileImage stars subjects attendance recommendations gameTime accuracy updatedAt",
     });
 
     if (!userClass) {
@@ -122,11 +149,12 @@ function formatDate(date) {
   };
 
   // Convert date to YYYY-MM-DD format
-  const formattedDate = date.toLocaleDateString("en-US", options).replace(/\//g, "-");
+  const formattedDate = date
+    .toLocaleDateString("en-US", options)
+    .replace(/\//g, "-");
   const formattedTime = date.toLocaleTimeString("en-US", options);
 
   return `Date: ${formattedDate} | Time: ${formattedTime}`;
 }
-
 
 module.exports = router;
