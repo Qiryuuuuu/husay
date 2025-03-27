@@ -1,4 +1,9 @@
 {
-  "compilerOptions": {},
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "allowJs": true, // Enables JavaScript support
+    "checkJs": false, // Prevents TypeScript from type-checking .js files (set to true if you want checking)
+    "jsx": "react-native" // Ensures JSX compiles correctly for React Native
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js"]
 }

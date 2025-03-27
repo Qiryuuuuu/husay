@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, Text, TouchableOpacity, Image, StyleSheet, FlatList, 
-  Alert, ActivityIndicator, Dimensions
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
+  Alert,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 
 const API_URL = "http://10.0.2.2:5000/api/class/get-students";
-const ADD_STUDENT_URL = "http://10.0.2.2:5000/api/class/add-student";
 
 const element1 = require("../../../assets/element1.png");
 const element3 = require("../../../assets/element3.png");
@@ -41,56 +47,27 @@ export default function LeaderboardScreen({ navigation }) {
       }
 
       const response = await axios.get(API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.status === 200) {
-        const sortedStudents = response.data.students.sort((a, b) => b.stars - a.stars);
+        const sortedStudents = response.data.students.sort(
+          (a, b) => (b.stars?.totalStars || 0) - (a.stars?.totalStars || 0)
+        );
+
         setStudents(sortedStudents);
-        setSelectedStudent(sortedStudents[0]);
+        setSelectedStudent(sortedStudents[0] || null);
       } else {
         Alert.alert("Error", "Failed to fetch students.");
       }
     } catch (error) {
       console.error("❌ Error fetching students:", error);
-      Alert.alert("Error", error.response?.data?.message || "Could not fetch student data.");
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Could not fetch student data."
+      );
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Function to add a new student and update the list in real-time
-  const addStudent = async (newStudent) => {
-    try {
-      const token = await AsyncStorage.getItem("authToken");
-      if (!token) {
-        Alert.alert("Error", "Unauthorized: No token found.");
-        navigation.navigate("Login");
-        return;
-      }
-
-      const response = await axios.post(ADD_STUDENT_URL, newStudent, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.status === 201) {
-        const addedStudent = response.data.student;
-        setStudents((prevStudents) => {
-          const updatedStudents = [...prevStudents, addedStudent];
-          updatedStudents.sort((a, b) => b.stars - a.stars);
-          return updatedStudents;
-        });
-      } else {
-        Alert.alert("Error", "Failed to add student.");
-      }
-    } catch (error) {
-      console.error("❌ Error adding student:", error);
-      Alert.alert("Error", error.response?.data?.message || "Could not add student.");
     }
   };
 
@@ -111,37 +88,59 @@ export default function LeaderboardScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Image source={element1} style={[styles.element1, styles.backgroundElement]} />
+      <Image
+        source={element1}
+        style={[styles.element1, styles.backgroundElement]}
+      />
       <Image source={element3} style={styles.element3} />
       <Image source={element4} style={styles.element4} />
-      <Image source={element5} style={[styles.element5, styles.backgroundElement]} />
+      <Image
+        source={element5}
+        style={[styles.element5, styles.backgroundElement]}
+      />
       <Image source={element6} style={styles.element6} />
 
       <View style={styles.navContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate("Home")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Home")}
+          style={styles.backButton}
+        >
           <Image source={backIcon} style={styles.backIcon} />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowAll(!showAll)} style={[styles.button, styles.shadow]}>
-          <Text style={styles.buttonText}>{showAll ? "Show Top 3" : "View all students"}</Text>
+        <TouchableOpacity
+          onPress={() => setShowAll(!showAll)}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>
+            {showAll ? "Show Top 3" : "View all students"}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Outstanding</Text>
-        <Text style={styles.subtitle}>The more you learn, the higher you go!</Text>
+        <Text style={styles.subtitle}>
+          The more you learn, the higher you go!
+        </Text>
         {selectedStudent && (
-          <TouchableOpacity 
-            style={styles.topStudentContainer} 
+          <TouchableOpacity
+            style={styles.topStudentContainer}
             onPress={() => handleStudentPress(selectedStudent)}
           >
             <View style={styles.squareProfileContainer}>
               <Image
-                source={selectedStudent.profileImage ? { uri: selectedStudent.profileImage } : defaultProfile}
+                source={
+                  selectedStudent.profileImage
+                    ? { uri: selectedStudent.profileImage }
+                    : defaultProfile
+                }
                 style={styles.squareProfileImage}
               />
             </View>
-            <Text style={styles.topStudentName}>{selectedStudent.fullName}</Text>
+            <Text style={styles.topStudentName}>
+              {selectedStudent.fullName}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -159,15 +158,23 @@ export default function LeaderboardScreen({ navigation }) {
           renderItem={({ item, index }) => (
             <View style={styles.tableRow}>
               <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
-              <Text style={[styles.cell, styles.centerText]}>{item.fullName}</Text>
-              <View style={[styles.cell, styles.centerText, styles.starContainer]}>
+              <Text style={[styles.cell, styles.centerText]}>
+                {item.fullName}
+              </Text>
+              <View
+                style={[styles.cell, styles.centerText, styles.starContainer]}
+              >
                 <Image source={starIcon} style={styles.starIcon} />
-                <Text style={styles.cell}>{item.stars}</Text>
+                <Text style={styles.cell}>
+                  {typeof item.stars === "object"
+                    ? item.stars.totalStars || 0
+                    : item.stars}
+                </Text>
               </View>
             </View>
           )}
           ListEmptyComponent={
-            <Text style={styles.noResults}>No students found. Add some students to get started!</Text>
+            <Text style={styles.noResults}>No students found.</Text>
           }
           contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator={true}
@@ -175,23 +182,45 @@ export default function LeaderboardScreen({ navigation }) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+        <Text style={styles.footerText}>
+          © 2024 Husay. All Rights Reserved.
+        </Text>
       </View>
     </View>
   );
 }
 
-
-
-
-
-
 const styles = StyleSheet.create({
-  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
-  element3: { position: "absolute", top: 400, left: -50, resizeMode: "contain" },
-  element4: { position: "absolute", top: 200, right: -180, resizeMode: "contain" },
-  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
-  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
+  element1: {
+    position: "absolute",
+    bottom: -180,
+    left: -10,
+    resizeMode: "contain",
+  },
+  element3: {
+    position: "absolute",
+    top: 400,
+    left: -50,
+    resizeMode: "contain",
+  },
+  element4: {
+    position: "absolute",
+    top: 200,
+    right: -180,
+    resizeMode: "contain",
+  },
+  element5: {
+    position: "absolute",
+    bottom: -40,
+    right: 40,
+    resizeMode: "contain",
+  },
+  element6: {
+    position: "absolute",
+    top: -70,
+    left: 400,
+    resizeMode: "contain",
+  },
   backgroundElement: {
     position: "absolute",
     zIndex: -1,
@@ -249,16 +278,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  headerContainer:{
-    alignItems: "center"
+  headerContainer: {
+    alignItems: "center",
   },
-  title:{
+  title: {
     fontWeight: "bold",
     fontSize: 26,
   },
-  subtitle:{
-    fontSize: 20
-  },  
+  subtitle: {
+    fontSize: 20,
+  },
   tableContainer: {
     width: "50%",
     borderWidth: 1,

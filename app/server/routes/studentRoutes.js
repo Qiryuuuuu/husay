@@ -78,17 +78,11 @@ router.put(
   }
 );
 
-// ✅ Update Student Score and Recommendations
 router.put("/update-score", authenticateUser, async (req, res) => {
   try {
-    const { studentId, subject, correct, incorrect } = req.body;
+    const { studentId, category: scoresByCategory, stars, rounds } = req.body;
 
-    if (
-      !studentId ||
-      !subject ||
-      correct === undefined ||
-      incorrect === undefined
-    ) {
+    if (!studentId || !scoresByCategory) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -97,26 +91,85 @@ router.put("/update-score", authenticateUser, async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ Update the score
-    if (student.subjects[subject]) {
-      student.subjects[subject].correct += correct;
-      student.subjects[subject].incorrect += incorrect;
+    // 1) Update the subject scores
+    const categoryMapping = {
+      shape: "Shapes",
+      color: "Colors",
+      number: "Numbers",
+    };
+
+    Object.entries(scoresByCategory).forEach(([cat, subcats]) => {
+      const correctCategory = categoryMapping[cat];
+      if (!correctCategory || !student.subjects[correctCategory]) return;
+
+      Object.entries(subcats).forEach(([subcat, scoreData]) => {
+        if (!student.subjects[correctCategory][subcat]) return;
+        student.subjects[correctCategory][subcat].correct += scoreData.correct;
+        student.subjects[correctCategory][subcat].incorrect +=
+          scoreData.incorrect;
+      });
+    });
+
+    // 2) Update total stars
+    if (typeof stars === "number") {
+      student.stars.totalStars += stars;
     }
 
-    // ✅ Recalculate accuracy and percentage
+    // 3) Recalculate stats & recommendations
     student.calculateStats();
-
-    // ✅ Recalculate recommendations
-    student.calculateRecommendations();
+    student.calculateRecommendations(); // Make sure you updated this method to store subcategory names
 
     await student.save();
 
-    res.status(200).json({ message: "Score updated successfully", student });
+    res.status(200).json({
+      message: "Score updated successfully",
+      student,
+    });
   } catch (error) {
     console.error("❌ Error updating score:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Updated function to handle undefined category error in the backend
+function updateRecommendations(recommendations, rounds) {
+  const newRecommendations = { ...recommendations };
+
+  rounds.forEach((round) => {
+    const category = round.type; // "shape", "color", "number"
+    const subcategory = round.name;
+
+    // Map the category to the expected category name
+    const validCategoryMapping = {
+      shape: "Shapes",
+      color: "Colors",
+      number: "Numbers",
+    };
+
+    // Map the category to its proper format (Shapes, Colors, Numbers)
+    const mappedCategory = validCategoryMapping[category];
+
+    if (!mappedCategory) {
+      console.error(`❌ Invalid category type: ${category}`);
+      return; // Skip invalid categories
+    }
+
+    // Ensure the mapped category exists in the student data
+    if (!student.subjects[mappedCategory]) {
+      console.error(`❌ Category not found in student data: ${mappedCategory}`);
+      return;
+    }
+
+    // Now safely update the student's category
+    if (round.correct) {
+      newRecommendations.Hard[mappedCategory].push(subcategory);
+    } else {
+      newRecommendations.Easy[mappedCategory].push(subcategory);
+    }
+  });
+
+  return newRecommendations;
+}
 
 // ✅ Edit Student Information
 router.put("/edit/:studentId", authenticateUser, async (req, res) => {
@@ -140,12 +193,10 @@ router.put("/edit/:studentId", authenticateUser, async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Student information updated successfully",
-        student: updatedStudent,
-      });
+    res.status(200).json({
+      message: "Student information updated successfully",
+      student: updatedStudent,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -160,12 +211,10 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
     const classWithStudent = await Class.findOne({ students: studentId });
 
     if (!classWithStudent || classWithStudent.employeeNo !== employeeNo) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Unauthorized: You do not have permission to delete this student.",
-        });
+      return res.status(403).json({
+        message:
+          "Unauthorized: You do not have permission to delete this student.",
+      });
     }
 
     // ✅ Remove student from class
@@ -210,5 +259,23 @@ router.get("/get/:studentId", authenticateUser, async (req, res) => {
     res.status(500).json({ message: "Server error fetching student" });
   }
 });
+
+router.get(
+  "/get-student-name/:studentId",
+  authenticateUser,
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json({ fullName: student.fullName });
+    } catch (error) {
+      console.error("❌ Error fetching student name:", error);
+      res.status(500).json({ message: "Server error fetching student name" });
+    }
+  }
+);
 
 module.exports = router;

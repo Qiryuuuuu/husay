@@ -11,6 +11,7 @@ import {
 import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /* Background image */
 const bgImg = require("../../../assets/gameBackground/blue.png");
@@ -28,13 +29,59 @@ const settingHeader = require("../../../assets/headerText/setting-header.png");
 export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const navigation = useNavigation();
-  const { studentName, studentId } = route.params || {}; // Get studentName from params
+  const [studentName, setStudentName] = useState("");
 
+  const navigation = useNavigation();
+  const { studentId } = route.params || {}; // Get studentName from params
+  console.log("🏠 HomeScreen received studentId:", studentId); // Debugging
   useEffect(() => {
     playMusic("appBg");
     return () => stopMusic(); // Stop music when the screen unmounts
   }, []);
+
+  useEffect(() => {
+    async function fetchStudentName() {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        if (!token) {
+          console.error("No auth token found");
+          return;
+        }
+
+        // Separate the URL from the options object
+        const response = await fetch(
+          `http://10.0.2.2:5000/api/students/get-student-name/${studentId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+        // data should contain { name: "Some Name" } or similar
+        setStudentName(data.fullName || "");
+        console.log("Student Name: ", data.fullName);
+      } catch (error) {
+        console.error("Error fetching student name:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (studentId) {
+      fetchStudentName();
+    } else {
+      // If there's no studentId, stop loading to avoid a spinner hanging
+      setIsLoading(false);
+    }
+  }, [studentId]);
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>

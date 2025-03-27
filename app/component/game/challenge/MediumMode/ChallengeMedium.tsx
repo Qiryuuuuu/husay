@@ -1,7 +1,8 @@
-//ChallengeMedium.tsx
-import React from "react";
+//ChallengeMedium.tsx //Save State
+import React, { useEffect, useState } from "react";
 import { BaseMediumGame } from "../../ChallMediumBase";
 import dialogues from "../../../../data/evaDialogues";
+import { CategoryItem } from "../../ChallMediumBase";
 
 // Import NPC (character) assets
 const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
@@ -51,7 +52,6 @@ export const FrameType = {
   FOLLOWING: "following",
 };
 
-
 // Story scenes configuration for all rounds
 const storyScenes = {
   round1: [
@@ -65,13 +65,15 @@ const storyScenes = {
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-1/pig-introduction.mp3"),
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-1/pig-introduction-continuation.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.QUESTION,
       background: pigProblemBg,
       character: "EVA",
-      dialogues: ["[Show the question from the randomized shape, color, and numbers]"],
+      dialogues: [
+        "[Show the question from the randomized shape, color, and numbers]",
+      ],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -104,7 +106,7 @@ const storyScenes = {
       ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-1/pig-completion.mp3"),
-      ]
+      ],
     },
   ],
   round2: [
@@ -120,20 +122,16 @@ const storyScenes = {
       type: FrameType.INTRODUCTION,
       background: chickenProblem2Bg,
       character: "EVA",
-      dialogues: [
-        "But, chickens can swim even briefly.",
-      ],
+      dialogues: ["But, chickens can swim even briefly."],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-2/chicken-introduction.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.INTRODUCTION,
       background: chickenProblem2Bg,
       character: "CHICKEN",
-      dialogues: [
-        "*caws weakly*",
-      ],
+      dialogues: ["*caws weakly*"],
     },
     {
       type: FrameType.INTRODUCTION,
@@ -144,13 +142,15 @@ const storyScenes = {
       ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-2/chicken-introduction-continuation.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.QUESTION,
       background: chickenProblem2Bg,
       character: "EVA",
-      dialogues: ["[Show the question from the randomized shape, color, and numbers]"],
+      dialogues: [
+        "[Show the question from the randomized shape, color, and numbers]",
+      ],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -176,30 +176,31 @@ const storyScenes = {
       type: FrameType.FOLLOWING,
       background: chickenSaveBg,
       character: "EVA",
-      dialogues: ["I think they want to lead the way. Let’s follow our new friends!"],
+      dialogues: [
+        "I think they want to lead the way. Let’s follow our new friends!",
+      ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-2/chicken-completion.mp3"),
-      ]
+      ],
     },
-    
   ],
   round3: [
     {
       type: FrameType.INTRODUCTION,
       background: cowProblemBg,
       character: "COW",
-      dialogues: [
-        "*moo desperately* *one foot stuck in the mud*",
-      ],
+      dialogues: ["*moo desperately* *one foot stuck in the mud*"],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-3/cow-introduction.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.QUESTION,
       background: cowProblemBg,
       character: "EVA",
-      dialogues: ["[Show the question from the randomized shape, color, and numbers]"],
+      dialogues: [
+        "[Show the question from the randomized shape, color, and numbers]",
+      ],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -230,7 +231,7 @@ const storyScenes = {
       dialogues: ["Yee haw! Hi, cow! Wanna join us?"],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-3/cow-completion.mp3"),
-      ]
+      ],
     },
   ],
   round4: [
@@ -238,12 +239,10 @@ const storyScenes = {
       type: FrameType.INTRODUCTION,
       background: dogProblem1Bg,
       character: "EVA",
-      dialogues: [
-        "I just heard someone barking, But from where???",
-      ],
+      dialogues: ["I just heard someone barking, But from where???"],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-4/dog-introduction.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.INTRODUCTION,
@@ -262,37 +261,33 @@ const storyScenes = {
       ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-4/dog-introduction-continuation.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.QUESTION,
       background: dogProblem2Bg,
       character: "EVA",
-      dialogues: ["[Show the question from the randomized shape, color, and numbers]"],
+      dialogues: [
+        "[Show the question from the randomized shape, color, and numbers]",
+      ],
     },
     {
       type: FrameType.CORRECT_ANSWER,
       background: dogCorrectBg,
       character: "EVA",
-      dialogues: [
-        "Great. I remember now. I can extend my arms and legs.",
-      ],
+      dialogues: ["Great. I remember now. I can extend my arms and legs."],
     },
     {
       type: FrameType.INCORRECT_ANSWER,
       background: dogIncorrectBg,
       character: "EVA",
-      dialogues: [
-        "Come on, EVA, think! Oh, he slowly slid down. Thankfully!",
-      ],
+      dialogues: ["Come on, EVA, think! Oh, he slowly slid down. Thankfully!"],
     },
     {
       type: FrameType.ANIMAL_REACTION,
       background: dogCorrectBg,
       character: "DOG",
-      dialogues: [
-        "*wags tail vigorously* *barks loudly and gratefully*",
-      ],
+      dialogues: ["*wags tail vigorously* *barks loudly and gratefully*"],
     },
     {
       type: FrameType.ANIMAL_REACTION,
@@ -303,7 +298,7 @@ const storyScenes = {
       ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-4/dog-introduction-continuation.mp3"),
-      ]
+      ],
     },
   ],
   round5: [
@@ -318,13 +313,15 @@ const storyScenes = {
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-5/cat-introduction.mp3"),
         require("../../../../../assets/gameBackground/challenge/medium/audio/scenario-5/cat-introduction-continuation.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.QUESTION,
       background: catProblemBg,
       character: "EVA",
-      dialogues: ["[Show the question from the randomized shape, color, and numbers]"],
+      dialogues: [
+        "[Show the question from the randomized shape, color, and numbers]",
+      ],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -338,9 +335,7 @@ const storyScenes = {
       type: FrameType.INCORRECT_ANSWER,
       background: catIncorrectBg,
       character: "EVA",
-      dialogues: [
-        "Woahhhh, I think I’m falling. Jump, kitty! Jump!",
-      ],
+      dialogues: ["Woahhhh, I think I’m falling. Jump, kitty! Jump!"],
     },
     {
       type: FrameType.ANIMAL_REACTION,
@@ -360,28 +355,34 @@ const storyScenes = {
       type: FrameType.INTRODUCTION,
       background: outro,
       character: "EVA",
-      dialogues: ["Gee, thanks. Would you like to join me and my friends after this in Techtopia?"],
+      dialogues: [
+        "Gee, thanks. Would you like to join me and my friends after this in Techtopia?",
+      ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/outro/outro-1.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.INTRODUCTION,
       background: outro,
       character: "COW",
-      dialogues: ["We will accept your offer. Just make sure there’s delicious food. Hehe"],
+      dialogues: [
+        "We will accept your offer. Just make sure there’s delicious food. Hehe",
+      ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/outro/outro-2.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.INTRODUCTION,
       background: outro,
       character: "EVA",
-      dialogues: ["Of course, I think you and Amber would go along well. Alright friends, thanks for accompanying me, I promise I will return safely with my friends. "],
+      dialogues: [
+        "Of course, I think you and Amber would go along well. Alright friends, thanks for accompanying me, I promise I will return safely with my friends. ",
+      ],
       audio: [
         require("../../../../../assets/gameBackground/challenge/medium/audio/outro/outro-3.mp3"),
-      ]
+      ],
     },
     {
       type: FrameType.INTRODUCTION,
@@ -389,13 +390,19 @@ const storyScenes = {
       character: "DOG",
       dialogues: ["Good luckkk!!! *Loudly and cute* "],
     },
-  ]
+  ],
 };
 
 // Define all the game objects
 const shapes = [
-  { name: "Rectangle", image: require("../../../../../assets/shapes/rectangle.png") },
-  { name: "Triangle", image: require("../../../../../assets/shapes/triangle.png") },
+  {
+    name: "Rectangle",
+    image: require("../../../../../assets/shapes/rectangle.png"),
+  },
+  {
+    name: "Triangle",
+    image: require("../../../../../assets/shapes/triangle.png"),
+  },
   { name: "Square", image: require("../../../../../assets/shapes/square.png") },
   { name: "Circle", image: require("../../../../../assets/shapes/circle.png") },
 ];
@@ -439,21 +446,83 @@ const npcConfig = {
 };
 
 interface ChallengeMediumGameProps {
-  onGameComplete: (time: number, score: number) => void;
+  onGameComplete: (
+    time: number,
+    score: number,
+    currentCategoryType: string,
+    rounds: CategoryItem[]
+  ) => void;
   navigation: any;
+  rounds: CategoryItem[];
+  studentId: any;
+  updatedRecommendations: any; // Add this line to handle the recommendations data
 }
 
-const ChallengeMediumGame: React.FC<ChallengeMediumGameProps> = ({ onGameComplete, navigation }) => {
+const ChallengeMediumGame: React.FC<ChallengeMediumGameProps> = ({
+  rounds,
+  onGameComplete,
+  navigation,
+  studentId,
+  updatedRecommendations,
+}) => {
+  const [currentCategoryType, setCurrentCategoryType] = useState<string>("");
+
+  useEffect(() => {
+    if (
+      Array.isArray(rounds) &&
+      rounds.length > 0 &&
+      rounds[0] &&
+      "type" in rounds[0]
+    ) {
+      setCurrentCategoryType(rounds[0].type as string); // 🚨 This is fine
+    } else {
+      setCurrentCategoryType(""); // Or null if you prefer
+    }
+  }, [rounds]);
+
+  const handleGameComplete = (
+    time: number,
+    score: number,
+    categoryType: string,
+    rounds: CategoryItem[]
+  ) => {
+    console.log("🔍 ChallengeMediumGame received rounds:", rounds);
+    // Fetch studentId from AsyncStorage
+    if (!studentId) {
+      console.error("❌ ERROR: Missing studentId before navigation!");
+      return;
+    }
+
+    if (!rounds || !Array.isArray(rounds)) {
+      console.error(
+        "❌ ERROR: Rounds array is missing or invalid before navigation!",
+        rounds
+      );
+      return;
+    }
+
+    // ✅ Explicitly pass studentId and rounds when navigating
+    // navigation.navigate("ChallengeMedium", {
+    //   studentId: studentId,
+    //   rounds: rounds, // ✅ Convert rounds to string to prevent loss
+    //   currentCategoryType: categoryType, // ✅ Ensure categoryType is passed correctly
+    // });
+    // ✅ Pass rounds to `onGameComplete`
+    onGameComplete(time, score, categoryType, rounds);
+  };
+
   return (
     <BaseMediumGame
       categories={categories}
-      onGameComplete={onGameComplete}
+      rounds={rounds} // ✅ Ensure `rounds` is explicitly used
+      onGameComplete={handleGameComplete} // ✅ Use the modified function
       navigation={navigation}
       npcConfig={npcConfig}
       dialogues={dialogues}
       numRounds={5}
       outro={outro}
       storyScenes={storyScenes}
+      currentCategoryType={currentCategoryType} // ✅ Pass category type
     />
   );
 };
