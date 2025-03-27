@@ -15,10 +15,10 @@ let fadeDuration = 1000; // 1 second fade
 
 const volumeLevels = {
   appBg: 0.7,
-  gameInterfaceBg: 0.5,
+  gameInterfaceBg: 0.7,
   easyBg: 0.7,
   mediumBg: 0.7,
-  hardBg: 0.4,
+  hardBg: 0.5,
 };
 
 // Fade out background music

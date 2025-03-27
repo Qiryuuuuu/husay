@@ -130,7 +130,7 @@ const NumberModeScreen = ({ route }) => {
           {...props}
           dialoguesData={numberDialogues}
           completionNpc={numberCompletionNpc}
-          navigation={() => navigation.navigate("PracMainScreen")}
+          navigation={() => navigation.navigate("PracMainScreen", { studentId })}
         />
       )}
     />

@@ -33,20 +33,22 @@ const customCompletionDialog = [
   "Thank you. We crossed the river safely. I can see the lair but we have to pass through the forest first."
 ];
 
-const ShapeModeScreen = () => {
-  const navigation = useNavigation(); 
+const ShapeModeScreen = ({ route }) => {
+  const { studentId, subject} = route.params; // ✅ Get studentId from navigation params
 
   useEffect(() => {
     playMusic("easyBg");
     return () => stopMusic();
   }, []);
 
+  const navigation = useNavigation(); 
+
   return (
     <GameFlows
       backgroundImg={shapeBg}
       DialogComponent={(props) => <PregameDialog {...props} dialogData={shapeDialogData} />}
       CountdownComponent={Countdown}
-      GameComponent={(props) => <ShapeGame {...props} />}
+      GameComponent={(props) => <ShapeGame {...props} studentId={studentId} />}
       navigation={navigation} 
       StageCompletionComponent={(props) => (
         <StageCompletion 
@@ -56,6 +58,8 @@ const ShapeModeScreen = () => {
           navigation={navigation} 
           isChallengeMode={true} 
           totalRounds={5}
+          studentId={studentId} // ✅ Pass studentId to completion screen
+          subject={subject}  // ✅ Ensure subject is passed
           currentScreen="ChallengeShape"
         />
       )}

@@ -1,11 +1,13 @@
 // BaseGame.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
+import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration, Alert } from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
 import AudioPlayer from "../../component/audio/AudioPlayer"; 
 import AudioChall from "../audio/ChallAudio";
 import { FrameType } from "../game/challenge/EasyMode/ChallengeShape"; // Import FrameType from ChallengeShape
+import axios from "axios"; // ✅ Import axios for API calls
+import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ Import AsyncStorage
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -19,6 +21,10 @@ interface CategoryItem {
 }
 
 interface BaseGameProps {
+  studentId: string;
+  subject: string,
+  element: string,
+  starsEarned: number;
   category: string; // Add category prop to determine the level
   categories: { [key: string]: CategoryItem[] }; 
   onGameComplete: (time: number, score: number) => void;
@@ -39,6 +45,10 @@ interface BaseGameProps {
 }
 
 export const BaseGame: React.FC<BaseGameProps> = ({
+  studentId,
+  subject,
+  element,
+  starsEarned,
   category,
   categories,
   onGameComplete,
@@ -75,6 +85,21 @@ export const BaseGame: React.FC<BaseGameProps> = ({
 
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const [gameCompleted, setGameCompleted] = useState(false);
+
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No auth token found!");
+      }
+      setAuthToken(token);
+    };
+  
+    fetchToken();
+  }, []);
 
   const generateRounds = useCallback(() => {
     if (!categories || !categories[category]) {
@@ -101,9 +126,6 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     resetGameState();
   }, [categories, category]);
   
-  
-  
-
   const resetGameState = () => {
     setCurrentRound(0);
     setIsCorrect(null);
@@ -150,6 +172,14 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     }
   }, [generateRounds]);
 
+
+  useEffect(() => {
+    if (!isGameRunning) {
+      handleGameComplete(totalTime, correctFirstTry, rounds.length - correctFirstTry, starsEarned, rounds[currentRound]?.name);
+    }
+  }, [isGameRunning]);
+
+  
   useEffect(() => {
     console.log("Current Round:", currentRound);
     console.log("Total Rounds:", rounds.length);
@@ -169,7 +199,6 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     }
   }, [currentRound, rounds]);
   
-
   const generateOptions = (correctAnswer: string) => {
     const categoryItems = categories[category]; // Dynamically get the selected category items
     const otherOptions = categoryItems.filter(item => item.name !== correctAnswer);
@@ -182,65 +211,71 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     setOptions(allOptions.sort(() => Math.random() - 0.5));
   };
   
-
-  const handleSelection = useCallback((selectedName: string) => {
-    if (!isClickable) return;
-
-    if (selectedName === rounds[currentRound].name) {
-      handleCorrectAnswer();
-    } else {
-      handleWrongAnswer();
+  const handleSelection = (selectedName: string) => {
+    if (!isClickable) return; // Prevent multiple taps
+  
+    const correctAnswer = rounds[currentRound]?.name; // ✅ Get the correct answer for this round
+  
+    if (!correctAnswer) {
+      console.error("❌ No correct answer found for this round.");
+      return;
     }
-  }, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
-
-  const moveToNextRound = (updatedScore: number) => {
-    if (currentRound < rounds.length - 1) {
-      setCurrentRound(prevRound => prevRound + 1);
+  
+    setIsClickable(false); // Disable further clicks during feedback
+  
+    if (selectedName === correctAnswer) {
+      handleCorrectAnswer(selectedName); // ✅ Pass the selected answer
     } else {
-      setTimeout(() => {
-        setIsGameRunning(false);
-        if (onGameComplete) {
-          onGameComplete(totalTime, updatedScore);
-        }
-      }, 500);
+      handleWrongAnswer(selectedName); // ✅ Pass the selected answer
     }
   };
   
 
-  const handleCorrectAnswer = () => {
-    setIsCorrect(true);
-    const roundStory = storyScenes[`round${currentRound + 1}`];
-    const correctFrame = roundStory.find(frame => frame.type === FrameType.CORRECT_ANSWER);
-    if (correctFrame) {
-      setCurrentFrame(correctFrame);
-      setIsWaitingForTap(true);
-    }
-    setNpcImage(npcConfig.correct);
-    fadeInAnimation();
-    setIsClickable(false);
-    let updatedScore = correctFirstTry;
-    if (!hasTried) {
-      updatedScore += 1;
-      setCorrectFirstTry(updatedScore);
-    }
-  };
+  const moveToNextRound = (correctFirstTry: number) => { 
+    if (gameCompleted) return; // 🔹 Prevent further rounds if game is completed
 
-  const handleWrongAnswer = () => {
-    setIsCorrect(false);
-    const roundStory = storyScenes[`round${currentRound + 1}`];
-    const incorrectFrame = roundStory.find(frame => frame.type === FrameType.INCORRECT_ANSWER);
-    if (incorrectFrame) {
-      setCurrentFrame(incorrectFrame);
-      setIsWaitingForTap(true);
+    if (currentRound < rounds.length - 1) {  
+        console.log(`🔄 Moving to Round ${currentRound + 2}`);
+        setCurrentRound(prevRound => prevRound + 1);
+    } else {
+        console.log("✅ All rounds completed! Moving to StageCompletion...");
+        setGameCompleted(true);  // 🔹 Ensure game does not reset rounds
+        setIsGameRunning(false);
+        handleGameComplete(totalTime, correctFirstTry, rounds.length - correctFirstTry, starsEarned, rounds[currentRound]?.name);
     }
-    setNpcImage(npcConfig.wrong);
-    fadeInAnimation();
-    triggerShake();
-    Vibration.vibrate(100);
-    setHasTried(true);
-  };
+};
+  
 
-  const triggerShake = () => {
+const handleCorrectAnswer = (selectedElement) => {
+  setIsCorrect(true);
+  setNpcImage(npcConfig.correct);
+  fadeInAnimation();
+  setIsClickable(false);
+
+  const updatedCorrectCount = hasTried ? 0 : 1;
+  setCorrectFirstTry(prev => prev + updatedCorrectCount);
+
+  setTimeout(() => {
+      moveToNextRound(correctFirstTry);  // ✅ Progress to next round
+  }, 1000);
+};
+
+
+
+const handleWrongAnswer = (selectedElement) => {
+  setIsCorrect(false);
+  setNpcImage(npcConfig.wrong);
+  fadeInAnimation();
+  triggerShake();
+  Vibration.vibrate(100);
+  setHasTried(true);
+
+  setTimeout(() => {
+      moveToNextRound(correctFirstTry); // ✅ Pass correctFirstTry as an argument
+  }, 1000);
+};
+
+  function triggerShake() {
     Animated.sequence([
       Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
@@ -248,7 +283,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
-  };
+  }
 
   const fadeInAnimation = () => {
     Animated.timing(fadeAnim, {
@@ -269,6 +304,84 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const handleAudioPlaybackComplete = () => {
     console.log("🎧 Audio finished playing for this frame.");
   };
+
+  
+  const handleGameComplete = async (timeTaken, correctAnswers, incorrectAnswers = 0, starsEarned = 1, name: string) => {
+    try {
+        const token = await AsyncStorage.getItem("authToken");
+
+        if (!token) {
+            console.error("❌ No token found, user is unauthorized.");
+            Alert.alert("Authentication Error", "You must log in to save game progress.");
+            return;
+        }
+
+        // ✅ Get the correct element from the current round
+        const element = rounds[currentRound]?.name || "Unknown";
+
+        // ✅ Define valid subjects and elements mapping
+        const subjectMapping = {
+            "Shapes": ["Rectangle", "Triangle", "Square", "Circle"],
+            "Colors": ["Red", "Yellow", "Green", "Blue", "Gray", "Black", "White"],
+            "Numbers": ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"],
+        };
+
+        // ✅ Determine the correct subject based on the selected element
+        const subject = Object.keys(subjectMapping).find(sub => subjectMapping[sub].includes(element)) || "Unknown";
+
+        if (!subject || !element || element === "Unknown") {
+            console.error("❌ Missing required fields:", {subject, element});
+            Alert.alert("Error", "Game data is incomplete. Cannot update progress.");
+            return;
+        }
+
+        console.log("📢 Sending Data to Server:", {
+            studentId,
+            subject,
+            element,
+            correct: correctAnswers,
+            incorrect: incorrectAnswers,
+            starsEarned,
+            timeSpent: timeTaken
+        });
+
+        await axios.put(
+            "http://10.0.2.2:5000/api/students/update-score",
+            {
+                studentId,
+                subject,
+                element,
+                correct: correctAnswers,
+                incorrect: incorrectAnswers,
+                starsEarned,
+                timeSpent: timeTaken,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        console.log(`✅ Game progress updated successfully for Subject: ${subject}, Element: ${element}`);
+
+        // ✅ Trigger the game completion state change
+        if (currentRound === rounds.length - 1) {
+          console.log("🏆 All rounds completed! Transitioning to StageCompletion...");
+          onGameComplete(timeTaken, correctAnswers);  // ✅ Ensure this is correctly linked
+      }
+
+    } catch (error) {
+        console.error("❌ Error updating game progress:", error.response?.data || error.message);
+        Alert.alert("Error", "Failed to save game progress. Please try again.");
+    }
+};
+
+
+  useEffect(() => {
+    console.log("📢 Retrieved rounds data:", rounds);
+}, [rounds]);
+
 
   return (
     <View style={styles.container}>
@@ -292,31 +405,31 @@ export const BaseGame: React.FC<BaseGameProps> = ({
 
       {/* Full-Screen Touchable for Progression */}
       <TouchableOpacity
-  style={styles.fullScreenTouchable}
-  onPress={() => {
-    if (gameEnded || currentFrame?.type === FrameType.QUESTION) {
-      return; // Prevent progression during the question phase or after the game ends
-    }
+        style={styles.fullScreenTouchable}
+        onPress={() => {
+          if (gameEnded || currentFrame?.type === FrameType.QUESTION) {
+            return; // Prevent progression during the question phase or after the game ends
+          }
 
-    if (isWaitingForTap) {
-      setIsWaitingForTap(false);
+          if (isWaitingForTap) {
+            setIsWaitingForTap(false);
 
-      // Handle progression after correct/incorrect feedback
-      if (currentFrame?.type === FrameType.CORRECT_ANSWER || currentFrame?.type === FrameType.INCORRECT_ANSWER) {
-        moveToNextRound(correctFirstTry);
-        return;
-      }
-    }
+            // Handle progression after correct/incorrect feedback
+            if (currentFrame?.type === FrameType.CORRECT_ANSWER || currentFrame?.type === FrameType.INCORRECT_ANSWER) {
+              moveToNextRound(correctFirstTry);
+              return;
+            }
+          }
 
-    // Default behavior: Progress to the next frame
-    const roundStory = storyScenes[`round${currentRound + 1}`];
-    if (roundStory && currentFrameIndex < roundStory.length - 1) {
-      const nextIndex = currentFrameIndex + 1;
-      setCurrentFrameIndex(nextIndex);
-      setCurrentFrame(roundStory[nextIndex]);
-      setIsWaitingForTap(true);
-    }
-  }}
+          // Default behavior: Progress to the next frame
+          const roundStory = storyScenes[`round${currentRound + 1}`];
+          if (roundStory && currentFrameIndex < roundStory.length - 1) {
+            const nextIndex = currentFrameIndex + 1;
+            setCurrentFrameIndex(nextIndex);
+            setCurrentFrame(roundStory[nextIndex]);
+            setIsWaitingForTap(true);
+          }
+        }}
 >
         {/* Background Image */}
         <Image source={currentFrame?.background} style={styles.backgroundImage} />
@@ -346,7 +459,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
         {currentFrame?.type === FrameType.QUESTION && (
           <Stopwatch 
             isRunning={true}  // Ensure it runs
-            onStop={(finalTime) => setTotalTime(finalTime)}  // Store elapsed time
+            onStop={(finalTime: React.SetStateAction<number>) => setTotalTime(finalTime)}  // Store elapsed time
           />
         )}
 
@@ -400,7 +513,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home');
+          navigation.navigate('Home', studentId);
           setIsPaused(false);
         }}
       />

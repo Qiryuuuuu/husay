@@ -28,10 +28,11 @@ router.get("/all", authenticateUser, async (req, res) => {
       "fullName age gender stars subjects recommendations attendance gameTime accuracy"
     );
 
+    console.log("📊 Fetched all students for dashboard:", students.length);
     res.json({ students });
   } catch (error) {
     console.error("❌ Error fetching students:", error);
-    res.status(500).json({ message: "Server error fetching students." });
+    res.status(500).json({ message: "Server error fetching studentaaas." });
   }
 });
 
@@ -74,35 +75,69 @@ router.put("/update-attendance/:studentId", authenticateUser, async (req, res) =
 // ✅ Update Student Score and Recommendations
 router.put("/update-score", authenticateUser, async (req, res) => {
   try {
-    const { studentId, subject, correct, incorrect } = req.body;
+    const { studentId, subject, element, correct, incorrect, starsEarned } = req.body;
 
-    if (!studentId || !subject || correct === undefined || incorrect === undefined) {
+    if (!studentId || !subject || !element || correct === undefined || incorrect === undefined || starsEarned === undefined) {
+      console.error("❌ Missing required fields:", req.body);
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     const student = await Student.findById(studentId);
     if (!student) {
+      console.error("❌ Student not found:", studentId);
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ Update the score
-    if (student.subjects[subject]) {
-      student.subjects[subject].correct += correct;
-      student.subjects[subject].incorrect += incorrect;
+    console.log(`🔄 Updating scores for ${student.fullName}:`, { subject, element, correct, incorrect });
+
+    // ✅ Update Scores (Correct, Incorrect, Percentage)
+    if (student.subjects[subject] && student.subjects[subject][element]) {
+      student.subjects[subject][element].correct += correct;
+      student.subjects[subject][element].incorrect += incorrect;
     }
 
-    // ✅ Recalculate accuracy and percentage
-    student.calculateStats();
+    // ✅ Update Stars
+    student.stars.totalStars += starsEarned;
+    console.log("🌟 Updated stars:", student.stars.totalStars);
 
-    // ✅ Recalculate recommendations
+    // ✅ Update Game Time (sessionStart, sessionEnd, timeSpent, timeLeft)
+    const now = new Date();
+    const formattedNow = formatDate(now);
+
+    if (student.gameTime.sessionStart) {
+      const sessionMinutes = Math.floor(
+        (now - new Date(student.gameTime.sessionStart.split("|")[0])) / 60000
+      );
+      student.gameTime.timeSpent = Math.min(60, student.gameTime.timeSpent + sessionMinutes);
+      student.gameTime.timeLeft = Math.max(0, 60 - student.gameTime.timeSpent);
+      student.gameTime.sessionEnd = formattedNow;
+      console.log("⏳ Updated game time:", student.gameTime);
+    } else {
+      student.gameTime.sessionStart = formattedNow;
+    }
+
+    // ✅ Update Attendance (Mark as Present if playing)
+    const todayDateOnly = formattedNow.split(" | ")[0];
+    const existingAttendance = student.attendance.find(att => att.date.startsWith(todayDateOnly));
+
+    if (!existingAttendance) {
+      student.attendance.push({ date: formattedNow, status: "Present" });
+      console.log("✅ Marked attendance as Present for:", formattedNow);
+    }
+
+    // ✅ Calculate Stats and Recommendations
+    student.calculateStats();
     student.calculateRecommendations();
 
+    console.log("📊 Updated student stats:", student.accuracy);
+    console.log("🔄 Updated recommendations:", student.recommendations);
+
     await student.save();
-    
+
     res.status(200).json({ message: "Score updated successfully", student });
   } catch (error) {
     console.error("❌ Error updating score:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Server error updating score" });
   }
 });
 
@@ -141,15 +176,16 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
     const classWithStudent = await Class.findOne({ students: studentId });
 
     if (!classWithStudent || classWithStudent.employeeNo !== employeeNo) {
+      console.error("❌ Unauthorized deletion attempt for student:", studentId);
       return res.status(403).json({ message: "Unauthorized: You do not have permission to delete this student." });
     }
 
-    // ✅ Remove student from class
     classWithStudent.students = classWithStudent.students.filter((id) => id.toString() !== studentId);
     await classWithStudent.save();
 
     await Student.findByIdAndDelete(studentId);
 
+    console.log("🗑️ Student deleted successfully:", studentId);
     res.status(200).json({ message: "Student deleted successfully" });
   } catch (error) {
     console.error("❌ Error deleting student:", error);
@@ -160,9 +196,7 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
 // ✅ Fetch a Single Student's Full Data
 router.get("/get/:studentId", authenticateUser, async (req, res) => {
   try {
-    const { studentId } = req.params;
-    
-    const student = await Student.findById(studentId).select(
+    let student = await Student.findById(req.params.studentId).select(
       "fullName age gender stars subjects recommendations attendance gameTime accuracy"
     );
 
@@ -170,19 +204,45 @@ router.get("/get/:studentId", authenticateUser, async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-     // ✅ Recalculate accuracy before returning (ensures latest values)
-     student.calculateStats();
-    
-     // ✅ Save the student to ensure database is updated
-     await student.save();
-    
-     console.log("✅ Updated Student Accuracy:", student.accuracy);
-     
+    console.log("🔍 Fetching student data:", student.fullName);
+
+    // ✅ Ensure data is updated before returning
+    student.markAbsentIfNoPlay();
+    student.updateGameTime();
+    student.calculateStats();
+    student.calculateRecommendations();
+
+    await student.save();
+
+    // ✅ Fetch latest student data
+    student = await Student.findById(req.params.studentId).select(
+      "fullName age gender stars subjects recommendations attendance gameTime accuracy"
+    );
+
+    console.log("✅ Updated Student Data:", student);
     res.json({ student });
   } catch (error) {
-    console.error("❌ Error fetching student data:", error);
-    res.status(500).json({ message: "Server error fetching student" });
+    console.error("❌ Error fetching student:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
+// ✅ Function to format date/time
+function formatDate(date) {
+  const options = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  };
+
+  const formattedDate = date.toLocaleDateString("en-US", options).replace(/\//g, "-");
+  const formattedTime = date.toLocaleTimeString("en-US", options);
+
+  return `Date: ${formattedDate} | Time: ${formattedTime}`;
+}
 
 module.exports = router;

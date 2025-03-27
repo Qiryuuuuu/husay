@@ -127,16 +127,17 @@ StudentSchema.methods.updateGameTime = function () {
 
     this.gameTime.timeSpent = Math.min(60, this.gameTime.timeSpent + sessionMinutes);
     this.gameTime.timeLeft = Math.max(0, 60 - this.gameTime.timeSpent);
-    this.gameTime.sessionEnd = formattedNow; // ✅ Always update sessionEnd with last session time
+    this.gameTime.sessionEnd = formattedNow;
 
-    if (this.gameTime.timeLeft === 0) {
-      this.gameTime.sessionStart = formattedNow; // ✅ KEEP the last sessionStart instead of setting null
-    } else {
-      this.gameTime.sessionStart = formattedNow; // ✅ Update sessionStart for the latest session
+    // ✅ Only update sessionStart if there is still time left
+    if (this.gameTime.timeLeft > 0) {
+      this.gameTime.sessionStart = formattedNow;
     }
+  } else {
+    // ✅ If sessionStart is null, start a new session
+    this.gameTime.sessionStart = formattedNow;
   }
 };
-
 
 // ✅ Mark Attendance as Absent if No Gameplay
 StudentSchema.methods.markAbsentIfNoPlay = function () {
@@ -156,8 +157,6 @@ StudentSchema.methods.markAbsentIfNoPlay = function () {
     this.gameTime.sessionEnd = null;  // Ensure sessionEnd is null when absent
   }
 };
-
-
 
 
 // ✅ Calculate Stats (Accuracy & Percentage)
@@ -180,25 +179,76 @@ StudentSchema.methods.calculateStats = function () {
 
 // ✅ Calculate Recommendations
 StudentSchema.methods.calculateRecommendations = function () {
-  const getLowest = (data, n) =>
-    Object.entries(data).sort(([,a],[,b]) => a.percentage - b.percentage).slice(0,n).map(([k])=>k);
+  const getLowest = (data, n) => {
+    const sorted = Object.entries(data)
+      .sort(([, a], [, b]) => a.percentage - b.percentage)
+      .slice(0, n)
+      .map(([k]) => k);
+
+    // ✅ If all values are zero, randomize
+    if (sorted.every(item => data[item].percentage === 0)) {
+      return shuffleArray(Object.keys(data)).slice(0, n);
+    }
+
+    return sorted;
+  };
+
+  const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
+
+  // ✅ Ensure randomization for first-time play (all zero case)
+  const shapes = ["Rectangle", "Triangle", "Circle", "Square"];
+  const numbers = Object.keys(this.subjects.Numbers);
+  const colors = Object.keys(this.subjects.Colors);
+
+  // ✅ Pick the lowest-performing shape (or random if first-time)
+  let extraShape = getLowest(this.subjects.Shapes, 1)[0] || shuffleArray(shapes)[0];
+
+  // ✅ Ensure 5 elements in Shapes (by repeating one of the existing four)
+  const shapesWithExtra = [...shapes, extraShape];
 
   this.recommendations = {
     Easy: {
-      Shapes: ["Square","Triangle","Rectangle","Circle",...getLowest(this.subjects.Shapes,1)],
-      Numbers: getLowest(this.subjects.Numbers,5),
-      Colors: getLowest(this.subjects.Colors,5),
+      Shapes: shapesWithExtra,
+      Numbers: getLowest(this.subjects.Numbers, 5),
+      Colors: getLowest(this.subjects.Colors, 5),
     },
     Medium: {
-      Mixed: getLowest({...this.subjects.Shapes, ...this.subjects.Colors, ...this.subjects.Numbers}, 5),
+      Mixed: getLowest(
+        { ...this.subjects.Shapes, ...this.subjects.Colors, ...this.subjects.Numbers },
+        5
+      ),
     },
     Hard: {
-      Shapes: ["Square","Triangle","Rectangle","Circle",...getLowest(this.subjects.Shapes,1)],
-      Numbers: getLowest(this.subjects.Numbers,1),
-      Colors: getLowest(this.subjects.Colors,5),
+      Shapes: shapesWithExtra,
+      Numbers: getLowest(this.subjects.Numbers, 1),
+      Colors: getLowest(this.subjects.Colors, 5),
     },
   };
+
+  // ✅ Randomize if all are zero (first-time play)
+  if (
+    Object.values(this.subjects.Shapes).every(entry => entry.percentage === 0) &&
+    Object.values(this.subjects.Numbers).every(entry => entry.percentage === 0) &&
+    Object.values(this.subjects.Colors).every(entry => entry.percentage === 0)
+  ) {
+    this.recommendations = {
+      Easy: {
+        Shapes: shapesWithExtra,
+        Numbers: shuffleArray(numbers).slice(0, 5),
+        Colors: shuffleArray(colors).slice(0, 5),
+      },
+      Medium: {
+        Mixed: shuffleArray([...shapes, ...numbers, ...colors]).slice(0, 5),
+      },
+      Hard: {
+        Shapes: shapesWithExtra,
+        Numbers: shuffleArray(numbers).slice(0, 1),
+        Colors: shuffleArray(colors).slice(0, 5),
+      },
+    };
+  }
 };
+
 
 // ✅ Pre-save Hook to Auto-Update Fields Before Saving
 StudentSchema.pre("save", function (next) {

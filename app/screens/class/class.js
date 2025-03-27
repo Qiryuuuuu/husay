@@ -118,7 +118,7 @@ export default function LeaderboardScreen({ navigation }) {
       <Image source={element6} style={styles.element6} />
 
       <View style={styles.navContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate("Home")} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.navigate("Home", studentId)} style={styles.backButton}>
           <Image source={backIcon} style={styles.backIcon} />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>

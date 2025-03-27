@@ -166,12 +166,16 @@ const storyScenes = {
   ]
 };
 
-const ShapeGame = ({ onGameComplete, navigation, onStateChange }) => {
+const ShapeGame = ({ studentId, onGameComplete, navigation, onStateChange }) => {
   return (
     <BaseGame
-      category="color"
-      categories={{ color: colors }}
-      onGameComplete={onGameComplete}
+      studentId={studentId} 
+      category="Colors" 
+      categories={{ Colors: colors }} 
+      onGameComplete={(time, score) => { 
+        console.log("✅ Game Complete Triggered in ChallengeColor.tsx!");
+        onGameComplete(time, score, "Colors", colors[score]?.name, score); // ✅ Pass subject, element, and stars
+      }}
       navigation={navigation}
       npcConfig={{
         idle: evaIdleImg,
@@ -179,9 +183,12 @@ const ShapeGame = ({ onGameComplete, navigation, onStateChange }) => {
         wrong: evaWrongImg,
         name: "Eva"
       }}
-      storyScenes={storyScenes} // Pass storyScenes correctly
-      dialogues={{ idle: [], correct: [], wrong: [] }}  
+      storyScenes={storyScenes}
+      dialogues={{ idle: [], correct: [], wrong: [] }}
       onStateChange={onStateChange}
+      subject="Colors" // ✅ Now passing a valid subject
+      element="" // ✅ Will be set dynamically
+      starsEarned={0} // ✅ Will be set dynamically
     />
   );
 };

@@ -153,7 +153,11 @@ export default function StudentProfileScreen({ navigation }) {
               <TouchableOpacity
                 style={styles.studentCard}
                 onPress={() => {
-                  console.log("Navigating to Home with studentId:", item._id); // Debugging
+                  if (!item._id) {
+                    console.error("❌ Error: studentId is missing for student:", item);
+                    return;
+                  }
+                  console.log("✅ Navigating to Home with studentId:", item._id);
                   navigation.navigate("Home", {
                     studentName: item.fullName,
                     studentId: item._id,

@@ -48,7 +48,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"]
+      dialogues: ["What number is this?"]
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -74,7 +74,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"]
+      dialogues: ["What number is this?"]
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -100,7 +100,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"]
+      dialogues: ["What number is this?"]
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -126,7 +126,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"]
+      dialogues: ["What number is this?"]
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -152,7 +152,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: outro,
       character: "EVA",
-      dialogues: ["What color is this?"]
+      dialogues: ["What number is this?"]
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -169,12 +169,16 @@ const storyScenes = {
   ]
 };
 
-const ShapeGame = ({ onGameComplete, navigation, onStateChange }) => {
+const ShapeGame = ({ studentId, onGameComplete, navigation, onStateChange }) => {
   return (
     <BaseGame
-      category="number"
-      categories={{ number: numbers }}
-      onGameComplete={onGameComplete}
+      studentId={studentId} 
+      category="Numbers" 
+      categories={{ Numbers: numbers }} 
+      onGameComplete={(time, score) => { 
+        console.log("✅ Game Complete Triggered in ChallengeNumber.tsx!");
+        onGameComplete(time, score, "Numbers", numbers[score]?.name, score); // ✅ Pass subject, element, and stars
+      }}
       navigation={navigation}
       npcConfig={{
         idle: evaIdleImg,
@@ -182,11 +186,15 @@ const ShapeGame = ({ onGameComplete, navigation, onStateChange }) => {
         wrong: evaWrongImg,
         name: "Eva"
       }}
-      storyScenes={storyScenes} // Pass storyScenes correctly
-      dialogues={{ idle: [], correct: [], wrong: [] }}  
+      storyScenes={storyScenes}
+      dialogues={{ idle: [], correct: [], wrong: [] }}
       onStateChange={onStateChange}
+      subject="Numbers" // ✅ Now passing a valid subject
+      element="" // ✅ Will be set dynamically
+      starsEarned={0} // ✅ Will be set dynamically
     />
   );
 };
+
 
 export default ShapeGame;

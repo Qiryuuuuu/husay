@@ -7,10 +7,13 @@ import {
   StyleSheet,
   useWindowDimensions,
   ImageBackground,
+  ActivityIndicator,
 } from "react-native";
 import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
 import { useNavigation } from "@react-navigation/native";
+import axios from "axios"; 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /* Background image */
 const bgImg = require("../../../assets/gameBackground/blue.png");
@@ -25,16 +28,75 @@ const challengeCard = require("../../../assets/menuCards/home/challenge-card.png
 
 const settingHeader = require("../../../assets/headerText/setting-header.png");
 
+
+
 export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const navigation = useNavigation();
   const { studentName, studentId } = route.params || {}; // Get studentName from params
 
+  const [studentData, setStudentData] = useState(null); // ✅ State for student data
+  const [loading, setLoading] = useState(true); // ✅ Loading state
+  const [error, setError] = useState(null); // ✅ Error state
+
   useEffect(() => {
     playMusic("appBg");
     return () => stopMusic(); // Stop music when the screen unmounts
   }, []);
+
+  useEffect(() => {
+    if (!studentId) {
+      setLoading(false);
+      return;
+    }
+  
+    const fetchStudent = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+  
+        const response = await axios.get(
+          `http://10.0.2.2:5000/api/students/get/${studentId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        if (response.status === 200) {
+          console.log("✅ Student data:", response.data);
+          setStudentData(response.data.student);
+        } else {
+          throw new Error("Failed to fetch student data");
+        }
+      } catch (err) {
+        console.error("❌ Error fetching student:", err);
+        setError("Failed to fetch student data");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchStudent();
+  }, [studentId]);
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("authToken"); // ✅ Clear authentication token
+      console.log("User logged out successfully.");
+      
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }], // ✅ Ensure user is redirected to login
+      });
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>
@@ -45,9 +107,15 @@ export default function HomeScreen({ route }) {
 
           <View style={styles.studentInfo}>
             <Image source={studentImg} style={styles.studentImg} />
-            <Text style={styles.studentName}>
-              {studentName || "Student Name"}
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : error ? (
+              <Text style={styles.studentName}>{error}</Text>
+            ) : (
+              <Text style={styles.studentName}>
+                {studentData?.fullName || studentName || "Student Name"}
+              </Text>
+            )}
           </View>
 
           <TouchableOpacity onPress={() => setSettingsVisible(true)}>
@@ -57,16 +125,12 @@ export default function HomeScreen({ route }) {
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate("Class")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Class", {studentId})}>
             <Image source={classCard} style={styles.cards} />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => {
-              console.log(
-                "Navigating to PracMainScreen with studentId:",
-                studentId
-              ); // Debugging
               navigation.navigate("PracMainScreen", { studentId });
             }}
           >
@@ -75,10 +139,6 @@ export default function HomeScreen({ route }) {
 
           <TouchableOpacity
             onPress={() => {
-              console.log(
-                "Navigating to ChallMainScreen with studentId:",
-                studentId
-              ); // Debugging
               navigation.navigate("ChallMainScreen", { studentId });
             }}
           >
@@ -104,7 +164,9 @@ export default function HomeScreen({ route }) {
             console.log("Switching Profile...");
             navigation.navigate("StudentProfile"); // Navigate back to Student Profile
           }}
-          onButtonTwoPress={() => console.log("Logging Out...")}
+          onButtonTwoPress={() => {console.log("Logging Out...");
+            handleLogout();
+          }}
         />
       </View>
     </ImageBackground>

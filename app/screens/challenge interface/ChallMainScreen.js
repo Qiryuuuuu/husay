@@ -49,10 +49,11 @@ const dialogData = {
   ],
 };
 
-export default function ChallMainScreen({ navigation }) {
+export default function ChallMainScreen({ navigation, route }) {
   const [dialogIndex, setDialogIndex] = useState(0);
   const [showDialog, setShowDialog] = useState(true);
   const [currentBackground, setCurrentBackground] = useState(bg1);
+  const { studentId } = route.params || {};
 
   const getBackgroundForSpeaker = (npcName, dialogue) => {
     if (dialogue === "First, we need to follow this forest path and cross the river. Then, we must pass through the forest to the Evil Inventor's Lair and hopefully we defeat the Evil Inventor.") {
@@ -73,6 +74,10 @@ export default function ChallMainScreen({ navigation }) {
   useEffect(() => {
     playMusic("gameInterfaceBg");
     return () => stopMusic();
+  }, []);
+
+  useEffect(() => {
+    console.log("Current studentId:", studentId);
   }, []);
 
   useEffect(() => {
@@ -126,7 +131,7 @@ export default function ChallMainScreen({ navigation }) {
             {/* Header */}
             {!isJourneyMap && ( // Only show header if it's not the journey map
               <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Home', { studentId })}>
                   <Image source={backButton} style={styles.logo} />
                 </TouchableOpacity>
 
@@ -139,15 +144,15 @@ export default function ChallMainScreen({ navigation }) {
             {/* Main content */}
             {!showDialog && !isJourneyMap && ( // Only show main content if it's not the journey map
               <View style={styles.cardContainer}>
-                <TouchableOpacity onPress={() => navigation.navigate('ChallengeEasyInterface')}>
+                <TouchableOpacity onPress={() => navigation.navigate('ChallengeEasyInterface',  { studentId })}>
                   <Image source={easyCard} style={styles.cards} />
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate('ChallengeMedium')}>
+                <TouchableOpacity onPress={() => navigation.navigate('ChallengeMedium',  { studentId })}>
                   <Image source={mediumCard} style={styles.cards} />
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate('ChallengeHard')}>
+                <TouchableOpacity onPress={() => navigation.navigate('ChallengeHard', { studentId })}>
                   <Image source={hardCard} style={styles.cards} />
                 </TouchableOpacity>
               </View>

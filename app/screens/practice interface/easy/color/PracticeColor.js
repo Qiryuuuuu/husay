@@ -138,7 +138,7 @@ const ColorModeScreen = ({ route }) => {
           {...props}
           dialoguesData={colorDialogues}
           completionNpc={colorCompletionNpc}
-          navigation={() => navigation.navigate("PracMainScreen")}
+          navigation={() => navigation.navigate("PracMainScreen", { studentId })}
         />
       )}
     />

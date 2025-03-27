@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import AudioPlayer from "../component/audio/AudioPlayer"; // Import AudioPlayer component
 import { useNavigation } from "@react-navigation/native";
+import axios from "axios"; // ✅ Import axios for API calls
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the completion sound effect
 const completionSound = require("../../assets/voiceOver/misc/stage-complete.wav"); // Update this path to match your sound file location
@@ -15,6 +17,11 @@ const StageCompletion = ({
   dialoguesData,
   completionNpc,
   isChallengeMode,
+  currentScreen,
+  studentId,  // ✅ Ensure studentId is received from props
+  subject,     // ✅ Ensure subject (e.g., "Shapes", "Numbers") is received
+  element,     // ✅ Ensure element (e.g., "Rectangle", "One") is received
+  starsEarned,
 }) => {
   const navigation = useNavigation();
   const [displayedText, setDisplayedText] = useState("");
@@ -54,41 +61,7 @@ const StageCompletion = ({
     }
   };
 
-  useEffect(() => {
-    // Play completion sound when component mounts
-    setPlayCompletionSound(true);
-
-    const completeDialogues = dialoguesData?.complete || [];
-    if (!completeDialogues.length) {
-      setIsTyping(false);
-      return;
-    }
-
-    const randomIndex = Math.floor(Math.random() * completeDialogues.length);
-    const message = completeDialogues[randomIndex] || "";
-
-    const characters = Array.from(message);
-    let currentIndex = 0;
-
-    const typeNextChar = () => {
-      if (currentIndex < characters.length) {
-        setDisplayedText(message.slice(0, currentIndex + 1));
-        currentIndex++;
-        setTimeout(typeNextChar, typingSpeed);
-      } else {
-        setIsTyping(false);
-      }
-    };
-
-    typeNextChar();
-
-    return () => {
-      setDisplayedText("");
-      setIsTyping(false);
-      setPlayCompletionSound(false);
-    };
-  }, [dialoguesData]);
-
+  
   // Calculate mistakes
   const mistakes = totalRounds - correctAnswers;
 
@@ -99,14 +72,73 @@ const StageCompletion = ({
   } else if (mistakes <= 3) {
     starCount = 2;
   }
+  
 
+  // ✅ Function to send game results to backend
+  const updateStudentProgress = async () => {
+   // 🔹 Fetch token right before making the API call
+   const authToken = await AsyncStorage.getItem("authToken");
+    
+   if (!authToken) {
+     console.error("❌ No token available, blocking API request.");
+     Alert.alert("Authentication Error", "You must log in to save game progress.");
+     return;
+   }
+    
+    try {
+      const response = await axios.put("http://10.0.2.2:5000/api/students/update-score", {
+        studentId,
+        subject,  // ✅ Subject category (e.g., "Shapes", "Colors", "Numbers")
+        element,  // ✅ Specific game element (e.g., "Rectangle", "Red", "One")
+        correct: correctAnswers,
+        incorrect: mistakes,  // ✅ Mistakes count as incorrect answers
+        starsEarned: starsEarned, // ✅ Pass the actual value
+        totalRounds, // ✅ Add totalRounds to track the game rounds
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,  // ✅ Fetch token dynamically
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+      console.log("✅ Student progress updated:", response.data);
+    } catch (error) {
+      console.error("❌ Error updating student progress:", error);
+      Alert.alert("Error", "Failed to save game progress. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    console.log("🛠️ StageCompletion Props Received:");
+    console.log("➡️ timeTaken:", timeTaken);
+    console.log("➡️ correctAnswers:", correctAnswers);
+    console.log("➡️ totalRounds:", totalRounds);
+    console.log("➡️ starsEarned:", starsEarned);
+    console.log("➡️ studentId:", studentId);
+    console.log("➡️ subject:", subject);
+    console.log("➡️ element:", element);
+  }, []);
+  
+  useEffect(() => {
+    if (studentId && subject && element && starsEarned !== undefined && totalRounds > 0) {
+      console.log("🚀 Updating student progress...");
+      updateStudentProgress();
+    } else {
+      console.log("⚠️ Not updating progress: Missing required data.");
+    }
+  }, [studentId,subject, element, starsEarned, totalRounds, ]);
+  
+
+  
   return (
     <View style={styles.containerStage}>
       {/* Add AudioPlayer component */}
       {playCompletionSound && (
         <AudioPlayer
           audioSource={completionSound}
-          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          onPlaybackStatusUpdate={() => setPlayCompletionSound(false)}
           autoPlay={true}
         />
       )}
@@ -124,7 +156,7 @@ const StageCompletion = ({
         {/* Star Display */}
         {isChallengeMode && (
           <View style={styles.starContainer}>
-            {[...Array(starCount)].map((_, index) => (
+            {[...Array(starsEarned || 1)].map((_, index) => (
               <Image
                 key={index}
                 source={require("../../assets/stageCompletion/star.png")}
@@ -155,7 +187,7 @@ const StageCompletion = ({
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              navigation.navigate("Home");
+              navigation.navigate("Home", {studentId});
             }}
           >
             <Image
@@ -166,7 +198,7 @@ const StageCompletion = ({
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              navigation.navigate("PracMainScreen");
+              navigation.navigate("PracMainScreen", {studentId});
             }}
           >
             <Image

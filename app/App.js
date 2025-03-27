@@ -40,29 +40,50 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Login"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Navigator initialRouteName= "Home" screenOptions={{ headerShown: false }}
+>
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+        />
+        <Stack.Screen 
+          name="SignUp" 
+          component={SignUpScreen} 
+        />
         <Stack.Screen
           name="SecurityQuestion"
           component={SecurityQuestionScreen}
         />
-
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen 
+          name="ForgotPassword" 
+          component={ForgotPasswordScreen} 
+        />
         <Stack.Screen
           name="ForgotSecurityQuestion"
           component={ForgotSecurityQuestionScreen}
         />
-        <Stack.Screen name="EnterCode" component={EnterCodeScreen} />
-        <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
+        <Stack.Screen 
+          name="EnterCode" 
+          component={EnterCodeScreen} 
+        />
+        <Stack.Screen 
+          name="SetPassword" 
+          component={SetPasswordScreen} 
+        />
 
-        <Stack.Screen name="AddStudent" component={AddStudentScreen} />
-        <Stack.Screen name="StudentProfile" component={StudentProfileScreen} />
+        <Stack.Screen 
+          name="AddStudent" 
+          component={AddStudentScreen} 
+        />
+        <Stack.Screen 
+          name="StudentProfile" 
+          component={StudentProfileScreen} 
+        />
 
-        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+        <Stack.Screen 
+          name="Dashboard" 
+          component={DashboardScreen} 
+        />
         <Stack.Screen
           name="AccountSettings"
           component={AccountSettingsScreen}
@@ -73,13 +94,20 @@ export default function App() {
           component={HomeScreen}
           options={{ title: "Home" }}
         />
-        <Stack.Screen name="Class" component={ClassScreen} />
+        <Stack.Screen 
+          name="Class" 
+          component={ClassScreen} 
+        />
+        
         <Stack.Screen
           name="PracMainScreen"
           component={PracMainScreen}
           options={{ title: "Practice" }}
         />
-        <Stack.Screen name="ChallMainScreen" component={ChallMainScreen} />
+        <Stack.Screen 
+          name="ChallMainScreen" 
+          component={ChallMainScreen} 
+        />
 
         <Stack.Screen
           name="EasyMenuInteface"
@@ -122,7 +150,6 @@ export default function App() {
           component={ChallengeShape}
           option={{ title: "ChallShape" }}
         />
-
         <Stack.Screen
           name="ChallengeColor"
           component={ChallengeColor}
@@ -143,6 +170,7 @@ export default function App() {
           component={ChallengeHard}
           Option={{ title: "ChallHard" }}
         />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

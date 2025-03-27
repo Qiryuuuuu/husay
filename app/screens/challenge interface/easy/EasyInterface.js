@@ -15,16 +15,18 @@ const colorCard = require("../../../../assets/menuCards/challenge/easy/color-eas
 const numberCard = require("../../../../assets/menuCards/challenge/easy/number-easy.png");
 
 
-export default function EasyInterface({ navigation }) {
+export default function EasyInterface({ navigation, route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const { studentId } = route.params || {};
+
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-         <TouchableOpacity onPress={() => navigation.navigate('ChallMainScreen')}>
+         <TouchableOpacity onPress={() => navigation.navigate('ChallMainScreen', { studentId })}>
             <Image source={backButton} style={styles.logo} />
          </TouchableOpacity>
 
@@ -36,15 +38,15 @@ export default function EasyInterface({ navigation }) {
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('ChallengeShape')}>
+          <TouchableOpacity onPress={() => navigation.navigate('ChallengeShape', { studentId })}>
             <Image source={shapeCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ChallengeColor')}>
+          <TouchableOpacity onPress={() => navigation.navigate('ChallengeColor', { studentId })}>
             <Image source={colorCard} style={styles.cards} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('ChallengeNumber')}>
+          <TouchableOpacity onPress={() => navigation.navigate('ChallengeNumber', { studentId })}>
             <Image source={numberCard} style={styles.cards} />
           </TouchableOpacity>
         </View>

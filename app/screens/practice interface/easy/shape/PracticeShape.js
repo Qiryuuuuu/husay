@@ -116,7 +116,7 @@ const ShapeModeScreen = ({ route }) => {
           {...props}
           dialoguesData={shapeDialogues}
           completionNpc={shapeCompletionNpc}
-          navigation={() => navigation.navigate("PracMainScreen")}
+          navigation={() => navigation.navigate("PracMainScreen", { studentId })}
         />
       )}
     />
