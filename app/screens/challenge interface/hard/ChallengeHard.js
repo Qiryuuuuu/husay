@@ -7,6 +7,7 @@ import HardGame from "../../../component/game/challenge/HardMode/ChallengeHard";
 import StageCompletion from "../../../component/stageCompletion";
 import EvaDialouges from "../../../data/evaDialogues";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { playMusic, stopMusic } from "../../../component/audio/MusicManager";
 
 const bg = require("../../../../assets/gameBackground/challenge/hard/chall-hard-bg.webp");
@@ -59,82 +60,183 @@ const customCompletionDialog = [
 
 const HardModeScreen = ({ route }) => {
   const navigation = useNavigation();
-  const [scores, setScores] = useState(null); // ✅ Initialize scores state
+  const [scores, setScores] = useState(null);
+
+  const [gameFinished, setGameFinished] = useState(false);
+  const [finalScore, setFinalScore] = useState(null);
+  const [finalTimeTaken, setFinalTimeTaken] = useState(null);
+  const [finalSetGamePhase, setFinalSetGamePhase] = useState(() => null);
+  const [updatedRecommendations, setUpdatedRecommendations] = useState(null);
+
+  const { studentId, rounds, currentCategoryType } = route.params || {};
+  const [gameRounds, setGameRounds] = useState(rounds || []);
+
+  console.log("📦 Received structuredRounds in HardModeScreen:", rounds);
+  console.log("🔄 Defaulting gameRounds to structuredRounds:", rounds || []);
 
   useEffect(() => {
     playMusic("hardBg");
     return () => stopMusic();
   }, []);
 
-  // ✅ Ensure `studentId` is properly extracted
-  const studentId = route?.params?.studentId || null;
+  useEffect(() => {
+    if (rounds && rounds.length > 0) {
+      console.log("🔄 ChallengeHard.js receiving structuredRounds...");
+      setGameRounds((prevRounds) => {
+        console.log("✅ Updating gameRounds from structuredRounds:", rounds);
+        return [...rounds]; // Ensure new rounds overwrite previous state
+      });
+    } else {
+      console.log("⚠️ WARNING: Received empty structuredRounds!");
+    }
+  }, [rounds]);
+
   console.log("Challenge Hard received studentID:", studentId);
 
   if (!studentId) {
     console.error("❌ ERROR: studentId is undefined!");
   }
 
-  // ✅ Function to submit scores
-  const handleGameComplete = async (score, timeTaken, setGamePhase) => {
-    console.log("Submitting game results...");
-    console.log("Student ID:", studentId);
-    console.log("Score:", score);
-    console.log("Time Taken:", timeTaken);
+  const handleGameComplete = async (
+    timeTaken,
+    score,
+    structuredRounds,
+    setGamePhase
+  ) => {
+    console.log("🚀 Submitting game results...");
+    console.log("📌 Student ID:", studentId);
+    console.log("🎯 Score:", score);
+    console.log("⏳ Time Taken:", timeTaken);
 
-    if (!studentId || !scores) {
-      if (!scores) {
-        console.error("❌ ERROR: Cannot submit score, scores are missing.");
-      }
-      if (!studentId) {
-        console.error("❌ ERROR: Cannot submit score, student ID is missing.");
-      }
+    if (!studentId) {
+      console.error("❌ ERROR: studentId is missing!");
       return;
     }
 
-    // ✅ Calculate correct and incorrect answers
-    let correct = 0;
-    let incorrect = 0;
+    if (!structuredRounds || structuredRounds.length === 0) {
+      console.error(
+        "❌ ERROR: structuredRounds is empty before submission! Check data flow."
+      );
+      return;
+    }
 
-    Object.keys(scores).forEach((category) => {
-      Object.entries(scores[category]).forEach(([key, value]) => {
-        correct += value; // Value is the number of correct answers
-      });
+    console.log(
+      "✅ Final structuredRounds before submission:",
+      structuredRounds
+    );
+
+    const correctAnswers = structuredRounds.filter(
+      (round) => round.correct === true
+    ).length;
+    console.log("🟢 Counted Correct Answers:", correctAnswers);
+
+    const incorrectAnswers = structuredRounds.filter(
+      (round) => !round.correct
+    ).length;
+
+    console.log("✅ Final Incorrect Count:", incorrectAnswers);
+
+    if (score != correctAnswers) {
+      console.log("❌ ERROR: Score does not match correct answers count!");
+    }
+
+    const totalRounds = structuredRounds.length;
+    const mistakes = incorrectAnswers;
+    const stars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
+    console.log("🌟 Stars earned:", stars);
+
+    // ✅ Initialize scoresByCategory to prevent missing categories
+    const scoresByCategory = { shape: {}, color: {}, number: {} };
+
+    structuredRounds.forEach((round) => {
+      const category = round.type;
+      const subcategory = round.name;
+
+      if (!scoresByCategory[category]) {
+        scoresByCategory[category] = {};
+      }
+      if (!scoresByCategory[category][subcategory]) {
+        scoresByCategory[category][subcategory] = { correct: 0, incorrect: 0 };
+      }
+
+      if (round.correct) {
+        scoresByCategory[category][subcategory].correct += 1;
+      } else {
+        scoresByCategory[category][subcategory].incorrect += 1;
+      }
     });
 
-    incorrect = 11 - correct; // Total rounds - correct answers
+    console.log("📊 Scores structured by category:", scoresByCategory);
 
     try {
+      console.log("🌍 Sending data to API...");
+      const token = await AsyncStorage.getItem("authToken");
+
+      if (!token) {
+        console.error("❌ ERROR: No auth token found.");
+        return;
+      }
+      console.log("🔍 Data being sent in PUT request:", {
+        studentId: studentId,
+        category: scoresByCategory,
+        stars: stars,
+        correctCount: correctAnswers,
+        incorrectCount: incorrectAnswers,
+        rounds: structuredRounds,
+      });
       const response = await fetch(
         "http://10.0.2.2:5000/api/students/update-score",
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            studentId,
-            subject: "Shapes", // 🔹 Adjust subject dynamically if needed
-            difficulty: "Hard",
-            mode: "challenge",
-            points: score,
-            stars: correct >= 10 ? 3 : correct >= 7 ? 2 : 1,
-            correct,
-            incorrect,
+            studentId: studentId,
+            category: scoresByCategory,
+            stars: stars,
+            correctCount: correctAnswers, // Ensure this matches correct answers
+            incorrectCount: incorrectAnswers,
+            rounds: structuredRounds, // ✅ Ensure structuredRounds is passed instead of gameRounds
+            time: timeTaken, // Send time taken to the backend
           }),
         }
       );
 
-      const data = await response.json();
-      console.log("✅ Score update response:", data);
+      console.log("📥 Response received, status:", response.status);
 
-      if (typeof setGamePhase === "function") {
-        console.log("✅ Updating game phase to 'completed'");
+      if (!response.ok) {
+        console.error(
+          "❌ ERROR: Server returned an error status:",
+          response.status
+        );
+        return;
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error("❌ ERROR: Failed to parse JSON response:", jsonError);
+        return;
+      }
+
+      console.log("✅ Score update response:", JSON.stringify(data, null, 2));
+
+      if (response.status === 200) {
+        setUpdatedRecommendations(data.student?.recommendations || []);
         setGamePhase("completed");
       } else {
-        console.error("❌ ERROR: setGamePhase is not a function!");
+        console.error("⚠️ Unexpected server response:", data.message);
       }
+
+      setFinalTimeTaken(timeTaken);
+      setFinalScore(score);
+      setFinalSetGamePhase(() => setGamePhase);
+      setGameFinished(true); // Now safely trigger game completion
     } catch (error) {
-      console.error("Error updating score:", error);
+      console.error("❌ ERROR: Handle game complete failed:", error);
     }
   };
 
@@ -148,21 +250,42 @@ const HardModeScreen = ({ route }) => {
       GameComponent={(props) => (
         <HardGame
           {...props}
-          onGameComplete={(score, timeTaken) =>
-            handleGameComplete(score, timeTaken, props.setGamePhase)
+          onGameComplete={(timeTaken, score, structuredRounds) =>
+            handleGameComplete(
+              timeTaken,
+              score,
+              structuredRounds,
+              props.setGamePhase
+            )
           }
           studentId={studentId}
+          gameRounds={gameRounds} // ✅ Pass structuredRounds to HardGame
         />
       )}
       navigation={navigation}
       StageCompletionComponent={(props) => (
         <StageCompletion
           mode="challenge"
-          level="" // ✅ Current Level
+          level=""
           dialoguesData={{ complete: customCompletionDialog }}
           completionNpc={CompletionNpc}
           navigation={navigation}
-          studentId={studentId} // ✅ Ensure studentId is passed
+          studentId={studentId}
+          isChallengeMode={true}
+          timeTaken={finalTimeTaken} // ✅ Pass correct final time
+          correctAnswers={finalScore} // ✅ Pass correct final score
+          totalRounds={11} // ✅ Ensure correct total rounds are passed
+          onRestart={() => {
+            setGameFinished(false);
+            setFinalScore(null);
+            setFinalTimeTaken(null);
+            setGameRounds(rounds || []);
+            navigation.replace("ChallengeHard", {
+              studentId,
+              rounds,
+              currentCategoryType, // ✅ Keep the same category
+            });
+          }}
         />
       )}
     />

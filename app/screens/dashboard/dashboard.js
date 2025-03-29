@@ -15,7 +15,6 @@ import { PieChart } from "react-native-svg-charts";
 import { Text as SVGText } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-
 import moment from "moment";
 
 export default function DashboardScreen({ navigation }) {
@@ -168,7 +167,6 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  // ✅ Fetch Student Details
   const fetchStudentDetails = async (studentId) => {
     try {
       if (!studentId) {
@@ -196,52 +194,70 @@ export default function DashboardScreen({ navigation }) {
       );
 
       const data = await response.json();
-      console.log("🔹 Full API Response:", JSON.stringify(data, null, 2)); // Full response log
+      console.log("🔹 Full API Response:", JSON.stringify(data, null, 2));
 
       if (response.ok && data.student) {
         const student = data.student;
         console.log("✅ Extracted Student Data:", student);
 
-        // ✅ Fetch and set accuracy directly from API response
-        if (student.accuracy) {
-          console.log("✅ Found Accuracy Data:", student.accuracy);
-          setAccuracyData({
-            correct: student.accuracy.correct || 0,
-            incorrect: student.accuracy.incorrect || 0,
-          });
+        // ✅ Extract game time data
+        let timeSpent = student.gameTime?.timeSpent;
+        let timeLeft = student.gameTime?.timeLeft;
+
+        // ✅ Handle missing or unreadable data
+        if (
+          typeof timeSpent !== "number" ||
+          typeof timeLeft !== "number" ||
+          timeLeft > 60
+        ) {
+          console.warn(
+            "⚠️ Game time data missing or unreadable. Resetting to defaults."
+          );
+          timeSpent = 0;
+          timeLeft = 60;
         } else {
-          console.warn("⚠️ No Accuracy Data found in API response.");
-          setAccuracyData({ correct: 0, incorrect: 0 });
+          // ✅ Ensure time spent calculation is correct
+          timeSpent = 60 - timeLeft;
         }
 
-        // ✅ Fetch and set familiarity data
-        if (student.subjects) {
-          console.log("✅ Found Familiarity Data. Processing...");
-          fetchFamiliarityData(student);
-        } else {
-          console.warn("⚠️ No Familiarity Data found in API response.");
-        }
+        console.log(`✅ Corrected Time Spent: ${timeSpent} mins`);
+        console.log(`✅ Corrected Time Left: ${timeLeft} mins`);
 
-        // ✅ Fetch and set time spent data
-        if (student.gameTime) {
-          console.log("✅ Found Game Time Data:", student.gameTime);
-          setTimeSpentData({
-            timeSpent: student.gameTime.timeSpent || 0,
-            timeLeft: student.gameTime.timeLeft || 60,
-          });
-        } else {
-          console.warn("⚠️ No Game Time Data found in API response.");
-          setTimeSpentData({ timeSpent: 0, timeLeft: 60 });
-        }
+        // ✅ Update state with the correct color mapping
+        setTimeSpentData({
+          timeSpent,
+          timeLeft,
+          timeSpentColor: timeSpent > 0 ? "#FF3B30" : "#FF3B30", // Always Red for Spent
+          timeLeftColor: timeLeft < 60 ? "#4CD964" : "#FF3B30", // Green if some time is left, Red if full 60 mins
+        });
 
-        // ✅ Set Attendance Data
+        // ✅ Update attendance data
         setAttendanceData(getAttendanceData([student]));
-        console.log("✅ Student Data Updated Successfully.");
+        console.log("✅ Attendance Data Processed and Set.");
+
+        // ✅ Fetch familiarity data
+        fetchFamiliarityData(student);
       } else {
         console.error("❌ Error fetching student details:", data.message);
+
+        // ✅ Handle case where API fails or student data is unreadable
+        setTimeSpentData({
+          timeSpent: 0,
+          timeLeft: 60,
+          timeSpentColor: "#FF3B30", // All red when data is missing
+          timeLeftColor: "#FF3B30", // All red when data is missing
+        });
       }
     } catch (error) {
       console.error("❌ Network error fetching student details:", error);
+
+      // ✅ Handle network failure scenario
+      setTimeSpentData({
+        timeSpent: 0,
+        timeLeft: 60,
+        timeSpentColor: "#FF3B30", // All red when network fails
+        timeLeftColor: "#FF3B30", // All red when network fails
+      });
     }
   };
 
@@ -272,6 +288,7 @@ export default function DashboardScreen({ navigation }) {
     console.log("🔹 Processing attendance for students:", students);
 
     const data = {};
+    const currentYear = moment().year();
 
     students.forEach((student) => {
       if (!student.attendance || !Array.isArray(student.attendance)) {
@@ -287,16 +304,22 @@ export default function DashboardScreen({ navigation }) {
           return;
         }
 
-        const parsedDate = moment(date, "YYYY-MM-DD HH:mm:ss");
+        // ✅ Extract date based on different possible formats
+        let parsedDate = moment(
+          date,
+          ["YYYY-MM-DD", "MM-DD-YYYY hh:mm:ss A"],
+          true
+        );
+
         if (!parsedDate.isValid()) {
           console.warn(
-            `⚠️ Invalid date format: ${date} for ${student.fullName}.`
+            `⚠️ Invalid parsed date: ${date} for ${student.fullName}.`
           );
           return;
         }
 
-        const month = parsedDate.month();
-        const day = parsedDate.date() - 1;
+        const month = parsedDate.month(); // 0-based index for month
+        const day = parsedDate.date() - 1; // Zero-based day index
 
         if (!data[month]) {
           const daysInMonth = moment(
@@ -357,7 +380,8 @@ export default function DashboardScreen({ navigation }) {
     if (isToday) {
       textColor = "#FFFFFF"; // ✅ Ensure text is readable
     } else if (!isFuture && weekday !== 0 && weekday !== 6) {
-      backgroundColor = status === "present" ? "#4CD964" : "#FF3B30";
+      backgroundColor =
+        status?.toLowerCase() === "present" ? "#4CD964" : "#FF3B30";
     }
 
     return (
@@ -1283,33 +1307,18 @@ export default function DashboardScreen({ navigation }) {
                 style={{ height: 250 }}
                 valueAccessor={({ item }) => item.value}
                 data={[
-                  timeSpentData.timeSpent > 0
-                    ? {
-                        key: 1,
-                        value: timeSpentData.timeSpent,
-                        label: `${timeSpentData.timeSpent} mins`,
-                        svg: { fill: "#4CD964" },
-                      }
-                    : {
-                        key: 1,
-                        value: timeSpentData.timeSpent,
-                        label: "",
-                        svg: { fill: "#4CD964" },
-                      }, // Hide "0 mins"
-
-                  timeSpentData.timeLeft > 0
-                    ? {
-                        key: 2,
-                        value: timeSpentData.timeLeft,
-                        label: `${timeSpentData.timeLeft} mins`,
-                        svg: { fill: "#FF3B30" },
-                      }
-                    : {
-                        key: 2,
-                        value: timeSpentData.timeLeft,
-                        label: "",
-                        svg: { fill: "#FF3B30" },
-                      }, // Hide "0 mins"
+                  {
+                    key: 1,
+                    value: timeSpentData.timeSpent,
+                    label: `${timeSpentData.timeSpent} mins`,
+                    svg: { fill: timeSpentData.timeSpentColor }, // 🔴 Red for Spent
+                  },
+                  {
+                    key: 2,
+                    value: timeSpentData.timeLeft,
+                    label: `${timeSpentData.timeLeft} mins`,
+                    svg: { fill: timeSpentData.timeLeftColor }, // 🟢 Green or 🔴 Red based on condition
+                  },
                 ]}
                 spacing={0}
                 outerRadius={"100%"}

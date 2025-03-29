@@ -5,6 +5,29 @@ const authenticateUser = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+// ✅ Function to format Date and Time in 12-hour format
+function formatDate(date) {
+  const options = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  };
+
+  // Format Date: Convert to `YYYY-MM-DD`
+  const formattedDate = date
+    .toLocaleDateString("en-US", options)
+    .replace(/\//g, "-");
+
+  // Format Time: `HH:MM:SS AM/PM`
+  const formattedTime = date.toLocaleTimeString("en-US", options);
+
+  return `Date: ${formattedDate} | Time: ${formattedTime}`;
+}
+
 // ✅ Get total student count for the logged-in user's class
 router.get("/count", authenticateUser, async (req, res) => {
   try {
@@ -80,7 +103,15 @@ router.put(
 
 router.put("/update-score", authenticateUser, async (req, res) => {
   try {
-    const { studentId, category: scoresByCategory, stars, rounds } = req.body;
+    console.log("🔍 Received Data in API Request:", req.body); // ✅ Log request data
+
+    const {
+      studentId,
+      category: scoresByCategory,
+      stars,
+      rounds,
+      time,
+    } = req.body;
 
     if (!studentId || !scoresByCategory) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -91,11 +122,24 @@ router.put("/update-score", authenticateUser, async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // 1) Update the subject scores
+    // ✅ Update subject scores
     const categoryMapping = {
       shape: "Shapes",
       color: "Colors",
       number: "Numbers",
+    };
+
+    const numberMapping = {
+      1: "One",
+      2: "Two",
+      3: "Three",
+      4: "Four",
+      5: "Five",
+      6: "Six",
+      7: "Seven",
+      8: "Eight",
+      9: "Nine",
+      10: "Ten",
     };
 
     Object.entries(scoresByCategory).forEach(([cat, subcats]) => {
@@ -103,21 +147,49 @@ router.put("/update-score", authenticateUser, async (req, res) => {
       if (!correctCategory || !student.subjects[correctCategory]) return;
 
       Object.entries(subcats).forEach(([subcat, scoreData]) => {
-        if (!student.subjects[correctCategory][subcat]) return;
-        student.subjects[correctCategory][subcat].correct += scoreData.correct;
-        student.subjects[correctCategory][subcat].incorrect +=
+        let mappedSubcat = subcat;
+
+        if (cat === "number" && !isNaN(subcat)) {
+          mappedSubcat = numberMapping[parseInt(subcat, 10)] || subcat;
+        }
+
+        if (!mappedSubcat || !student.subjects[correctCategory][mappedSubcat])
+          return;
+
+        student.subjects[correctCategory][mappedSubcat].correct +=
+          scoreData.correct;
+        student.subjects[correctCategory][mappedSubcat].incorrect +=
           scoreData.incorrect;
       });
     });
 
-    // 2) Update total stars
+    // ✅ Update total stars
     if (typeof stars === "number") {
       student.stars.totalStars += stars;
     }
 
-    // 3) Recalculate stats & recommendations
+    // ✅ Update Game Time
+    if (typeof time === "number") {
+      student.gameTime.timeSpent = Math.min(
+        60,
+        student.gameTime.timeSpent + time
+      );
+      student.gameTime.timeLeft = Math.max(0, 60 - student.gameTime.timeSpent);
+
+      const now = new Date();
+      const formattedNow = formatDate(now);
+
+      if (student.gameTime.timeLeft === 0) {
+        student.gameTime.sessionEnd = formattedNow;
+      } else {
+        student.gameTime.sessionStart = formattedNow;
+        student.gameTime.sessionEnd = formattedNow;
+      }
+    }
+
+    // ✅ Recalculate stats & recommendations
     student.calculateStats();
-    student.calculateRecommendations(); // Make sure you updated this method to store subcategory names
+    student.calculateRecommendations();
 
     await student.save();
 

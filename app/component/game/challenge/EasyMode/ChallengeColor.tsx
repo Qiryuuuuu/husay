@@ -1,6 +1,6 @@
 //ChallengeColor.tsx
-import React from "react";
-import { BaseGame } from "../../ChallBaseGame";
+import React, { useEffect, useState } from "react";
+import { CategoryItem, BaseGame } from "../../ChallBaseGame";
 
 // Import NPC images
 const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
@@ -180,12 +180,78 @@ const storyScenes = {
   ],
 };
 
-const ColorGame = ({ onGameComplete, navigation, onStateChange }) => {
+// Group all categories into one object
+const categories = {
+  color: colors,
+};
+
+interface BaseGameProps {
+  onGameComplete: (
+    time: number,
+    score: number,
+    currentCategoryType: string,
+    rounds: CategoryItem[]
+  ) => void;
+  navigation: any;
+  rounds: CategoryItem[];
+  studentId: any;
+  updatedRecommendations: any; // Add this line to handle the recommendations data
+  onStateChange: (state: any) => void;
+}
+
+const ColorGame: React.FC<BaseGameProps> = ({
+  rounds,
+  onGameComplete,
+  navigation,
+  studentId,
+  updatedRecommendations,
+  onStateChange,
+}) => {
+  const [currentCategoryType, setCurrentCategoryType] = useState<string>("");
+
+  useEffect(() => {
+    if (
+      Array.isArray(rounds) &&
+      rounds.length > 0 &&
+      rounds[0] &&
+      "type" in rounds[0]
+    ) {
+      setCurrentCategoryType(rounds[0].type as string); // 🚨 This is fine
+    } else {
+      setCurrentCategoryType(""); // Or null if you prefer
+    }
+  }, [rounds]);
+
+  const handleGameComplete = (
+    time: number,
+    score: number,
+    categoryType: string,
+    rounds: CategoryItem[]
+  ) => {
+    console.log("🔍 Challenge Color Game received rounds:", rounds);
+    // Fetch studentId from AsyncStorage
+    if (!studentId) {
+      console.error("❌ ERROR: Missing studentId before navigation!");
+      return;
+    }
+
+    if (!rounds || !Array.isArray(rounds)) {
+      console.error(
+        "❌ ERROR: Rounds array is missing or invalid before navigation!",
+        rounds
+      );
+      return;
+    }
+    onGameComplete(time, score, categoryType, rounds);
+  };
+
   return (
     <BaseGame
-      category="color"
-      categories={{ color: colors }}
-      onGameComplete={onGameComplete}
+      categories={categories}
+      rounds={rounds} // ✅ Ensure `rounds` is explicitly used
+      onGameComplete={handleGameComplete} // ✅ Use the modified function
+      currentCategoryType={currentCategoryType} // ✅ Pass category type
+      numRounds={5}
       navigation={navigation}
       npcConfig={{
         idle: evaIdleImg,

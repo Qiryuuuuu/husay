@@ -84,8 +84,22 @@ const StudentSchema = new mongoose.Schema({
   attendance: { type: [AttendanceSchema], default: [] },
 
   gameTime: {
-    timeSpent: { type: Number, default: 0, min: 0, max: 60 },
-    timeLeft: { type: Number, default: 60, min: 0, max: 60 },
+    timeSpent: {
+      type: Number,
+      default: 0, // Store in hours internally
+      min: 0,
+      max: 1, // 1 hour max
+      get: (v) => (v ? v.toFixed(2) : "0.00"), // Ensure it's formatted as a string for frontend
+      set: (v) => (v ? parseFloat((v / 3600).toFixed(2)) : 0), // Convert seconds to hours before saving
+    },
+    timeLeft: {
+      type: Number,
+      default: 1, // 1 hour max in hours
+      min: 0,
+      max: 1, // Store in hours (1 hour max)
+      get: (v) => (v ? v.toFixed(2) : "0.00"),
+      set: (v) => (v ? parseFloat((v / 3600).toFixed(2)) : 0),
+    },
     sessionStart: { type: String, default: null },
     sessionEnd: { type: String, default: null },
   },
@@ -275,10 +289,13 @@ StudentSchema.methods.calculateRecommendations = function () {
 
 // ✅ Pre-save Hook to Auto-Update Fields Before Saving
 StudentSchema.pre("save", function (next) {
+  if (this.timeTaken !== undefined) {
+    this.updateGameTime(this.timeTaken);
+  }
+
   this.calculateStats();
   this.calculateRecommendations();
   this.markAbsentIfNoPlay();
-  this.updateGameTime();
   this.updatedAt = formatDate(new Date());
   next();
 });

@@ -1,6 +1,14 @@
 //HardGameLogic
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Animated,
+  Vibration,
+} from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
 
@@ -13,7 +21,7 @@ const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 // Define types for shape, color and count options
 const shapeOptions = ["Rectangle", "Triangle", "Square", "Circle"];
 const colorOptions = ["Red", "Blue", "Green", "Yellow"];
-const countOptions = ["1", "2", "3", "4", "5"]; 
+const countOptions = ["1", "2", "3", "4", "5"];
 
 interface FigureProperties {
   shape: string;
@@ -24,7 +32,7 @@ interface FigureProperties {
 interface Figure {
   source: any;
   properties: FigureProperties;
-  questionType?: 'shape' | 'color' | 'count';
+  questionType?: "shape" | "color" | "count";
   correctAnswer?: string;
 }
 
@@ -58,7 +66,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
   dialogues,
   numShapeRounds = 5,
   numColorRounds = 5,
-  includeCountRound = true
+  includeCountRound = true,
 }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [rounds, setRounds] = useState<Figure[]>([]);
@@ -67,84 +75,97 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isClickable, setIsClickable] = useState(true);
   const [feedbackText, setFeedbackText] = useState(
-    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!"
+    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+      "Let's begin!"
   );
   const [npcImage, setNpcImage] = useState(npcConfig.idle);
   const [isGameRunning, setIsGameRunning] = useState(true);
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
-  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(null);
-  const [questionType, setQuestionType] = useState<'shape' | 'color' | 'count'>('shape');
+  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(
+    null
+  );
+  const [questionType, setQuestionType] = useState<"shape" | "color" | "count">(
+    "shape"
+  );
 
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
 
-  const totalRounds = numShapeRounds + numColorRounds + (includeCountRound ? 1 : 0);
+  const totalRounds =
+    numShapeRounds + numColorRounds + (includeCountRound ? 1 : 0);
 
   // Generate rounds
   const generateRounds = useCallback(() => {
     // Get all available figure types
     const figureTypes = Object.keys(figures);
     if (figureTypes.length === 0) return;
-    
-    const randomFigureType = figureTypes[Math.floor(Math.random() * figureTypes.length)];
+
+    const randomFigureType =
+      figureTypes[Math.floor(Math.random() * figureTypes.length)];
     setSelectedFigureType(randomFigureType);
-    
+
     const selectedFigures = figures[randomFigureType];
     if (!selectedFigures || !selectedFigures[0]?.properties) {
-      console.error('Invalid figure data:', randomFigureType, selectedFigures);
+      console.error("Invalid figure data:", randomFigureType, selectedFigures);
       return;
     }
-    
+
     // Create separate arrays for shape and color rounds
     const shapeRounds: Figure[] = [];
     const colorRounds: Figure[] = [];
-    
+
     // Get all figures except the overall figure (index 0)
     const availableFigures = selectedFigures.slice(1);
-    
+
     // Shuffle available figures
-    const shuffledFigures = [...availableFigures].sort(() => Math.random() - 0.5);
-    
+    const shuffledFigures = [...availableFigures].sort(
+      () => Math.random() - 0.5
+    );
+
     // Generate shape rounds
     for (let i = 0; i < numShapeRounds && i < shuffledFigures.length; i++) {
       shapeRounds.push({
         ...shuffledFigures[i],
-        questionType: 'shape',
-        correctAnswer: shuffledFigures[i].properties.shape
+        questionType: "shape",
+        correctAnswer: shuffledFigures[i].properties.shape,
       });
     }
-    
+
     // Generate color rounds using different figures when possible
     const remainingFigures = shuffledFigures.slice(numShapeRounds);
-    const colorFigures = [...remainingFigures, ...shuffledFigures].slice(0, numColorRounds);
-    
+    const colorFigures = [...remainingFigures, ...shuffledFigures].slice(
+      0,
+      numColorRounds
+    );
+
     for (let i = 0; i < numColorRounds && i < colorFigures.length; i++) {
       colorRounds.push({
         ...colorFigures[i],
-        questionType: 'color',
-        correctAnswer: colorFigures[i].properties.color
+        questionType: "color",
+        correctAnswer: colorFigures[i].properties.color,
       });
     }
-    
+
     // Prepare rounds array
-    let allRounds: Figure[] = [...shapeRounds, ...colorRounds]
-      .sort(() => Math.random() - 0.5);
-    
+    let allRounds: Figure[] = [...shapeRounds, ...colorRounds].sort(
+      () => Math.random() - 0.5
+    );
+
     // Add the count round if needed (using the overall figure)
     if (includeCountRound) {
       const countRound: Figure = {
         ...selectedFigures[0],
-        questionType: 'count',
-        correctAnswer: selectedFigures[0].properties.count
+        questionType: "count",
+        correctAnswer: selectedFigures[0].properties.count,
       };
-      
+
       // Add count round at the end
       allRounds = [...allRounds, countRound];
     }
-    
+
     setRounds(allRounds);
     resetGameState();
   }, [figures, numShapeRounds, numColorRounds, includeCountRound]);
@@ -153,7 +174,10 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     setCurrentRound(0);
     setIsCorrect(null);
     setIsClickable(true);
-    setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!");
+    setFeedbackText(
+      dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+        "Let's begin!"
+    );
     setNpcImage(npcConfig.idle);
     setIsGameRunning(true);
     setCorrectFirstTry(0);
@@ -171,59 +195,70 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     if (rounds.length > 0 && currentRound < rounds.length) {
       const currentQuestion = rounds[currentRound];
       if (!currentQuestion) {
-        console.error('Invalid round data:', currentRound, rounds);
+        console.error("Invalid round data:", currentRound, rounds);
         return;
       }
-      
-      setQuestionType(currentQuestion.questionType || 'shape');
-      
+
+      setQuestionType(currentQuestion.questionType || "shape");
+
       let roundOptions: string[] = [];
-      if (currentQuestion.questionType === 'shape') {
+      if (currentQuestion.questionType === "shape") {
         roundOptions = [...shapeOptions].sort(() => Math.random() - 0.5);
-      } else if (currentQuestion.questionType === 'color') {
+      } else if (currentQuestion.questionType === "color") {
         roundOptions = [...colorOptions].sort(() => Math.random() - 0.5);
-      } else if (currentQuestion.questionType === 'count') {
+      } else if (currentQuestion.questionType === "count") {
         roundOptions = [...countOptions].sort(() => Math.random() - 0.5);
       }
-      
+
       setOptions(roundOptions);
       setIsCorrect(null);
       setIsClickable(true);
-      setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's continue!");
+      setFeedbackText(
+        dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+          "Let's continue!"
+      );
       setNpcImage(npcConfig.idle);
       setHasTried(false);
     }
   }, [currentRound, rounds, dialogues?.idle, npcConfig.idle]);
 
-  const handleSelection = useCallback((selectedAnswer: string) => {
-    if (!isClickable || currentRound >= rounds.length) return;
+  const handleSelection = useCallback(
+    (selectedAnswer: string) => {
+      if (!isClickable || currentRound >= rounds.length) return;
 
-    // Convert both to lowercase for case-insensitive comparison
-    const normalizedSelection = selectedAnswer.toLowerCase();
-    const normalizedCorrectAnswer = (rounds[currentRound].correctAnswer || '').toLowerCase();
+      // Convert both to lowercase for case-insensitive comparison
+      const normalizedSelection = selectedAnswer.toLowerCase();
+      const normalizedCorrectAnswer = (
+        rounds[currentRound].correctAnswer || ""
+      ).toLowerCase();
 
-    if (normalizedSelection === normalizedCorrectAnswer) {
-      handleCorrectAnswer();
-    } else {
-      handleWrongAnswer();
-    }
-  }, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
+      if (normalizedSelection === normalizedCorrectAnswer) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [currentRound, rounds, isClickable, correctFirstTry, hasTried]
+  );
 
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
-    const randomCorrectDialogue = dialogues?.correct?.[Math.floor(Math.random() * dialogues.correct.length)] || "Correct!";
+    const randomCorrectDialogue =
+      dialogues?.correct?.[
+        Math.floor(Math.random() * dialogues.correct.length)
+      ] || "Correct!";
     setFeedbackText(randomCorrectDialogue);
     animateNpcBounce();
     setNpcImage(npcConfig.correct);
     fadeInAnimation();
     setIsClickable(false);
-  
+
     let updatedScore = correctFirstTry;
     if (!hasTried) {
       updatedScore += 1;
       setCorrectFirstTry(updatedScore);
     }
-  
+
     setTimeout(() => {
       if (currentRound < rounds.length - 1) {
         setCurrentRound(currentRound + 1);
@@ -240,7 +275,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
   const handleWrongAnswer = () => {
     setIsCorrect(false);
-    const randomWrongDialogue = dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] || "Try again!";
+    const randomWrongDialogue =
+      dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] ||
+      "Try again!";
     setFeedbackText(randomWrongDialogue);
     setNpcImage(npcConfig.wrong);
     fadeInAnimation();
@@ -252,18 +289,46 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
   const triggerShake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
   const animateNpcBounce = () => {
     Animated.sequence([
-      Animated.timing(npcBounceAnim, { toValue: 1.1, duration: 150, useNativeDriver: true }),
-      Animated.timing(npcBounceAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1.1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -277,13 +342,13 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
   const getQuestionText = () => {
     if (!rounds[currentRound]) return "";
-    
-    switch(questionType) {
-      case 'shape':
+
+    switch (questionType) {
+      case "shape":
         return "Identify the shape";
-      case 'color':
+      case "color":
         return "Identify the color";
-      case 'count':
+      case "count":
         return "How MANY shapes are in this figure?";
       default:
         return "";
@@ -300,38 +365,47 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.pauseContainer} 
+      <TouchableOpacity
+        style={styles.pauseContainer}
         onPress={() => {
           setIsPaused(true);
           setIsGameRunning(false);
-        }}>
+        }}
+      >
         <Image source={pauseBtn} style={styles.pause} />
       </TouchableOpacity>
 
       <View style={styles.contentContainer}>
         <View style={styles.validationContainer}>
           {isCorrect !== null && (
-            <Image source={isCorrect ? correctImg : wrongImg} style={styles.validationImage} />
+            <Image
+              source={isCorrect ? correctImg : wrongImg}
+              style={styles.validationImage}
+            />
           )}
         </View>
-      
-        <Stopwatch 
-          isRunning={isGameRunning} 
-          onStop={(finalTime) => { 
+
+        <Stopwatch
+          isRunning={isGameRunning}
+          onStop={(finalTime) => {
             elapsedTimeRef.current = finalTime;
-          }} 
-        />                
-        <Text style={styles.roundText}>Round {currentRound + 1} of {totalRounds}</Text>
+          }}
+        />
+        <Text style={styles.roundText}>
+          Round {currentRound + 1} of {totalRounds}
+        </Text>
 
         {rounds.length > 0 && currentRound < rounds.length && (
           <>
             <Text style={styles.questionText}>{getQuestionText()}</Text>
-            
+
             <View style={styles.shapeContainer}>
-              <Animated.Image 
-                source={rounds[currentRound].source} 
-                style={[styles.shapeImage, { transform: [{ translateX: shakeAnim }] }]} 
+              <Animated.Image
+                source={rounds[currentRound].source}
+                style={[
+                  styles.shapeImage,
+                  { transform: [{ translateX: shakeAnim }] },
+                ]}
               />
             </View>
 
@@ -340,10 +414,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
                 <TouchableOpacity
                   key={index}
                   onPress={() => handleSelection(option)}
-                  style={[
-                    styles.button,
-                    !isClickable && styles.disabledButton
-                  ]}
+                  style={[styles.button, !isClickable && styles.disabledButton]}
                   disabled={!isClickable}
                 >
                   <Text style={styles.buttonText}>{option}</Text>
@@ -355,9 +426,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
       </View>
 
       <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
-        <Animated.Image 
-          source={npcImage} 
-          style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]} 
+        <Animated.Image
+          source={npcImage}
+          style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]}
         />
 
         <View style={styles.dialogueContainer}>
@@ -366,8 +437,8 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
         </View>
       </Animated.View>
 
-      <SettingsModal 
-        visible={isPaused} 
+      <SettingsModal
+        visible={isPaused}
         onClose={() => {
           setIsPaused(false);
           setIsGameRunning(true);
@@ -381,7 +452,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home');
+          navigation.navigate("Home");
           setIsPaused(false);
         }}
       />
@@ -394,7 +465,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     position: "absolute",
     top: 40,
-    left: 50
+    left: 50,
   },
   container: {
     flex: 1,
@@ -408,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     paddingBottom: 150,
-    zIndex: 10
+    zIndex: 10,
   },
   validationContainer: {
     height: 50,
@@ -506,14 +577,14 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     elevation: 3,
     borderWidth: 4,
-    borderColor: "white"
+    borderColor: "white",
   },
   npcName: {
     fontWeight: "bold",
     alignSelf: "flex-start",
     marginBottom: 5,
     paddingLeft: 60,
-    fontSize: 18
+    fontSize: 18,
   },
   npcDialogue: {
     textAlign: "center",
@@ -527,6 +598,6 @@ const styles = StyleSheet.create({
   pause: {
     width: 80,
     height: 80,
-    resizeMode: "contain"
-  }
+    resizeMode: "contain",
+  },
 });

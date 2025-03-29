@@ -119,6 +119,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   // Counters if you want them, not mandatory
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
+
   const generateRounds = useCallback(() => {
     const categoryTypes = Object.keys(categories);
 

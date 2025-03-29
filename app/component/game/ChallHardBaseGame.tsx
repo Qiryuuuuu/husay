@@ -39,6 +39,13 @@ interface Figure {
   correctAnswer?: string;
 }
 
+export interface RoundData {
+  correct: boolean;
+  image?: number; // Assuming figures have an `image` field
+  name: string;
+  type: "shape" | "color" | "number";
+}
+
 interface NpcConfig {
   [key: string]: {
     idle: any;
@@ -56,7 +63,7 @@ interface BaseHardGameProps {
     flower: Figure[];
     robot: Figure[];
   };
-  onGameComplete: (time: number, score: number) => void;
+  onGameComplete: (time: number, score: number, structuredRounds: any) => void;
   navigation: any;
   npcConfig: NpcConfig;
   dialogues: {
@@ -70,6 +77,8 @@ interface BaseHardGameProps {
   numRounds?: number;
   storyScenes: any;
   outro: any;
+  structuredRounds: RoundData[]; // ✅ New prop
+  setStructuredRounds: React.Dispatch<React.SetStateAction<RoundData[]>>; // ✅ New prop
 }
 
 export const BaseHardGame: React.FC<BaseHardGameProps> = ({
@@ -83,6 +92,8 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   numColorRounds = 5,
   includeCountRound = true,
   numRounds = 11,
+  structuredRounds,
+  setStructuredRounds,
 }) => {
   const [npcImage, setNpcImage] = useState(npcConfig["EVA"].idle);
   const [totalTime, setTotalTime] = useState(0);
@@ -114,6 +125,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const [questionType, setQuestionType] = useState<"shape" | "color" | "count">(
     "shape"
   );
+  const structuredRoundsRef = useRef(structuredRounds);
 
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
@@ -168,6 +180,20 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     resetGameState();
   }, [figures, numShapeRounds, numColorRounds, includeCountRound]);
 
+  const generateRoundsData = useCallback(() => {
+    const newRounds: RoundData[] = rounds.map((round) => ({
+      correct: false, // Default false, will be updated during gameplay
+      image: round.source, // Assuming `source` contains the image reference
+      name: round.correctAnswer || "Unknown",
+      type:
+        round.questionType === "count"
+          ? "number"
+          : round.questionType || "shape",
+    }));
+
+    return newRounds;
+  }, [rounds]);
+
   const resetGameState = () => {
     setCurrentRound(0);
     setIsCorrect(null);
@@ -182,6 +208,20 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     elapsedTimeRef.current = 0;
     setHasTried(false);
   };
+
+  useEffect(() => {
+    if (structuredRounds.length === 0) {
+      setStructuredRounds(generateRoundsData());
+      console.log("✅ Initialized Structured Rounds:", generateRoundsData());
+    }
+  }, [rounds]);
+
+  useEffect(() => {
+    console.log(
+      "📦 BaseHardGame structuredRounds passed up:",
+      structuredRounds
+    );
+  }, [structuredRounds]);
 
   useEffect(() => {
     if (figures && Object.keys(figures).length > 0) {
@@ -264,8 +304,14 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     fadeInAnimation();
     setIsClickable(false);
 
-    // Check the ref instead of state
+    // ✅ Only mark the round as correct if it was answered on the first try
     if (!hasTriedRef.current) {
+      setStructuredRounds((prevRounds) => {
+        return prevRounds.map((round, index) =>
+          index === currentRound ? { ...round, correct: true } : round
+        );
+      });
+
       setCorrectFirstTry((prevScore) => {
         console.log(
           `Round ${currentRound + 1}: Correct on first try! Score: ${
@@ -276,12 +322,18 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       });
     }
 
-    // Reset the ref for the next round
+    console.log(
+      `🚀 Updated structuredRounds for round ${
+        currentRound + 1
+      } (First try: ${!hasTriedRef.current})`
+    );
+
+    // ✅ Reset hasTriedRef for the next round
     hasTriedRef.current = false;
 
-    if (currentRound === 4 || currentRound === 9 || currentRound === 10) {
+    if ([4, 9, 10].includes(currentRound)) {
       const roundKey = `round${currentRound + 1}`;
-      const correctFrame = storyScenes[roundKey].find(
+      const correctFrame = storyScenes[roundKey]?.find(
         (frame) => frame.type === FrameType.CORRECT_ANSWER
       );
       if (correctFrame) {
@@ -289,35 +341,14 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         setIsWaitingForTap(true);
         return;
       }
-    } else {
-      if (!hasTriedRef.current) {
-        setTimeout(() => {
-          setCurrentRound((prevRound) => {
-            console.log(`Moving to Round ${prevRound + 2}`);
-            hasTriedRef.current = false;
-            return prevRound + 1;
-          });
-        }, 1500);
-      } else {
-        console.log(
-          `Round ${
-            currentRound + 1
-          }: Correct but not first try. Restarting round.`
-        );
-        setTimeout(() => {
-          setIsClickable(true);
-          setIsCorrect(null);
-          hasTriedRef.current = false;
-          const roundKey = `round${currentRound + 1}`;
-          const questionFrame = storyScenes[roundKey].find(
-            (frame) => frame.type === FrameType.QUESTION
-          );
-          if (questionFrame) {
-            setCurrentFrame(questionFrame);
-          }
-        }, 1500);
-      }
     }
+
+    setTimeout(() => {
+      setCurrentRound((prevRound) => {
+        console.log(`✅ Moving to Round ${prevRound + 2}`);
+        return prevRound + 1;
+      });
+    }, 1500);
   };
 
   const handleWrongAnswer = () => {
@@ -333,10 +364,25 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     triggerShake();
     Vibration.vibrate(100);
 
-    // Mark that the player has tried using the ref
     hasTriedRef.current = true;
     console.log(
       `Round ${currentRound + 1}: Wrong answer. hasTriedRef set to true.`
+    );
+
+    setStructuredRounds((prevRounds) => {
+      const updatedRounds = prevRounds.map((round, index) =>
+        index === currentRound ? { ...round, correct: false } : round
+      );
+      console.log(
+        "🚨 structuredRounds AFTER wrong answer:",
+        JSON.stringify(updatedRounds, null, 2)
+      );
+      return updatedRounds;
+    });
+
+    console.log(
+      `❌ Updated structuredRounds after wrong answer:`,
+      structuredRounds
     );
   };
 
@@ -466,10 +512,14 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       setGameEnded(true);
       setIsGameRunning(false);
       stopTimer();
+      console.log(
+        "🚀 BEFORE SUBMISSION structuredRounds:",
+        JSON.stringify(structuredRounds, null, 2)
+      );
 
       if (onGameComplete) {
         // Use the score passed to this function
-        onGameComplete(totalTime, finalScore);
+        onGameComplete(totalTime, finalScore, structuredRounds);
       }
     }
   };

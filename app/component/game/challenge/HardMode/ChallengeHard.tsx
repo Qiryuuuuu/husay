@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BaseHardGame } from "../../ChallHardBaseGame";
 import dialogues from "../../../../data/evaDialogues";
 import figures from "../../../../data/hardQuestions";
+import { RoundData } from "../../ChallHardBaseGame";
 
 // Import NPC (character) assets
 const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
@@ -830,13 +831,14 @@ const npcConfig = {
 };
 
 interface ChallengeHardGameProps {
-  onGameComplete: (time: number, score: number) => void;
+  onGameComplete: (time: number, score: number, structuredRounds: any) => void;
   navigation: any;
   onScoreUpdate: (scores: {
     Shapes: Record<string, number>;
     Colors: Record<string, number>;
     Numbers: Record<string, number>;
-  }) => void; // ✅ Ensure correct type
+  }) => void;
+  structuredRounds: RoundData[]; // ✅ New prop
 }
 
 const formattedFigures = {
@@ -851,10 +853,45 @@ const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
   onGameComplete,
   navigation,
 }) => {
+  const [structuredRounds, setStructuredRounds] = useState<RoundData[]>(
+    () => structuredRounds || []
+  );
+
+  const handleGameComplete = (
+    time: number,
+    score: number,
+    structuredRounds: any
+  ) => {
+    console.log("🔍 Challenge Hard Game received rounds:", structuredRounds);
+
+    if (!structuredRounds || !Array.isArray(structuredRounds)) {
+      console.error(
+        "❌ ERROR: Rounds array is missing or invalid before navigation!",
+        structuredRounds
+      );
+      return;
+    }
+    setStructuredRounds([...structuredRounds]); // ✅ Clone structured rounds before passing up
+    console.log(
+      "🚀 Final structuredRounds being passed to ChallengeHard.js:",
+      structuredRounds
+    );
+    console.log(
+      "✅ Final Correct Count:",
+      structuredRounds.filter((r) => r.correct).length
+    );
+    console.log(
+      "✅ Final Incorrect Count:",
+      structuredRounds.filter((r) => !r.correct).length
+    );
+
+    onGameComplete(time, score, [...structuredRounds]); // ✅ Ensure correct rounds are sent
+  };
+
   return (
     <BaseHardGame
       figures={formattedFigures}
-      onGameComplete={onGameComplete}
+      onGameComplete={handleGameComplete}
       navigation={navigation}
       npcConfig={npcConfig}
       dialogues={dialogues}
@@ -864,8 +901,18 @@ const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
       numRounds={11}
       outro={outro}
       storyScenes={storyScenes}
+      structuredRounds={structuredRounds} // ✅ Pass structuredRounds
+      setStructuredRounds={setStructuredRounds} // ✅ Allow updates
     />
   );
 };
 
-export default ChallengeHardGame;
+export default (props) => {
+  console.log(
+    "🚀 Final structuredRounds being passed to ChallengeHard.js:",
+    props.structuredRounds
+  );
+  return (
+    <ChallengeHardGame {...props} structuredRounds={props.structuredRounds} />
+  );
+};

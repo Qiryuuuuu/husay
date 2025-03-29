@@ -1,9 +1,17 @@
 // BaseGame.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Animated,
+  Vibration,
+} from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
-import AudioPlayer from "../../component/audio/AudioPlayer"; 
+import AudioPlayer from "../../component/audio/AudioPlayer";
 import AudioChall from "../audio/ChallAudio";
 import { FrameType } from "../game/challenge/EasyMode/ChallengeShape"; // Import FrameType from ChallengeShape
 
@@ -13,15 +21,25 @@ const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
-interface CategoryItem {
+export interface CategoryItem {
   name: string;
   image: any;
+  type?: string;
+  correct?: boolean;
+}
+
+interface CategoryData {
+  [key: string]: CategoryItem[];
 }
 
 interface BaseGameProps {
-  category: string; // Add category prop to determine the level
-  categories: { [key: string]: CategoryItem[] }; 
-  onGameComplete: (time: number, score: number) => void;
+  categories: CategoryData;
+  onGameComplete: (
+    time: number,
+    score: number,
+    currentCategoryType: string,
+    rounds: CategoryItem[]
+  ) => void;
   navigation: any;
   npcConfig: {
     idle: any;
@@ -36,17 +54,20 @@ interface BaseGameProps {
   };
   storyScenes: any;
   onStateChange: (state: any) => void;
+  numRounds?: number;
+  rounds: CategoryItem[];
+  currentCategoryType: string;
 }
 
 export const BaseGame: React.FC<BaseGameProps> = ({
-  category,
   categories,
   onGameComplete,
   navigation,
   npcConfig,
   dialogues,
   storyScenes,
-  onStateChange
+  onStateChange,
+  numRounds = 5,
 }) => {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(null);
@@ -58,7 +79,8 @@ export const BaseGame: React.FC<BaseGameProps> = ({
 
   const [totalTime, setTotalTime] = useState(0);
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
-
+  const elapsedTimeRef = useRef(0);
+  const [currentCategoryType, setCurrentCategoryType] = useState("");
   const [isPaused, setIsPaused] = useState(false);
   const [rounds, setRounds] = useState<CategoryItem[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -66,7 +88,8 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isClickable, setIsClickable] = useState(true);
   const [feedbackText, setFeedbackText] = useState(
-    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!"
+    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+      "Let's begin!"
   );
   const [npcImage, setNpcImage] = useState(npcConfig.idle);
   const [isGameRunning, setIsGameRunning] = useState(true);
@@ -76,44 +99,73 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
+  // Counters if you want them, not mandatory
+  const [correctCount, setCorrectCount] = useState(0);
+  const [incorrectCount, setIncorrectCount] = useState(0);
+
   const generateRounds = useCallback(() => {
-    if (!categories || !categories[category]) {
-      console.warn(`Category ${category} is not found!`);
+    const categoryTypes = Object.keys(categories);
+
+    if (categoryTypes.length === 0) {
+      console.error("❌ ERROR: No categories available!");
       return;
     }
-  
-    const categoryItems = categories[category]; // Select the right category dynamically
-  
-    if (categoryItems.length < 4) {
-      console.warn(`Not enough items in category: ${category}`);
+
+    let selectedRounds: CategoryItem[] = [];
+
+    // If there’s only one category, just pull from it directly
+    const categoryName = categoryTypes[0]; // ✅ Always use "color" (or whatever is the only category)
+    const categoryItems = categories[categoryName];
+
+    if (!categoryItems || categoryItems.length === 0) {
+      console.error(`❌ ERROR: No items in category '${categoryName}'`);
       return;
     }
-  
-    let shuffledItems = [...categoryItems].sort(() => Math.random() - 0.5); // Shuffle
-    let selectedRounds = [...shuffledItems.slice(0, 4)]; // Take 4 items
-  
-    // Add one random extra item to make it 5 rounds
-    const extraItem = shuffledItems[Math.floor(Math.random() * shuffledItems.length)];
-    selectedRounds.push(extraItem);
-  
-    console.log(`Generated Rounds for ${category}:`, selectedRounds.length, selectedRounds);
+
+    // Shuffle the category items and select `numRounds`
+    let shuffledItems = [...categoryItems].sort(() => Math.random() - 0.5);
+
+    // Ensure we have exactly `numRounds` items
+    while (selectedRounds.length < numRounds && shuffledItems.length > 0) {
+      const item = shuffledItems.pop();
+      if (item && item.name) {
+        selectedRounds.push({ ...item, type: categoryName }); // ✅ Always set `type` correctly
+      } else {
+        console.error("❌ ERROR: Item is missing a valid name.");
+      }
+    }
+
+    if (selectedRounds.length < numRounds) {
+      console.warn(
+        `⚠️ Warning: Only ${selectedRounds.length} rounds available instead of ${numRounds}.`
+      );
+    }
+
+    console.log("✅ Generated Rounds:", selectedRounds);
     setRounds(selectedRounds);
     resetGameState();
-  }, [categories, category]);
-  
-  
-  
+  }, [categories, numRounds]);
 
   const resetGameState = () => {
     setCurrentRound(0);
     setIsCorrect(null);
     setIsClickable(true);
-    setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!");
+    setFeedbackText(
+      dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+        "Let's begin!"
+    );
     setNpcImage(npcConfig.idle);
     setIsGameRunning(true);
     setCorrectFirstTry(0);
     setHasTried(false);
   };
+
+  // On mount, generate the random set of rounds
+  useEffect(() => {
+    if (Object.keys(categories).length > 0) {
+      generateRounds();
+    }
+  }, [generateRounds]);
 
   useEffect(() => {
     if (currentFrame?.type === FrameType.QUESTION) {
@@ -132,7 +184,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const startTimer = () => {
     if (!timerInterval.current) {
       timerInterval.current = setInterval(() => {
-        setTotalTime(prev => prev + 1);
+        setTotalTime((prev) => prev + 1);
       }, 1000);
     }
   };
@@ -145,108 +197,225 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   };
 
   useEffect(() => {
-    if (Object.keys(categories).length > 0) {
-      generateRounds();
-    }
-  }, [generateRounds]);
-
-  useEffect(() => {
-    console.log("Current Round:", currentRound);
-    console.log("Total Rounds:", rounds.length);
-  
-    if (rounds.length > 0 && currentRound <= rounds.length - 1) { 
+    if (rounds.length > 0) {
+      // Load frames
       const roundStory = storyScenes[`round${currentRound + 1}`];
       if (roundStory) {
         setCurrentFrame(roundStory[0]);
         setCurrentFrameIndex(0);
       }
-  
-      generateOptions(rounds[currentRound]?.name);
+
+      if (!rounds[currentRound]) {
+        console.log(`Error: rounds[${currentRound}] is undefined!`, rounds);
+        return;
+      }
+
+      const currentType = rounds[currentRound]?.type;
+      setCurrentCategoryType(currentType);
+      generateOptions(currentType, rounds[currentRound]?.name);
+
+      // Reset states
       setNpcImage(npcConfig.idle);
       setIsCorrect(null);
       setIsClickable(true);
       setHasTried(false);
     }
   }, [currentRound, rounds]);
-  
 
-  const generateOptions = (correctAnswer: string) => {
-    const categoryItems = categories[category]; // Dynamically get the selected category items
-    const otherOptions = categoryItems.filter(item => item.name !== correctAnswer);
+  // Generate the multiple‐choice options for each round
+  const generateOptions = (type: string, correctAnswer: string) => {
+    if (!type || !categories[type]) {
+      console.error(`Error: Invalid category type '${type}'`);
+      return;
+    }
+
+    const categoryArray = categories[type];
+    const otherOptions = categoryArray.filter(
+      (item) => item.name !== correctAnswer
+    );
+
+    // Shuffle and pick up to 6 wrong options
     const shuffledOptions = otherOptions.sort(() => Math.random() - 0.5);
-    const wrongOptions = shuffledOptions.slice(0, Math.min(6, shuffledOptions.length));
+    const wrongOptions = shuffledOptions.slice(
+      0,
+      Math.min(6, shuffledOptions.length)
+    );
+
+    // Add correct, shuffle
     const allOptions = [
       ...wrongOptions,
-      categoryItems.find(item => item.name === correctAnswer) || { name: correctAnswer, image: null }
+      categoryArray.find((item) => item.name === correctAnswer) || {
+        name: correctAnswer,
+        image: null,
+      },
     ];
     setOptions(allOptions.sort(() => Math.random() - 0.5));
   };
-  
 
-  const handleSelection = useCallback((selectedName: string) => {
-    if (!isClickable) return;
+  const handleSelection = useCallback(
+    (selectedName: string) => {
+      if (!isClickable) return;
 
-    if (selectedName === rounds[currentRound].name) {
-      handleCorrectAnswer();
-    } else {
-      handleWrongAnswer();
-    }
-  }, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
+      if (selectedName === rounds[currentRound].name) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [currentRound, rounds, isClickable, correctFirstTry, hasTried]
+  );
 
+  // Whenever totalTime changes, sync the ref:
+  useEffect(() => {
+    elapsedTimeRef.current = totalTime;
+  }, [totalTime]);
+
+  // Move to next round or end
   const moveToNextRound = (updatedScore: number) => {
-    if (currentRound < rounds.length - 1) {
-      setCurrentRound(prevRound => prevRound + 1);
+    if (currentRound < numRounds) {
+      setCurrentRound(currentRound + 1);
     } else {
+      setIsGameRunning(false);
       setTimeout(() => {
-        setIsGameRunning(false);
         if (onGameComplete) {
-          onGameComplete(totalTime, updatedScore);
+          // We pass updatedScore as the final score
+          onGameComplete(
+            elapsedTimeRef.current,
+            updatedScore,
+            currentCategoryType,
+            rounds
+          );
         }
       }, 500);
     }
   };
-  
+
+  // ========== CORRECT / INCORRECT ANSWER HANDLERS ==========
 
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
+    setCorrectCount((prev) => prev + 1);
+
+    setRounds((prevRounds) => {
+      const updated = [...prevRounds];
+      updated[currentRound] = {
+        ...updated[currentRound],
+        correct: true, // ✅ set round as correct
+      };
+      return updated;
+    });
+
+    // Show correct answer feedback if it exists
     const roundStory = storyScenes[`round${currentRound + 1}`];
-    const correctFrame = roundStory.find(frame => frame.type === FrameType.CORRECT_ANSWER);
+    const correctFrame = roundStory.find(
+      (frame) => frame.type === FrameType.CORRECT_ANSWER
+    );
+
     if (correctFrame) {
       setCurrentFrame(correctFrame);
       setIsWaitingForTap(true);
     }
+
     setNpcImage(npcConfig.correct);
     fadeInAnimation();
     setIsClickable(false);
+
+    // If the user hasn't tried yet, increment updatedScore
     let updatedScore = correctFirstTry;
     if (!hasTried) {
       updatedScore += 1;
       setCorrectFirstTry(updatedScore);
     }
+    moveToNextRound(updatedScore);
   };
 
   const handleWrongAnswer = () => {
     setIsCorrect(false);
+    setIncorrectCount((prev) => prev + 1);
+
+    setRounds((prevRounds) => {
+      const updated = [...prevRounds];
+      updated[currentRound] = {
+        ...updated[currentRound],
+        correct: false, // ✅ set round as incorrect
+      };
+      return updated;
+    });
+
+    // Show incorrect answer feedback if it exists
     const roundStory = storyScenes[`round${currentRound + 1}`];
-    const incorrectFrame = roundStory.find(frame => frame.type === FrameType.INCORRECT_ANSWER);
+    const incorrectFrame = roundStory.find(
+      (frame) => frame.type === FrameType.INCORRECT_ANSWER
+    );
+
     if (incorrectFrame) {
       setCurrentFrame(incorrectFrame);
       setIsWaitingForTap(true);
     }
+
     setNpcImage(npcConfig.wrong);
     fadeInAnimation();
     triggerShake();
     Vibration.vibrate(100);
     setHasTried(true);
+    moveToNextRound(correctFirstTry);
+  };
+
+  // End entire game
+  const endGame = async (finalScore: number) => {
+    if (!gameEnded) {
+      console.log(
+        "🎉 Ending Game with Score:",
+        finalScore,
+        "Elapsed Time:",
+        totalTime
+      );
+      console.log(
+        "🔍 Checking rounds before sending to onGameComplete:",
+        rounds
+      );
+
+      if (!rounds || rounds.length === 0) {
+        console.error("❌ ERROR: Rounds array is empty or undefined!");
+      }
+
+      setGameEnded(true);
+      setIsGameRunning(false);
+      stopTimer();
+
+      if (onGameComplete) {
+        onGameComplete(finalScore, totalTime, currentCategoryType, [...rounds]);
+      }
+    }
   };
 
   const triggerShake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -274,62 +443,73 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     <View style={styles.container}>
       {/* Audio Player */}
       {currentAudioSources.length > 0 && (
-          <AudioChall
-            audioSources={currentAudioSources}
-            onPlaybackComplete={handleAudioPlaybackComplete}
-          />
+        <AudioChall
+          audioSources={currentAudioSources}
+          onPlaybackComplete={handleAudioPlaybackComplete}
+        />
       )}
 
       {/* Pause Button */}
-      <TouchableOpacity 
-        style={styles.pauseContainer} 
+      <TouchableOpacity
+        style={styles.pauseContainer}
         onPress={() => {
           setIsPaused(true);
           setIsGameRunning(false);
-        }}>
+        }}
+      >
         <Image source={pauseBtn} style={styles.pause} />
       </TouchableOpacity>
 
       {/* Full-Screen Touchable for Progression */}
       <TouchableOpacity
-  style={styles.fullScreenTouchable}
-  onPress={() => {
-    if (gameEnded || currentFrame?.type === FrameType.QUESTION) {
-      return; // Prevent progression during the question phase or after the game ends
-    }
+        style={styles.fullScreenTouchable}
+        onPress={() => {
+          if (gameEnded || currentFrame?.type === FrameType.QUESTION) {
+            return; // Prevent progression during the question phase or after the game ends
+          }
 
-    if (isWaitingForTap) {
-      setIsWaitingForTap(false);
+          if (isWaitingForTap) {
+            setIsWaitingForTap(false);
 
-      // Handle progression after correct/incorrect feedback
-      if (currentFrame?.type === FrameType.CORRECT_ANSWER || currentFrame?.type === FrameType.INCORRECT_ANSWER) {
-        moveToNextRound(correctFirstTry);
-        return;
-      }
-    }
+            // Handle progression after correct/incorrect feedback
+            if (
+              currentFrame?.type === FrameType.CORRECT_ANSWER ||
+              currentFrame?.type === FrameType.INCORRECT_ANSWER
+            ) {
+              moveToNextRound(correctFirstTry);
+              return;
+            }
+          }
 
-    // Default behavior: Progress to the next frame
-    const roundStory = storyScenes[`round${currentRound + 1}`];
-    if (roundStory && currentFrameIndex < roundStory.length - 1) {
-      const nextIndex = currentFrameIndex + 1;
-      setCurrentFrameIndex(nextIndex);
-      setCurrentFrame(roundStory[nextIndex]);
-      setIsWaitingForTap(true);
-    }
-  }}
->
+          // Default behavior: Progress to the next frame
+          const roundStory = storyScenes[`round${currentRound + 1}`];
+          if (roundStory && currentFrameIndex < roundStory.length - 1) {
+            const nextIndex = currentFrameIndex + 1;
+            setCurrentFrameIndex(nextIndex);
+            setCurrentFrame(roundStory[nextIndex]);
+            setIsWaitingForTap(true);
+          }
+        }}
+      >
         {/* Background Image */}
-        <Image source={currentFrame?.background} style={styles.backgroundImage} />
+        <Image
+          source={currentFrame?.background}
+          style={styles.backgroundImage}
+        />
 
         {/* NPC & Dialogue Box */}
         <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
-          <Animated.Image 
-            source={currentFrame?.character === "EVA" ? npcImage : null} 
-            style={[styles.npcImage]} 
+          <Animated.Image
+            source={currentFrame?.character === "EVA" ? npcImage : null}
+            style={[styles.npcImage]}
           />
           <View style={styles.dialogueContainer}>
-            <Text style={styles.npcName}>{currentFrame?.character || "Unknown"}</Text>
-            <Text style={styles.npcDialogue}>{currentFrame?.dialogues?.[0] || ""}</Text>
+            <Text style={styles.npcName}>
+              {currentFrame?.character || "Unknown"}
+            </Text>
+            <Text style={styles.npcDialogue}>
+              {currentFrame?.dialogues?.[0] || ""}
+            </Text>
           </View>
         </Animated.View>
 
@@ -337,16 +517,19 @@ export const BaseGame: React.FC<BaseGameProps> = ({
         {currentFrame?.type === FrameType.QUESTION && (
           <View style={styles.validationContainer}>
             {isCorrect !== null && (
-              <Image source={isCorrect ? correctImg : wrongImg} style={styles.validationImage} />
+              <Image
+                source={isCorrect ? correctImg : wrongImg}
+                style={styles.validationImage}
+              />
             )}
           </View>
         )}
 
         {/* Show Stopwatch Only During Question Frames */}
         {currentFrame?.type === FrameType.QUESTION && (
-          <Stopwatch 
-            isRunning={true}  // Ensure it runs
-            onStop={(finalTime) => setTotalTime(finalTime)}  // Store elapsed time
+          <Stopwatch
+            isRunning={true} // Ensure it runs
+            onStop={(finalTime) => setTotalTime(finalTime)} // Store elapsed time
           />
         )}
 
@@ -359,9 +542,12 @@ export const BaseGame: React.FC<BaseGameProps> = ({
         {currentFrame?.type === FrameType.QUESTION && (
           <>
             <View style={styles.itemContainer}>
-              <Animated.Image 
-                source={rounds[currentRound]?.image} 
-                style={[styles.itemImage, { transform: [{ translateX: shakeAnim }] }]} 
+              <Animated.Image
+                source={rounds[currentRound]?.image}
+                style={[
+                  styles.itemImage,
+                  { transform: [{ translateX: shakeAnim }] },
+                ]}
               />
             </View>
 
@@ -370,10 +556,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
                 <TouchableOpacity
                   key={index}
                   onPress={() => handleSelection(option.name)}
-                  style={[
-                    styles.button,
-                    !isClickable && styles.disabledButton
-                  ]}
+                  style={[styles.button, !isClickable && styles.disabledButton]}
                   disabled={!isClickable}
                 >
                   <Text style={styles.buttonText}>{option.name}</Text>
@@ -385,8 +568,8 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       </TouchableOpacity>
 
       {/* Pause Menu */}
-      <SettingsModal 
-        visible={isPaused} 
+      <SettingsModal
+        visible={isPaused}
         onClose={() => {
           setIsPaused(false);
           setIsGameRunning(true);
@@ -400,7 +583,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home');
+          navigation.navigate("Home");
           setIsPaused(false);
         }}
       />
@@ -421,14 +604,14 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1,  // Ensures it receives taps
-    flex: 1
+    zIndex: 1, // Ensures it receives taps
+    flex: 1,
   },
   pauseContainer: {
     zIndex: 100,
     position: "absolute",
     top: 40,
-    left: 50
+    left: 50,
   },
   container: {
     flex: 1,
@@ -442,7 +625,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     paddingBottom: 150,
-    zIndex: 10
+    zIndex: 10,
   },
   validationContainer: {
     height: 50,
@@ -502,7 +685,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   button: {
     backgroundColor: "#5A8EF4",
@@ -512,7 +695,7 @@ const styles = StyleSheet.create({
     width: 120,
     alignItems: "center",
     zIndex: 20,
-    marginBottom: 10
+    marginBottom: 10,
   },
   npcContainer: {
     position: "absolute",
@@ -540,14 +723,14 @@ const styles = StyleSheet.create({
     maxWidth: 800,
     elevation: 3,
     borderWidth: 4,
-    borderColor: "white"
+    borderColor: "white",
   },
   npcName: {
     fontWeight: "bold",
     alignSelf: "flex-start",
     marginBottom: 5,
     paddingLeft: 50,
-    fontSize: 20
+    fontSize: 20,
   },
   npcDialogue: {
     lineHeight: 30,
@@ -556,11 +739,11 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   disabledButton: {
-    backgroundColor: "#A0A0A0", 
+    backgroundColor: "#A0A0A0",
   },
   pause: {
     width: 80,
     height: 80,
-    resizeMode: "contain"
-  }
+    resizeMode: "contain",
+  },
 });

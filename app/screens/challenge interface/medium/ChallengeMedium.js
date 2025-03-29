@@ -40,6 +40,13 @@ const customCompletionDialog = [
 ];
 
 const MedModeScreen = ({ route }) => {
+  const [gameRounds, setGameRounds] = useState(rounds || []); // Fallback to empty array if rounds is undefined
+  const [gameFinished, setGameFinished] = useState(false);
+  const [finalScore, setFinalScore] = useState(null);
+  const [finalTimeTaken, setFinalTimeTaken] = useState(null);
+  const [finalSetGamePhase, setFinalSetGamePhase] = useState(() => null);
+  const [updatedRecommendations, setUpdatedRecommendations] = useState(null); // Initialize state for updated recommendations
+
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -50,12 +57,6 @@ const MedModeScreen = ({ route }) => {
   const { studentId, rounds, currentCategoryType } = route.params || {};
 
   // ✅ Fix: Correctly initialize `useState`
-  const [gameRounds, setGameRounds] = useState(rounds || []); // Fallback to empty array if rounds is undefined
-  const [gameFinished, setGameFinished] = useState(false);
-  const [finalScore, setFinalScore] = useState(null);
-  const [finalTimeTaken, setFinalTimeTaken] = useState(null);
-  const [finalSetGamePhase, setFinalSetGamePhase] = useState(() => null);
-  const [updatedRecommendations, setUpdatedRecommendations] = useState(null); // Initialize state for updated recommendations
 
   console.log("Challenge Medium received studentID:", studentId);
   console.log("🔍 Challenge Medium received rounds:", rounds);
@@ -150,6 +151,7 @@ const MedModeScreen = ({ route }) => {
             correctCount: score,
             incorrectCount: gameRounds.length - score,
             rounds: gameRounds, // Send rounds data to the backend
+            time: timeTaken, // Send time taken to the backend
           }),
         }
       );
