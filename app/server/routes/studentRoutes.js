@@ -189,7 +189,6 @@ router.put("/update-score", authenticateUser, async (req, res) => {
 
     // ✅ Recalculate stats & recommendations
     student.calculateStats();
-    student.calculateRecommendations();
 
     await student.save();
 
@@ -319,6 +318,7 @@ router.get("/get/:studentId", authenticateUser, async (req, res) => {
 
     // ✅ Recalculate accuracy before returning (ensures latest values)
     student.calculateStats();
+    student.calculateRecommendations();
 
     // ✅ Save the student to ensure database is updated
     await student.save();

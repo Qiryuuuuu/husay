@@ -288,6 +288,8 @@ export const BaseGame: React.FC<GameProps> = ({
     );
   }
 
+  
+  
   return (
     <View style={styles.container}>
       {/* Include AudioPlayer component */}
@@ -342,18 +344,7 @@ export const BaseGame: React.FC<GameProps> = ({
               />
             </View>
 
-            <View style={styles.buttonContainer}>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleSelection(option.name)}
-                  style={[styles.button, !isClickable && styles.disabledButton]}
-                  disabled={!isClickable}
-                >
-                  <Text style={styles.buttonText}>{option.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+
           </>
         )}
       </View>

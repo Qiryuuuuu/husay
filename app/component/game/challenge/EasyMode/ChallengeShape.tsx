@@ -264,8 +264,7 @@ const ShapeGame: React.FC<BaseGameProps> = ({
       }}
       storyScenes={storyScenes} // Pass storyScenes correctly
       dialogues={{ idle: [], correct: [], wrong: [] }}
-      onStateChange={onStateChange}
-    />
+      onStateChange={onStateChange} studentId={""}    />
   );
 };
 

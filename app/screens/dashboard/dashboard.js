@@ -235,6 +235,12 @@ export default function DashboardScreen({ navigation }) {
         setAttendanceData(getAttendanceData([student]));
         console.log("✅ Attendance Data Processed and Set.");
 
+         // ✅ Update accuracy data
+          setAccuracyData({
+            correct: student.accuracy?.correct || 0,
+            incorrect: student.accuracy?.incorrect || 0,
+          });
+          console.log("✅ Accuracy Data Processed and Set.");
         // ✅ Fetch familiarity data
         fetchFamiliarityData(student);
       } else {
@@ -690,15 +696,18 @@ export default function DashboardScreen({ navigation }) {
         if (response.ok) {
           console.log("✅ Student deleted successfully:", data);
 
-          // ✅ Remove student from frontend state
-          setStudents((prevStudents) =>
-            prevStudents.filter(
-              (student) => student._id !== selectedStudent._id
-            )
+          // ✅ Remove student from state
+        setStudents((prevStudents) => {
+          const updatedStudents = prevStudents.filter(
+            (student) => student._id !== selectedStudent._id
           );
 
-          // ✅ Clear selected student
-          setSelectedStudent(null);
+          // ✅ Auto-select the first student in the updated list (if any)
+          setSelectedStudent(updatedStudents.length > 0 ? updatedStudents[0] : null);
+
+          return updatedStudents;
+        });
+
         } else {
           console.error("❌ Error deleting student:", data.message);
         }

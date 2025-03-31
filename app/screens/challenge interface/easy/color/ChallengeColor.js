@@ -9,6 +9,7 @@ import { useNavigation } from "@react-navigation/native";
 import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 const bg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.webp");
 
 const DialogData = {

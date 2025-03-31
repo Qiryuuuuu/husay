@@ -7,6 +7,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   ImageBackground,
+  Alert,
 } from "react-native";
 import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
@@ -30,6 +31,7 @@ export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [studentName, setStudentName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigation = useNavigation();
   const { studentId } = route.params || {}; // Get studentName from params
@@ -82,6 +84,28 @@ export default function HomeScreen({ route }) {
       setIsLoading(false);
     }
   }, [studentId]);
+
+  const handleLogout = async () => {
+    try {
+      // Remove authentication token from storage
+      await AsyncStorage.clear();
+
+      // Show alert confirmation and navigate to login
+      Alert.alert("Logged Out", "You have been logged out.", [
+        { text: "OK", onPress: () => navigation.replace("Login") },
+      ]);
+
+      console.log("✅ User successfully logged out.");
+    } catch (error) {
+      console.error("❌ Error logging out:", error);
+    }
+  };
+
+  const handleSwitchProfile = () => { 
+    console.log("Switching Profile...");
+    navigation.navigate("StudentProfile"); // Navigate back to Student Profile
+  }
+
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>
@@ -147,11 +171,8 @@ export default function HomeScreen({ route }) {
           headerImage={settingHeader}
           buttonOneText="Switch Profile"
           buttonTwoText="Logout"
-          onButtonOnePress={() => {
-            console.log("Switching Profile...");
-            navigation.navigate("StudentProfile"); // Navigate back to Student Profile
-          }}
-          onButtonTwoPress={() => console.log("Logging Out...")}
+          onButtonOnePress={handleSwitchProfile}
+          onButtonTwoPress={handleLogout}
         />
       </View>
     </ImageBackground>

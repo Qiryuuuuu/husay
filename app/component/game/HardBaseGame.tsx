@@ -409,18 +409,6 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
               />
             </View>
 
-            <View style={styles.buttonContainer}>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleSelection(option)}
-                  style={[styles.button, !isClickable && styles.disabledButton]}
-                  disabled={!isClickable}
-                >
-                  <Text style={styles.buttonText}>{option}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </>
         )}
       </View>

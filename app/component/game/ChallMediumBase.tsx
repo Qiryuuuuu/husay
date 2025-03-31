@@ -14,7 +14,9 @@ import SettingsModal from "../setting";
 import AudioPlayer from "../../component/audio/AudioPlayer";
 import AudioChall from "../audio/ChallAudio";
 import { FrameType } from "../game/challenge/MediumMode/ChallengeMedium";
+import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoute } from '@react-navigation/native';
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -27,6 +29,20 @@ export interface CategoryItem {
   image: any;
   type?: string;
   correct?: boolean;
+}
+
+export interface RecommendationData {
+  Easy: {
+    Shapes: string[];
+    Colors: string[];
+    Numbers: string[];
+  };
+  Medium: {
+    Mixed: string[];
+  };
+  Hard: {
+    Mixed: string[];
+  };
 }
 
 interface CategoryData {
@@ -47,6 +63,7 @@ interface Dialogues {
 }
 
 interface BaseMediumGameProps {
+  studentId: string;
   categories: CategoryData;
   onGameComplete: (
     time: number,
@@ -62,6 +79,7 @@ interface BaseMediumGameProps {
   numRounds?: number;
   rounds: CategoryItem[];
   currentCategoryType: string;
+  recommendations?: RecommendationData;
 }
 
 export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
@@ -73,6 +91,8 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   storyScenes,
   outro,
   numRounds = 5,
+  recommendations,
+  
 }) => {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0); // Track which frame of the story is active
   const [currentFrame, setCurrentFrame] = useState(null); // Stores current frame details
@@ -120,52 +140,97 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
 
+  //RFID
+  const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
+  const [latestRFID, setLatestRFID] = useState<string | null>(null);
+  const [fetchingRFID, setFetchingRFID] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
+ 
+  //Routes
+  const route = useRoute();
+  const { studentId } = route.params as { studentId: string };
+  
+  useEffect(() => {
+      console.log("Student ID received as prop:", studentId);
+    }, [studentId]);
+  
   const generateRounds = useCallback(() => {
-    const categoryTypes = Object.keys(categories);
+      const categoryTypes = Object.keys(categories);
+      if (categoryTypes.length === 0) {
+        console.error("❌ ERROR: No categories available!");
+        return;
+      }
+  
+      const categoryName = categoryTypes[0];
+      const categoryItems = categories[categoryName] || [];
+  
+      if (categoryItems.length === 0) {
+        console.error("❌ ERROR: No items found in category:", categoryName);
+        return;
+      }
+  
+      let selectedRounds = [];
+      if (recommendations?.Medium?.Mixed?.length > 0) {
+        const recommendedNames = recommendations.Medium.Mixed;
+        selectedRounds = recommendedNames
+          .map(name => {
+            const foundItem = categoryItems.find(
+              item => item.name.toLowerCase() === name.toLowerCase()
+            );
+            return foundItem
+              ? { ...foundItem, type: categoryName }
+              : { name, image: null, type: categoryName };
+          })
+          .slice(0, numRounds);
+      } else {
+        selectedRounds = categoryItems
+          .sort(() => Math.random() - 0.5)
+          .slice(0, numRounds)
+          .map(item => ({ ...item, type: categoryName }));
+      }
+  
+      if (selectedRounds.length < numRounds) {
+        console.warn(
+          `⚠️ Warning: Only ${selectedRounds.length} rounds available instead of ${numRounds}.`
+        );
+      }
+  
+      console.log("✅ Generated Rounds:", selectedRounds);
+      setRounds(selectedRounds);
+      resetGameState();
+    }, [categories, numRounds, recommendations]);
+  
+  const fetchLatestRFIDAnswer = useCallback(async () => {
+    if (!isGameRunning || gameEnded || rfidReceived) return;
+    if (fetchingRFID) return;
+    setFetchingRFID(true);
 
-    // Guarantee we have at least 1 round from a randomly chosen category
-    const guaranteedCategoryIndex = Math.floor(
-      Math.random() * categoryTypes.length
-    );
-    const guaranteedCategory = categoryTypes[guaranteedCategoryIndex];
+    try {
+      console.log("🔄 Fetching latest RFID answer...");
+      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
 
-    const remainingCategories = categoryTypes.filter(
-      (cat) => cat !== guaranteedCategory
-    );
+      if (response.data.success) {
+        const { category, answer, timestamp } = response.data.data;
+        console.log(`✅ Received RFID Answer: ${answer} (Category: ${category}) at ${timestamp}`);
 
-    let selectedRounds: CategoryItem[] = [];
-
-    // Add 1 guaranteed item
-    const guaranteedCategoryItems = categories[guaranteedCategory];
-    const guaranteedItem = {
-      ...guaranteedCategoryItems[
-        Math.floor(Math.random() * guaranteedCategoryItems.length)
-      ],
-      type: guaranteedCategory,
-    };
-    selectedRounds.push(guaranteedItem);
-
-    // Build item pool
-    let itemPool: CategoryItem[] = [];
-    remainingCategories.forEach((category) => {
-      categories[category].forEach((item) => {
-        itemPool.push({ ...item, type: category });
-      });
-    });
-
-    // Shuffle the item pool
-    itemPool.sort(() => Math.random() - 0.5);
-
-    // Grab additional items up to numRounds - 1
-    const additionalItems = itemPool.slice(0, numRounds - 1);
-    selectedRounds = [...selectedRounds, ...additionalItems];
-
-    // Final shuffle
-    selectedRounds.sort(() => Math.random() - 0.5);
-
-    setRounds(selectedRounds);
-    resetGameState();
-  }, [categories, numRounds]);
+        // Ensure answer is valid & new
+        const answerTime = new Date(timestamp);
+        if (answerTime >= roundStartTime && answer !== lastProcessedRFID) {
+          processRFIDAnswer(answer);
+        } else {
+          console.log("⚠️ Stale RFID answer or already processed, ignoring.");
+        }
+      } else {
+        console.warn("⚠️ No RFID data found. Retrying...");
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching latest RFID answer:", error.message);
+    } finally {
+      setFetchingRFID(false);
+    }
+}, [fetchingRFID, isGameRunning, gameEnded, rfidReceived]);
 
   // Clear round states
   const resetGameState = () => {
@@ -180,6 +245,8 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     setIsGameRunning(true);
     setCorrectFirstTry(0);
     setHasTried(false);
+    setLatestRFID(null); // Reset RFID for new game
+    setRfidReceived(false); // Ready for new RFID tap
   };
 
   // Start/stop the question timer
@@ -221,24 +288,33 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
 
   // Each time we change the `currentRound`, set up that round's frames & options
   useEffect(() => {
-    if (rounds.length > 0) {
-      // Load frames
-      const roundStory = storyScenes[`round${currentRound + 1}`];
-      if (roundStory) {
-        setCurrentFrame(roundStory[0]);
-        setCurrentFrameIndex(0);
+      if (rounds.length > 0) {
+        setRoundStartTime(new Date());
+        setLatestRFID(null);
+        setRfidReceived(false); // Ready for a new RFID tap
+        // Load frames for the new round
+        const roundStory = storyScenes[`round${currentRound + 1}`];
+        if (roundStory) {
+          setCurrentFrame(roundStory[0]);
+          setCurrentFrameIndex(0);
+        }
+  
+        if (!rounds[currentRound]) {
+          console.log(`Error: rounds[${currentRound}] is undefined!`, rounds);
+          return;
+        }
+  
+        const currentType = rounds[currentRound]?.type;
+        setCurrentCategoryType(currentType);
+        generateOptions(currentType, rounds[currentRound]?.name);
+  
+        // Reset states
+        setNpcImage(npcConfig.idle);
+        setIsCorrect(null);
+        setIsClickable(true);
+        setHasTried(false);
       }
-      const currentType = rounds[currentRound]?.type || "";
-      setCurrentCategoryType(currentType);
-      generateOptions(currentType, rounds[currentRound]?.name);
-
-      // Reset states
-      setNpcImage(npcConfig.idle);
-      setIsCorrect(null);
-      setIsClickable(true);
-      setHasTried(false);
-    }
-  }, [currentRound, rounds]);
+    }, [currentRound, rounds]);
 
   // Generate the multiple‐choice options for each round
   const generateOptions = (type: string, correctAnswer: string) => {
@@ -341,6 +417,163 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     }
   };
 
+  // ========== CORRECT / INCORRECT ANSWER HANDLERS ==========
+
+  const handleCorrectAnswer = () => {
+    setIsCorrect(true);
+    setCorrectCount((prev) => prev + 1);
+
+    setRounds((prevRounds) => {
+      const updated = [...prevRounds];
+      updated[currentRound] = {
+        ...updated[currentRound],
+        correct: true, // mark round as correct
+      };
+      return updated;
+    });
+
+    // Show correct answer feedback if available
+    const roundStory = storyScenes[`round${currentRound + 1}`];
+    const correctFrame = roundStory.find(
+      (frame) => frame.type === FrameType.CORRECT_ANSWER
+    );
+
+    if (correctFrame) {
+      setCurrentFrame(correctFrame);
+      setIsWaitingForTap(true);
+    }
+
+    setNpcImage(npcConfig.correct);
+    fadeInAnimation();
+    setIsClickable(false);
+
+    let updatedScore = correctFirstTry;
+    if (!hasTried) {
+      updatedScore += 1;
+      setCorrectFirstTry(updatedScore);
+    }
+    moveToNextRound(updatedScore);
+  };
+
+const handleWrongAnswer = () => {
+    setIsCorrect(false);
+    setIncorrectCount((prev) => prev + 1);
+
+    setRounds((prevRounds) => {
+      const updated = [...prevRounds];
+      updated[currentRound] = {
+        ...updated[currentRound],
+        correct: false, // mark round as incorrect
+      };
+      return updated;
+    });
+
+    const roundStory = storyScenes[`round${currentRound + 1}`];
+    const incorrectFrame = roundStory.find(
+      (frame) => frame.type === FrameType.INCORRECT_ANSWER
+    );
+
+    if (incorrectFrame) {
+      setCurrentFrame(incorrectFrame);
+      setIsWaitingForTap(true);
+    }
+
+    setNpcImage(npcConfig.wrong);
+    fadeInAnimation();
+    triggerShake();
+    Vibration.vibrate(100);
+    setHasTried(true);
+    moveToNextRound(correctFirstTry);
+  };
+
+  const processRFIDAnswer = useCallback(
+    async (rfidData: string) => {
+      let validStudentId = studentId;
+      if (!validStudentId || validStudentId.trim() === "") {
+        validStudentId = await AsyncStorage.getItem("studentId");
+        if (!validStudentId || validStudentId.trim() === "") {
+          console.error("Student ID is missing, cannot update score.");
+          return;
+        }
+      }
+        
+        if (!isClickable || currentRound >= rounds.length) return;
+
+        const currentQuestion = rounds[currentRound];
+        const correctAnswer = currentQuestion.name;
+        console.log(`🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`);
+        
+        // Prevent further processing for this round
+        setIsClickable(false);
+        setRfidReceived(true);
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+        setLastProcessedRFID(rfidData);
+
+        // Check correctness
+        const isAnswerCorrect = rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+        console.log(`✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+
+        setIsCorrect(isAnswerCorrect);
+
+        // Send result to RFID Microservice
+        try {
+            await axios.post("http://10.0.2.2:5001/rfid-result", {
+                result: isAnswerCorrect ? "Correct" : "Incorrect",
+            });
+            console.log(`📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+        } catch (error: any) {
+            console.error("❌ Error sending RFID result:", error.message);
+        }
+
+        // Update Student Score in Main Server
+        try {
+            const authToken = await AsyncStorage.getItem("authToken");
+            const response = await axios.put(
+                "http://10.0.2.2:5000/api/students/update-score",
+                {
+                    studentId: validStudentId,
+                    category: currentCategoryType,
+                    isCorrect: isAnswerCorrect,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
+                }
+            );
+
+            if (response.status === 200) {
+                console.log("✅ Student score updated successfully.");
+            } else {
+                console.error(`⚠️ Unexpected response: ${response.status}`);
+            }
+        } catch (error: any) {
+            console.error("❌ Error updating student score:", error.message);
+        }
+
+        // Move to next round or trigger correct/incorrect logic
+        if (isAnswerCorrect) {
+            handleCorrectAnswer();
+        } else {
+            handleWrongAnswer();
+        }
+    },
+    [currentRound, rounds, isClickable, currentCategoryType, handleCorrectAnswer, handleWrongAnswer]
+);
+
+  useEffect(() => {
+      if (isGameRunning && !rfidReceived) {
+        pollingIntervalRef.current = setInterval(fetchLatestRFIDAnswer, 3000);
+      }
+      return () => {
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+      };
+      
+    }, [isGameRunning, currentRound, rfidReceived, fetchLatestRFIDAnswer]);
+
   // End entire game
   const endGame = async (finalScore: number) => {
     if (!gameEnded) {
@@ -388,77 +621,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
       setPlaySound(false);
     }
   }, []);
-
-  // ========== CORRECT / INCORRECT ANSWER HANDLERS ==========
-
-  const handleCorrectAnswer = () => {
-    setIsCorrect(true);
-    setCorrectCount((prev) => prev + 1);
-
-    setRounds((prevRounds) => {
-      const updated = [...prevRounds];
-      updated[currentRound] = {
-        ...updated[currentRound],
-        correct: true, // ✅ set round as correct
-      };
-      return updated;
-    });
-
-    // Show correct answer feedback if it exists
-    const roundStory = storyScenes[`round${currentRound + 1}`];
-    const correctFrame = roundStory.find(
-      (frame) => frame.type === FrameType.CORRECT_ANSWER
-    );
-
-    if (correctFrame) {
-      setCurrentFrame(correctFrame);
-      setIsWaitingForTap(true);
-    }
-
-    setNpcImage(npcConfig.correct);
-    fadeInAnimation();
-    setIsClickable(false);
-
-    // If the user hasn't tried yet, increment updatedScore
-    let updatedScore = correctFirstTry;
-    if (!hasTried) {
-      updatedScore += 1;
-      setCorrectFirstTry(updatedScore);
-    }
-    moveToNextRound(updatedScore);
-  };
-
-  const handleWrongAnswer = () => {
-    setIsCorrect(false);
-    setIncorrectCount((prev) => prev + 1);
-
-    setRounds((prevRounds) => {
-      const updated = [...prevRounds];
-      updated[currentRound] = {
-        ...updated[currentRound],
-        correct: false, // ✅ set round as incorrect
-      };
-      return updated;
-    });
-
-    // Show incorrect answer feedback if it exists
-    const roundStory = storyScenes[`round${currentRound + 1}`];
-    const incorrectFrame = roundStory.find(
-      (frame) => frame.type === FrameType.INCORRECT_ANSWER
-    );
-
-    if (incorrectFrame) {
-      setCurrentFrame(incorrectFrame);
-      setIsWaitingForTap(true);
-    }
-
-    setNpcImage(npcConfig.wrong);
-    fadeInAnimation();
-    triggerShake();
-    Vibration.vibrate(100);
-    setHasTried(true);
-    moveToNextRound(correctFirstTry);
-  };
 
   // ========== UI ANIMATIONS ==========
   const triggerShake = () => {
@@ -651,20 +813,22 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
           </View>
         )}
 
-        {/* Show Stopwatch Only During Question Frames */}
-        {currentFrame?.type === FrameType.QUESTION && (
-          <Stopwatch
-            isRunning={true} // ✅ Ensure it runs
-            onStop={(finalTime) => setTotalTime(finalTime)} // ✅ Store elapsed time
-          />
-        )}
 
-        {/* Round Info */}
-        {currentFrame?.type === FrameType.QUESTION && (
-          <Text style={styles.roundText}>
-            Round {currentRound + 1} of {numRounds}
-          </Text>
-        )}
+      {/* Stopwatch - Positioned above itemContainer */}
+      {currentFrame?.type === FrameType.QUESTION && (
+        <View style={styles.stopwatchContainer}>
+          <Stopwatch 
+            isRunning={true}
+            onStop={(finalTime) => setTotalTime(finalTime)}
+          />
+        </View>
+      )}
+
+      {/* Round Info - Positioned above itemContainer */}
+      {currentFrame?.type === FrameType.QUESTION && (
+        <Text style={styles.roundText}>Round {currentRound + 1} of 5</Text>
+      )}
+
 
         {/* Show Question & Answers ONLY if it's the question phase */}
         {currentFrame?.type === FrameType.QUESTION && (
@@ -679,18 +843,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
               />
             </View>
 
-            <View style={styles.buttonContainer}>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleSelection(option.name)}
-                  style={[styles.button, !isClickable && styles.disabledButton]}
-                  disabled={!isClickable}
-                >
-                  <Text style={styles.buttonText}>{option.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+
           </>
         )}
       </TouchableOpacity>
@@ -766,7 +919,16 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     resizeMode: "contain",
   },
+  stopwatchContainer: {
+    position: 'absolute',
+    top: '15%', // Positioned above the itemContainer
+    width: '100%',
+    alignItems: 'center',
+    zIndex: 20, // Higher than itemContainer
+  },
   roundText: {
+    position: 'absolute',
+    top: '25%', // Positioned between stopwatch and itemContainer
     backgroundColor: "rgba(0,0,0,0.7)",
     color: "white",
     paddingVertical: 8,
@@ -774,8 +936,18 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
     textAlign: "center",
+    zIndex: 20, // Higher than itemContainer
+  },
+  itemContainer: {
+    width: "100%",
+    height: 270,
+    position: 'absolute', 
+    top: '35%', // Maintains your desired position
+    left: 0, 
+    right: 0, 
+    alignItems: 'center',
+    zIndex: 10, // Lower than stopwatch and roundText
   },
   categoryTitle: {
     backgroundColor: "#5A8EF4",
@@ -787,14 +959,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 15,
     textAlign: "center",
-  },
-  itemContainer: {
-    width: "100%",
-    height: 270,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 20,
-    marginBottom: 30,
   },
   itemImage: {
     width: "100%",

@@ -269,6 +269,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     );
   }
 
+  
   return (
     <View style={styles.container}>
       <TouchableOpacity 
@@ -310,21 +311,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
               />
             </View>
 
-            <View style={styles.buttonContainer}>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleSelection(option.name)}
-                  style={[
-                    styles.button,
-                    !isClickable && styles.disabledButton
-                  ]}
-                  disabled={!isClickable}
-                >
-                  <Text style={styles.buttonText}>{option.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </>
         )}
       </View>

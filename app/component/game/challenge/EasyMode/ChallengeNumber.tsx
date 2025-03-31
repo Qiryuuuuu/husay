@@ -48,7 +48,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"],
+      dialogues: ["What number is this?"],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -76,7 +76,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"],
+      dialogues: ["What number is this?"],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -104,7 +104,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"],
+      dialogues: ["What number is this?"],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -132,7 +132,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: bgIntro,
       character: "EVA",
-      dialogues: ["What color is this?"],
+      dialogues: ["What number is this?"],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -162,7 +162,7 @@ const storyScenes = {
       type: FrameType.QUESTION,
       background: outro,
       character: "EVA",
-      dialogues: ["What color is this?"],
+      dialogues: ["What number is this?"],
     },
     {
       type: FrameType.CORRECT_ANSWER,
@@ -264,8 +264,7 @@ const NumberGame: React.FC<BaseGameProps> = ({
       }}
       storyScenes={storyScenes} // Pass storyScenes correctly
       dialogues={{ idle: [], correct: [], wrong: [] }}
-      onStateChange={onStateChange}
-    />
+      onStateChange={onStateChange} studentId={""}    />
   );
 };
 

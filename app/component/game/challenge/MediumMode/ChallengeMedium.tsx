@@ -454,7 +454,7 @@ interface ChallengeMediumGameProps {
   ) => void;
   navigation: any;
   rounds: CategoryItem[];
-  studentId: any;
+  studentId: string;
   updatedRecommendations: any; // Add this line to handle the recommendations data
 }
 
@@ -500,14 +500,6 @@ const ChallengeMediumGame: React.FC<ChallengeMediumGameProps> = ({
       );
       return;
     }
-
-    // ✅ Explicitly pass studentId and rounds when navigating
-    // navigation.navigate("ChallengeMedium", {
-    //   studentId: studentId,
-    //   rounds: rounds, // ✅ Convert rounds to string to prevent loss
-    //   currentCategoryType: categoryType, // ✅ Ensure categoryType is passed correctly
-    // });
-    // ✅ Pass rounds to `onGameComplete`
     onGameComplete(time, score, categoryType, rounds);
   };
 
@@ -523,6 +515,8 @@ const ChallengeMediumGame: React.FC<ChallengeMediumGameProps> = ({
       outro={outro}
       storyScenes={storyScenes}
       currentCategoryType={currentCategoryType} // ✅ Pass category type
+      studentId={""}      
+      recommendations={updatedRecommendations} 
     />
   );
 };

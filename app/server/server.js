@@ -6,8 +6,11 @@ const bodyParser = require("body-parser");
 
 const app = express();
 
+
 // ✅ Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*'
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -18,14 +21,14 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // ✅ Import Routes
-const authRoutes = require("./routes/authRoutes");
+const authRoutes = require("./routes/authRoutes"); 
 const classRoutes = require("./routes/classRoutes");
-const studentRoutes = require("./routes/studentRoutes"); // ✅ Import Student Routes
+const studentRoutes = require("./routes/studentRoutes");
 
-// ✅ Use Routes
+// ✅ Ensure each route is properly attached as middleware
 app.use("/api/auth", authRoutes);
 app.use("/api/class", classRoutes);
-app.use("/api/students", studentRoutes); // ✅ Register Student Routes
+app.use("/api/students", studentRoutes);
 
 // ✅ Server Listening
 const PORT = process.env.PORT || 5000;
