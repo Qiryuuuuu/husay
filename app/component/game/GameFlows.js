@@ -41,12 +41,16 @@ const GameFlows = ({
     }).start();
   }, [gamePhase, overlayOpacity]);
 
-  const handleGameComplete = (timeTaken, score) => {
+  const handleGameComplete = (score, timeTaken) => {
     console.log("✅ Transitioning to Stage Completion...");
-    setFinalTime(timeTaken);
-    setFinalScore(score);
+      
+    setFinalScore(score); // ✅ Store final score
+    setFinalTime(timeTaken); // ✅ Store final time
     setGamePhase("completed"); // ✅ Ensure the game phase updates properly
   };
+
+  console.log("🔄 Current game phase:", gamePhase); // ✅ Add this log
+
 
   return (
     <ImageBackground source={backgroundImg} style={styles.background}>
@@ -81,6 +85,8 @@ const GameFlows = ({
           <GameComponent
             onGameComplete={handleGameComplete}
             setGamePhase={setGamePhase} // ✅ Pass setGamePhase to GameComponent
+            setFinalScore={setFinalScore}  // ✅ Pass this
+            setFinalTime={setFinalTime}  // ✅ Pass this
             navigation={navigation}
           />
         </View>
@@ -89,9 +95,10 @@ const GameFlows = ({
       {gamePhase === "completed" && (
         <View style={styles.fullscreenContainer}>
           <StageCompletionComponent
-            timeTaken={`${Math.floor(finalTime / 60)}:${finalTime % 60}`}
+            timeTaken={`${Math.floor(finalTime / 60)}:${(finalTime % 60).toString().padStart(2, "0")}`}
             correctAnswers={finalScore}
             onRestart={() => setGamePhase("countdown")}
+            setGamePhase={setGamePhase} // ✅ Pass this so it can control game phases
             navigation={navigation}
           />
         </View>

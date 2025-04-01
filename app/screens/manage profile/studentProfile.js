@@ -80,14 +80,21 @@ export default function StudentProfileScreen({ navigation }) {
     );
   }
 
+ 
   return (
     <View style={styles.container}>
       {/* Header and Search Bar */}
       <View style={styles.headerContainer}>
-        <Image source={logoImg} style={styles.logo} />
+
+        <View style={styles.headerContent}>
+          <Image source={logoImg} style={styles.logo} />
+          <View style={styles.headerTagline}>
+            <Text style={styles.title}>Husay</Text>
+            <Text style={styles.subtitle}>Hugis, Bilang, at Kulay, Aalalay!</Text>
+          </View>
+        </View>
+
         <View style={styles.textHeader}>
-          <Text style={styles.title}>Husay</Text>
-          <Text style={styles.subtitle}>Hugis, Bilang, at Kulay, Aalalay!</Text>
           <View style={styles.searchWrapper}>
             <Searchbar
               placeholder="Search students..."
@@ -96,12 +103,6 @@ export default function StudentProfileScreen({ navigation }) {
               inputStyle={styles.inputStyle}
               onChangeText={(text) => setSearchQuery(text)}
               value={searchQuery}
-            />
-            <Feather
-              name="filter"
-              size={24}
-              color="#5A8EF4"
-              style={styles.filterIcon}
             />
           </View>
         </View>
@@ -180,122 +181,142 @@ export default function StudentProfileScreen({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 30,
+    backgroundColor: '#F5F7FA',
+    padding: 16,
   },
   headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-    width: "100%",
+    marginBottom: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   logo: {
-    width: 70,
-    height: 70,
-    resizeMode: "contain",
-    marginRight: 20,
+    width: 50,
+    height: "100%",
+    marginRight: 12,
+  },
+  headerTagline: {
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
   textHeader: {
-    alignItems: "center",
+    width: '100%',
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 10,
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
   searchWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
   },
   searchBar: {
-    borderRadius: 50,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#5A8EF4",
-    height: 45,
-    width: "90%",
-    maxWidth: 400,
+    flex: 1,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#FFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  inputStyle: {
+    fontSize: 14,
   },
   filterIcon: {
-    marginLeft: -35,
+    marginLeft: 12,
+    padding: 8,
+    backgroundColor: '#F0F4FF',
+    borderRadius: 10,
   },
   buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginVertical: 15,
-    gap: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
   },
   button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#428bca",
-    width: 180,
-    backgroundColor: "blue",
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#5A8EF4',
+    width: '48%',
+    justifyContent: 'center',
   },
   dashboard: {
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#5A8EF4",
-  },
-  buttonTextDashboard: {
-    color: "#5A8EF4",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+    backgroundColor: '#F0F4FF',
   },
   buttonIcon: {
     marginRight: 8,
   },
+  buttonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  buttonTextDashboard: {
+    color: '#5A8EF4',
+  },
+  shadow: {
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
   grid: {
-    justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingBottom: 16,
   },
   row: {
-    flex: 1,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   cardWrapper: {
-    flex: 1,
-    alignItems: "center",
-    margin: 10,
+    width: '23%',
   },
   studentCard: {
-    width: 150,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 6,
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   studentImg: {
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-    marginBottom: 10,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: 8,
   },
   studentName: {
-    textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'center',
+  },
+  noStudentsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#888',
+    marginTop: 40,
   },
 });

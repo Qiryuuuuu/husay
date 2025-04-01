@@ -4,11 +4,18 @@ import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } 
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
 
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoute } from '@react-navigation/native';
+
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
 const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
+
+
+
 
 interface CategoryItem {
   name: string;
@@ -34,12 +41,14 @@ interface Dialogues {
 }
 
 interface BaseMediumGameProps {
+  studentId: string;
   categories: CategoryData;
-  onGameComplete: (time: number, score: number) => void;
+  onGameComplete: (score: number, time: number) => void;
   navigation: any;
   npcConfig: NpcConfig;
   dialogues: Dialogues;
   numRounds?: number;
+ 
 }
 
 export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
@@ -48,8 +57,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   navigation,
   npcConfig,
   dialogues,
-  numRounds = 5
+  numRounds = 5,
 }) => {
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0); // Track which frame of the story is active
+    const [currentFrame, setCurrentFrame] = useState(null); // Stores current frame details
   const [isPaused, setIsPaused] = useState(false);
   const [rounds, setRounds] = useState<CategoryItem[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -69,6 +80,24 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
+
+
+
+  //RFID
+    const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
+    const [latestRFID, setLatestRFID] = useState<string | null>(null);
+    const [fetchingRFID, setFetchingRFID] = useState(false);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+    const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
+   
+  //Routes
+    const route = useRoute();
+    const { studentId } = route.params as { studentId: string };
+    
+    useEffect(() => {
+        console.log("Student ID received as prop:", studentId);
+      }, [studentId]);
 
   const generateRounds = useCallback(() => {
     // Get all category types
@@ -127,7 +156,11 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     setCorrectFirstTry(0);
     elapsedTimeRef.current = 0;
     setHasTried(false);
+    setLatestRFID(null); // Reset RFID for new game
+    setRfidReceived(false); // Ready for new RFID tap
   };
+
+  
 
   useEffect(() => {
     if (Object.keys(categories).length > 0) {
@@ -135,22 +168,24 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     }
   }, [generateRounds]);
 
+  // On round change, update category and options; also reset RFID state for the round
   useEffect(() => {
     if (rounds.length > 0) {
-      // Set current category type
       const currentType = rounds[currentRound].type || "";
       setCurrentCategoryType(currentType);
-      
-      // Generate options based on the current round's category
       generateOptions(currentType, rounds[currentRound].name);
-      
       setIsCorrect(null);
       setIsClickable(true);
       setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's continue!");
       setNpcImage(npcConfig.idle);
       setHasTried(false);
+      // --- Reset RFID state for new round ---
+      setRoundStartTime(new Date());
+      setLatestRFID(null);
+      setRfidReceived(false);
     }
   }, [currentRound, rounds]);
+  
 
   const generateOptions = (type: string, correctAnswer: string) => {
     if (!type || !categories[type]) {
@@ -185,6 +220,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     }
   };
 
+    
   const handleSelection = useCallback((selectedName: string) => {
     if (!isClickable) return;
 
@@ -203,13 +239,15 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     setNpcImage(npcConfig.correct);
     fadeInAnimation();
     setIsClickable(false);
-  
+
+   
+
     let updatedScore = correctFirstTry;
     if (!hasTried) {
       updatedScore += 1;
       setCorrectFirstTry(updatedScore);
     }
-  
+
     setTimeout(() => {
       if (currentRound < numRounds - 1) {
         setCurrentRound(currentRound + 1);
@@ -217,7 +255,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         setIsGameRunning(false);
         setTimeout(() => {
           if (onGameComplete) {
-            onGameComplete(elapsedTimeRef.current, updatedScore);
+            onGameComplete(updatedScore, elapsedTimeRef.current);
           }
         }, 500);
       }
@@ -234,6 +272,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     triggerShake();
     Vibration.vibrate(100);
     setHasTried(true);
+
   };
 
   const triggerShake = () => {
@@ -269,6 +308,96 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     );
   }
 
+  // --- RFID FUNCTIONALITY ---
+
+  // Poll for the latest RFID answer every 3 seconds if the game is running
+  const fetchLatestRFIDAnswer = useCallback(async () => {
+    if (!isGameRunning || rfidReceived) return;
+    if (fetchingRFID) return;
+    setFetchingRFID(true);
+
+    try {
+      console.log("🔄 Fetching latest RFID answer...");
+      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
+      if (response.data.success) {
+        const { answer, timestamp } = response.data.data;
+        console.log(`✅ Received RFID Answer: ${answer} at ${timestamp}`);
+
+        const answerTime = new Date(timestamp);
+        if (answer && answerTime >= roundStartTime && answer !== lastProcessedRFID) {
+          processRFIDAnswer(answer);
+        } else {
+          console.log("⚠️ Stale RFID answer or already processed, ignoring.");
+        }
+      } else {
+        console.warn("⚠️ No RFID data found. Retrying...");
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching latest RFID answer:", error.message);
+    } finally {
+      setFetchingRFID(false);
+    }
+  }, [isGameRunning, rfidReceived, fetchingRFID, roundStartTime, lastProcessedRFID]);
+
+  // Process the RFID answer without updating the score on the main server.
+  const processRFIDAnswer = useCallback(
+    async (rfidData: string) => {
+
+      let validStudentId = studentId;
+      if (!validStudentId || validStudentId.trim() === "") {
+        validStudentId = await AsyncStorage.getItem("studentId");
+        if (!validStudentId || validStudentId.trim() === "") {
+          console.error("Student ID is missing, cannot update score.");
+          return;
+        }
+      }
+      
+      if (!isClickable || currentRound >= rounds.length) return;
+      const currentQuestion = rounds[currentRound];
+      const correctAnswer = currentQuestion.name;
+      console.log(`🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`);
+      
+      // Prevent further processing for this round
+      setIsClickable(false);
+      setRfidReceived(true);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      setLastProcessedRFID(rfidData);
+      const isAnswerCorrect = rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+      console.log(`✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+      setIsCorrect(isAnswerCorrect);
+
+      // Send result to RFID microservice
+      try {
+        await axios.post("http://10.0.2.2:5001/rfid-result", {
+          result: isAnswerCorrect ? "Correct" : "Incorrect",
+        });
+        console.log(`📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+      } catch (error: any) {
+        console.error("❌ Error sending RFID result:", error.message);
+      }
+
+      // Trigger the appropriate answer handler
+      if (isAnswerCorrect) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [isClickable, currentRound, rounds, handleCorrectAnswer, handleWrongAnswer]
+  );
+
+  // Start RFID polling when game is running and no RFID answer has been processed
+  useEffect(() => {
+    if (isGameRunning && !rfidReceived) {
+      pollingIntervalRef.current = setInterval(fetchLatestRFIDAnswer, 3000);
+    }
+    return () => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    };
+  }, [isGameRunning, rfidReceived, fetchLatestRFIDAnswer]);
   
   return (
     <View style={styles.container}>

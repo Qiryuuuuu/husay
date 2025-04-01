@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { BaseGame } from "../../EasyBaseGame";
 import colorDialogues from "../../../../data/colorDialogues";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoute } from "@react-navigation/native";
 
 const dolorIdleImg = require("../../../../../assets/dolor/dolor-guess.png");
 const dolorCorrectImg = require("../../../../../assets/dolor/dolor-correct.png");
@@ -17,18 +19,24 @@ const colors = [
 ];
 
 const ColorGame = ({ onGameComplete, setGamePhase, navigation }) => {
-  const [startTime, setStartTime] = useState(Date.now());
-
-  useEffect(() => {
-    setStartTime(Date.now()); // Start tracking time when game starts
-  }, []);
+ const route = useRoute();
+   const { studentId } = route.params as { studentId: string }; // Get studentId from navigation params
+   const [startTime, setStartTime] = useState(Date.now());
+ 
+   useEffect(() => {
+     setStartTime(Date.now()); // Start tracking time when game starts
+ 
+     if (!studentId) {
+       console.error("❌ ERROR: Missing studentId from navigation params!");
+     }
+   }, [studentId]);
 
   const finishGame = (score, timeTaken) => {
     console.log("✅ Game Finished in ColorGame!");
     console.log("Time Taken:", timeTaken);
     console.log("Final Score Received:", score);
 
-    onGameComplete(score, timeTaken, setGamePhase); // ✅ Correct order
+    onGameComplete(score, timeTaken); // ✅ Correct order
   };
 
   return (
@@ -42,8 +50,7 @@ const ColorGame = ({ onGameComplete, setGamePhase, navigation }) => {
         wrong: dolorWrongImg,
         name: "Dolor",
       }}
-      dialogues={colorDialogues}
-    />
+      dialogues={colorDialogues} studentId={studentId}    />
   );
 };
 

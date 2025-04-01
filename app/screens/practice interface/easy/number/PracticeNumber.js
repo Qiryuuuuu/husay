@@ -7,6 +7,7 @@ import NumberGame from "../../../../component/game/Practice/EasyMode/PracticeNum
 import StageCompletion from "../../../../component/stageCompletion";
 import numberDialogues from "../../../../data/numberDialogues";
 import { useNavigation } from "@react-navigation/native";
+import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 
 const numberBg = require("../../../../../assets/gameBackground/practice-number-bg.png");
 
@@ -64,8 +65,14 @@ const numberCompletionNpc = {
 const NumberModeScreen = ({ route }) => {
   const navigation = useNavigation();
   const { studentId } = route.params || {}; // Receive studentId
-
-  const handleGameComplete = async (score, timeTaken, setGamePhase) => {
+  useEffect(() => {
+      playMusic("easyBg");
+      return () => stopMusic();
+    }, []);
+  
+    console.log("Practice Number easy received studentID: ", studentId);
+  
+  const handleGameComplete = async (score, timeTaken, setGamePhase, setFinalScore, setFinalTime) => {
     console.log("Submitting game results...");
     console.log("Student ID:", studentId);
     console.log("Score:", score);
@@ -98,13 +105,12 @@ const NumberModeScreen = ({ route }) => {
       const data = await response.json();
       console.log("Score update response:", data);
 
-      // ✅ Transition to Stage Completion
-      if (setGamePhase) {
-        console.log("✅ Updating game phase to 'completed'");
-        setGamePhase("completed");
-      } else {
-        console.error("❌ setGamePhase is undefined!");
-      }
+      setFinalScore(score);
+      setFinalTime(timeTaken);
+
+       // ✅ Transition to Stage Completion
+      console.log("✅ Updating game phase to 'completed'");
+      setGamePhase("completed"); 
     } catch (error) {
       console.error("Error updating score:", error);
     }
@@ -120,8 +126,12 @@ const NumberModeScreen = ({ route }) => {
       GameComponent={(props) => (
         <NumberGame
           {...props}
-          onGameComplete={handleGameComplete}
-          setGamePhase={props.setGamePhase} // ✅ Pass setGamePhase from GameFlows.js
+        onGameComplete={(score, timeTaken) =>
+            handleGameComplete(score, timeTaken, props.setGamePhase,props.setFinalScore, props.setFinalTime)
+          } // ✅ Pass setGamePhase when calling handleGameComplete
+          setGamePhase={props.setGamePhase}
+          setFinalScore={props.setFinalScore}  // ✅ Ensure these are passed
+          setFinalTime={props.setFinalTime} 
         />
       )}
       navigation={navigation}

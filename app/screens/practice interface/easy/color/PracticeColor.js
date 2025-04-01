@@ -65,15 +65,17 @@ const colorCompletionNpc = {
 
 const ColorModeScreen = ({ route }) => {
   const navigation = useNavigation();
-
+  const { studentId } = route.params || {};
+  
   useEffect(() => {
     playMusic("easyBg");
     return () => stopMusic();
   }, []);
-  const { studentId } = route.params || {}; // Receive studentId
+
+
   console.log("Practice Color easy received studentID: ", studentId);
 
-  const handleGameComplete = async (score, timeTaken, setGamePhase) => {
+  const handleGameComplete = async (score, timeTaken, setGamePhase, setFinalScore, setFinalTime) => {
     console.log("Submitting game results...");
     console.log("Student ID:", studentId);
     console.log("Score:", score);
@@ -106,13 +108,13 @@ const ColorModeScreen = ({ route }) => {
       const data = await response.json();
       console.log("Score update response:", data);
 
+      // ✅ Store final values
+      setFinalScore(score);
+      setFinalTime(timeTaken);
+
       // ✅ Transition to Stage Completion
-      if (setGamePhase) {
-        console.log("✅ Updating game phase to 'completed'");
-        setGamePhase("completed");
-      } else {
-        console.error("❌ setGamePhase is undefined!");
-      }
+      console.log("✅ Updating game phase to 'completed'");
+      setGamePhase("completed"); 
     } catch (error) {
       console.error("Error updating score:", error);
     }
@@ -126,10 +128,14 @@ const ColorModeScreen = ({ route }) => {
       )}
       CountdownComponent={Countdown}
       GameComponent={(props) => (
-        <ColorGame
+        <ColorGame 
           {...props}
-          onGameComplete={handleGameComplete}
-          setGamePhase={props.setGamePhase} // ✅ Pass setGamePhase from GameFlows.js
+          onGameComplete={(score, timeTaken) =>
+            handleGameComplete(score, timeTaken, props.setGamePhase,props.setFinalScore, props.setFinalTime)
+          } // ✅ Pass setGamePhase when calling handleGameComplete
+          setGamePhase={props.setGamePhase}
+          setFinalScore={props.setFinalScore}  // ✅ Ensure these are passed
+          setFinalTime={props.setFinalTime} 
         />
       )}
       navigation={navigation}

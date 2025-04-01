@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { BaseGame } from "../../EasyBaseGame";
 import numberDialogues from "../../../../data/numberDialogues";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoute } from "@react-navigation/native";
 
 const amberIdleImg = require("../../../../../assets/amber/amber-guess.png");
 const amberCorrectImg = require("../../../../../assets/amber/amber-correct.png");
@@ -20,18 +22,24 @@ const numbers = [
 ];
 
 const NumberGame = ({ onGameComplete, setGamePhase, navigation }) => {
-  const [startTime, setStartTime] = useState(Date.now());
-
-  useEffect(() => {
-    setStartTime(Date.now()); // Start tracking time when game starts
-  }, []);
+ const route = useRoute();
+   const { studentId } = route.params as { studentId: string }; // Get studentId from navigation params
+   const [startTime, setStartTime] = useState(Date.now());
+ 
+   useEffect(() => {
+     setStartTime(Date.now()); // Start tracking time when game starts
+ 
+     if (!studentId) {
+       console.error("❌ ERROR: Missing studentId from navigation params!");
+     }
+   }, [studentId]);
 
   const finishGame = (score, timeTaken) => {
-    console.log("✅ Game Finished in ColorGame!");
+    console.log("✅ Game Finished in NumberGame!");
     console.log("Time Taken:", timeTaken);
     console.log("Final Score Received:", score);
 
-    onGameComplete(score, timeTaken, setGamePhase); // ✅ Correct order
+    onGameComplete(score, timeTaken); // ✅ Correct order
   };
   return (
     <BaseGame
@@ -44,8 +52,7 @@ const NumberGame = ({ onGameComplete, setGamePhase, navigation }) => {
         wrong: amberWrongImg,
         name: "Amber",
       }}
-      dialogues={numberDialogues}
-    />
+      dialogues={numberDialogues} studentId={studentId}    />
   );
 };
 

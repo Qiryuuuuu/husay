@@ -140,6 +140,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
 
+
   //RFID
   const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
   const [latestRFID, setLatestRFID] = useState<string | null>(null);

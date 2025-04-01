@@ -1,7 +1,9 @@
 //PracticeMedium.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BaseMediumGame } from "../../MediumBaseGame";
 import dialogues from "../../../../data/evaDialogues";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoute } from "@react-navigation/native";
 
 // Import NPC (character) assets
 const evaIdleImg = require("../../../../../assets/eva/eva-guess.png");
@@ -61,17 +63,29 @@ const npcConfig = {
 };
 
 interface PracticeMediumGameProps {
-  onGameComplete: (time: number, score: number) => void;
+  onGameComplete: (score: number, time: number) => void;
   navigation: any;
 }
 
 const PracticeMediumGame = ({ onGameComplete, setGamePhase, navigation }) => {
+  const route = useRoute();
+    const { studentId } = route.params as { studentId: string }; // Get studentId from navigation params
+    const [startTime, setStartTime] = useState(Date.now());
+  
+    useEffect(() => {
+      setStartTime(Date.now()); // Start tracking time when game starts
+  
+      if (!studentId) {
+        console.error("❌ ERROR: Missing studentId from navigation params!");
+      }
+    }, [studentId]);
+
   const finishGame = (score, timeTaken) => {
-    console.log("✅ Game Finished in ColorGame!");
+    console.log("✅ Game Finished in PracticeMediumGame!");
     console.log("Time Taken:", timeTaken);
     console.log("Final Score Received:", score);
 
-    onGameComplete(score, timeTaken, setGamePhase); // ✅ Correct order
+    onGameComplete(score, timeTaken); // ✅ Correct order
   };
   return (
     <BaseMediumGame
@@ -80,8 +94,7 @@ const PracticeMediumGame = ({ onGameComplete, setGamePhase, navigation }) => {
       navigation={navigation}
       npcConfig={npcConfig}
       dialogues={dialogues}
-      numRounds={5}
-    />
+      numRounds={5} studentId={studentId}    />
   );
 };
 
