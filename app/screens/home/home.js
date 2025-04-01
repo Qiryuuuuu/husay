@@ -128,7 +128,7 @@ export default function HomeScreen({ route }) {
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate("Class")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Class", {studentId})}>
             <Image source={classCard} style={styles.cards} />
           </TouchableOpacity>
 

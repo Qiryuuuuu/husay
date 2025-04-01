@@ -25,12 +25,12 @@ const backIcon = require("../../../assets/back-icon.png");
 const starIcon = require("../../../assets/star-icon.png");
 const defaultProfile = require("../../../assets/default-profile.png");
 
-export default function LeaderboardScreen({ navigation }) {
+export default function LeaderboardScreen({ navigation, route }) {
   const [students, setStudents] = useState([]);
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState(null);
-
+  const studentId = route?.params?.studentId || null;
   useFocusEffect(
     React.useCallback(() => {
       fetchStudents();
@@ -102,7 +102,7 @@ export default function LeaderboardScreen({ navigation }) {
 
       <View style={styles.navContainer}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("Home")}
+          onPress={() => navigation.navigate("Home", { studentId })}
           style={styles.backButton}
         >
           <Image source={backIcon} style={styles.backIcon} />
