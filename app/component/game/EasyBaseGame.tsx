@@ -83,22 +83,21 @@ export const BaseGame: React.FC<GameProps> = ({
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
 
-   // NEW: RFID-related state variables
-   const [rfidReceived, setRfidReceived] = useState(false);
-   const [latestRFID, setLatestRFID] = useState<string | null>(null);
-   const [fetchingRFID, setFetchingRFID] = useState(false);
-   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-   const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
-   const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
+  // NEW: RFID-related state variables
+  const [rfidReceived, setRfidReceived] = useState(false);
+  const [latestRFID, setLatestRFID] = useState<string | null>(null);
+  const [fetchingRFID, setFetchingRFID] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
 
-   // Fetch StudentId
-    const route = useRoute();
-    const { studentId } = route.params as { studentId: string };
+  // Fetch StudentId
+  const route = useRoute();
+  const { studentId } = route.params as { studentId: string };
 
-
-   useEffect(() => {
-       console.log("Student ID received as prop:", studentId);
-     }, [studentId]);
+  useEffect(() => {
+    console.log("Student ID received as prop:", studentId);
+  }, [studentId]);
 
   const generateRounds = useCallback(() => {
     // Generate exactly numRounds rounds
@@ -136,8 +135,8 @@ export const BaseGame: React.FC<GameProps> = ({
     setRfidReceived(false); // Ready for new RFID tap
   };
 
-   // NEW: Reset RFID state on each round change
-   useEffect(() => {
+  // NEW: Reset RFID state on each round change
+  useEffect(() => {
     setRoundStartTime(new Date());
     setLatestRFID(null);
     setRfidReceived(false);
@@ -229,6 +228,7 @@ export const BaseGame: React.FC<GameProps> = ({
     }, 1500);
   };
 
+  // --- FIXED: Automatically proceed to the next round after a wrong answer ---
   const handleWrongAnswer = () => {
     setIsCorrect(false);
     const randomWrongDialogue =
@@ -245,8 +245,18 @@ export const BaseGame: React.FC<GameProps> = ({
     // Play wrong sound
     setCurrentSound(wrongSound);
     setPlaySound(true);
-  };
 
+    // Disable further input and move to the next round after a short delay
+    setIsClickable(false);
+    setTimeout(() => {
+      if (currentRound < numRounds - 1) {
+        setCurrentRound(currentRound + 1);
+      } else {
+        setIsGameRunning(false);
+        setTimeout(handleGameEnd, 500);
+      }
+    }, 1500);
+  };
 
   const triggerShake = () => {
     Animated.sequence([
@@ -337,7 +347,6 @@ export const BaseGame: React.FC<GameProps> = ({
   // NOTE: Update score calls have been removed.
   const processRFIDAnswer = useCallback(
     async (rfidData: string) => {
-
       let validStudentId = studentId;
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = await AsyncStorage.getItem("studentId");
@@ -400,8 +409,6 @@ export const BaseGame: React.FC<GameProps> = ({
     );
   }
 
-  
-  
   return (
     <View style={styles.container}>
       {/* Include AudioPlayer component */}
@@ -455,8 +462,6 @@ export const BaseGame: React.FC<GameProps> = ({
                 ]}
               />
             </View>
-
-
           </>
         )}
       </View>
@@ -488,7 +493,7 @@ export const BaseGame: React.FC<GameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate("Home");
+          navigation.navigate("Home", { studentId });
           setIsPaused(false);
         }}
       />

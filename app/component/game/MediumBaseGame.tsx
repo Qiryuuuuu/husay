@@ -7,6 +7,8 @@ import SettingsModal from "../setting";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute } from '@react-navigation/native';
+import AudioPlayer from "../audio/AudioPlayer";
+
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -14,8 +16,9 @@ const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
-
-
+// Import sound files
+const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
+const wrongSound = require("../../../assets/voiceOver/misc/answerValidation/wrong.mp3");
 
 interface CategoryItem {
   name: string;
@@ -48,7 +51,6 @@ interface BaseMediumGameProps {
   npcConfig: NpcConfig;
   dialogues: Dialogues;
   numRounds?: number;
- 
 }
 
 export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
@@ -60,7 +62,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   numRounds = 5,
 }) => {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0); // Track which frame of the story is active
-    const [currentFrame, setCurrentFrame] = useState(null); // Stores current frame details
+  const [currentFrame, setCurrentFrame] = useState(null); // Stores current frame details
   const [isPaused, setIsPaused] = useState(false);
   const [rounds, setRounds] = useState<CategoryItem[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -76,28 +78,30 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const [currentCategoryType, setCurrentCategoryType] = useState("");
   const [hasTried, setHasTried] = useState(false);
 
+  // New audio playback state
+  const [currentSound, setCurrentSound] = useState<any>(null);
+  const [playSound, setPlaySound] = useState(false);
+
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
 
-
-
-  //RFID
-    const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
-    const [latestRFID, setLatestRFID] = useState<string | null>(null);
-    const [fetchingRFID, setFetchingRFID] = useState(false);
-    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
-    const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
+  // RFID state
+  const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
+  const [latestRFID, setLatestRFID] = useState<string | null>(null);
+  const [fetchingRFID, setFetchingRFID] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
    
-  //Routes
-    const route = useRoute();
-    const { studentId } = route.params as { studentId: string };
+  // Routes
+  const route = useRoute();
+  const { studentId } = route.params as { studentId: string };
     
-    useEffect(() => {
-        console.log("Student ID received as prop:", studentId);
-      }, [studentId]);
+  useEffect(() => {
+    console.log("Student ID received as prop:", studentId);
+  }, [studentId]);
 
   const generateRounds = useCallback(() => {
     // Get all category types
@@ -160,8 +164,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     setRfidReceived(false); // Ready for new RFID tap
   };
 
-  
-
   useEffect(() => {
     if (Object.keys(categories).length > 0) {
       generateRounds();
@@ -185,7 +187,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
       setRfidReceived(false);
     }
   }, [currentRound, rounds]);
-  
 
   const generateOptions = (type: string, correctAnswer: string) => {
     if (!type || !categories[type]) {
@@ -220,7 +221,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     }
   };
 
-    
   const handleSelection = useCallback((selectedName: string) => {
     if (!isClickable) return;
 
@@ -240,7 +240,9 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     fadeInAnimation();
     setIsClickable(false);
 
-   
+     // Play correct sound
+     setCurrentSound(correctSound);
+     setPlaySound(true);
 
     let updatedScore = correctFirstTry;
     if (!hasTried) {
@@ -262,6 +264,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     }, 1500);
   };
 
+  // --- Modified handleWrongAnswer to automatically move to the next round ---
   const handleWrongAnswer = () => {
     setIsCorrect(false);
     const randomWrongDialogue = dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] || "Try again!";
@@ -272,7 +275,24 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     triggerShake();
     Vibration.vibrate(100);
     setHasTried(true);
+    setIsClickable(false);
 
+     // Play correct sound
+     setCurrentSound(wrongSound);
+     setPlaySound(true);
+    
+    setTimeout(() => {
+      if (currentRound < numRounds - 1) {
+        setCurrentRound(currentRound + 1);
+      } else {
+        setIsGameRunning(false);
+        setTimeout(() => {
+          if (onGameComplete) {
+            onGameComplete(correctFirstTry, elapsedTimeRef.current);
+          }
+        }, 500);
+      }
+    }, 1500);
   };
 
   const triggerShake = () => {
@@ -300,13 +320,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     }).start();
   };
 
-  if (Object.keys(categories).length === 0) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
+  // Audio playback status handler
+  const handlePlaybackStatusUpdate = useCallback((status) => {
+    if (status.didJustFinish) setPlaySound(false);
+  }, []);
 
   // --- RFID FUNCTIONALITY ---
 
@@ -401,6 +418,14 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   
   return (
     <View style={styles.container}>
+      {playSound && currentSound && (
+        <AudioPlayer
+          audioSource={currentSound}
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          autoPlay={true}
+        />
+      )}
+      
       <TouchableOpacity 
         style={styles.pauseContainer} 
         onPress={() => {
@@ -439,7 +464,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
                 style={[styles.itemImage, { transform: [{ translateX: shakeAnim }] }]} 
               />
             </View>
-
           </>
         )}
       </View>
@@ -471,7 +495,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home');
+          navigation.navigate('Home', {studentId});
           setIsPaused(false);
         }}
       />

@@ -24,6 +24,10 @@ const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
+// Import sound files
+const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
+const wrongSound = require("../../../assets/voiceOver/misc/answerValidation/wrong.mp3");
+
 export interface CategoryItem {
   name: string;
   image: any;
@@ -94,8 +98,10 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const [isWaitingForTap, setIsWaitingForTap] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [currentAudioSources, setCurrentAudioSources] = useState([]);
-  const [playSound, setPlaySound] = useState(false);
+    
+  // New audio playback state
   const [currentSound, setCurrentSound] = useState<any>(null);
+  const [playSound, setPlaySound] = useState(false);
 
   const [totalTime, setTotalTime] = useState(0);
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
@@ -394,6 +400,10 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     fadeInAnimation();
     setIsClickable(false);
 
+    // ✅ Play correct sound
+    setCurrentSound(correctSound);
+    setPlaySound(true);
+
     let updatedScore = correctFirstTry;
     if (!hasTried) {
       updatedScore += 1;
@@ -429,6 +439,11 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     fadeInAnimation();
     triggerShake();
     Vibration.vibrate(100);
+
+    // ❌ Play wrong sound
+    setCurrentSound(wrongSound);
+    setPlaySound(true);
+
     setHasTried(true);
     moveToNextRound(correctFirstTry);
   };
@@ -773,7 +788,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate("Home");
+          navigation.navigate("Home", {studentId});
           setIsPaused(false);
         }}
       />

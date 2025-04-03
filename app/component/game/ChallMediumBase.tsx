@@ -1,4 +1,4 @@
-//ChallMediumBase.tsx //Save State
+//ChallMediumBase.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
@@ -23,6 +23,11 @@ const pauseHeader = require("../../../assets/headerText/pause-header.png");
 const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
+
+// Import sound files
+const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
+const wrongSound = require("../../../assets/voiceOver/misc/answerValidation/wrong.mp3");
+
 
 export interface CategoryItem {
   name: string;
@@ -149,9 +154,12 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
   const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
  
+
   //Routes
   const route = useRoute();
   const { studentId } = route.params as { studentId: string };
+
+  
   
   useEffect(() => {
       console.log("Student ID received as prop:", studentId);
@@ -159,49 +167,50 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   
   const generateRounds = useCallback(() => {
       const categoryTypes = Object.keys(categories);
-      if (categoryTypes.length === 0) {
-        console.error("❌ ERROR: No categories available!");
-        return;
-      }
   
-      const categoryName = categoryTypes[0];
-      const categoryItems = categories[categoryName] || [];
+      // Guarantee we have at least 1 round from a randomly chosen category
+      const guaranteedCategoryIndex = Math.floor(
+        Math.random() * categoryTypes.length
+      );
+      const guaranteedCategory = categoryTypes[guaranteedCategoryIndex];
   
-      if (categoryItems.length === 0) {
-        console.error("❌ ERROR: No items found in category:", categoryName);
-        return;
-      }
+      const remainingCategories = categoryTypes.filter(
+        (cat) => cat !== guaranteedCategory
+      );
   
-      let selectedRounds = [];
-      if (recommendations?.Medium?.Mixed?.length > 0) {
-        const recommendedNames = recommendations.Medium.Mixed;
-        selectedRounds = recommendedNames
-          .map(name => {
-            const foundItem = categoryItems.find(
-              item => item.name.toLowerCase() === name.toLowerCase()
-            );
-            return foundItem
-              ? { ...foundItem, type: categoryName }
-              : { name, image: null, type: categoryName };
-          })
-          .slice(0, numRounds);
-      } else {
-        selectedRounds = categoryItems
-          .sort(() => Math.random() - 0.5)
-          .slice(0, numRounds)
-          .map(item => ({ ...item, type: categoryName }));
-      }
+      let selectedRounds: CategoryItem[] = [];
   
-      if (selectedRounds.length < numRounds) {
-        console.warn(
-          `⚠️ Warning: Only ${selectedRounds.length} rounds available instead of ${numRounds}.`
-        );
-      }
+      // Add 1 guaranteed item
+      const guaranteedCategoryItems = categories[guaranteedCategory];
+      const guaranteedItem = {
+        ...guaranteedCategoryItems[
+          Math.floor(Math.random() * guaranteedCategoryItems.length)
+        ],
+        type: guaranteedCategory,
+      };
+      selectedRounds.push(guaranteedItem);
   
-      console.log("✅ Generated Rounds:", selectedRounds);
+      // Build item pool
+      let itemPool: CategoryItem[] = [];
+      remainingCategories.forEach((category) => {
+        categories[category].forEach((item) => {
+          itemPool.push({ ...item, type: category });
+        });
+      });
+  
+      // Shuffle the item pool
+      itemPool.sort(() => Math.random() - 0.5);
+  
+      // Grab additional items up to numRounds - 1
+      const additionalItems = itemPool.slice(0, numRounds - 1);
+      selectedRounds = [...selectedRounds, ...additionalItems];
+  
+      // Final shuffle
+      selectedRounds.sort(() => Math.random() - 0.5);
+  
       setRounds(selectedRounds);
       resetGameState();
-    }, [categories, numRounds, recommendations]);
+    }, [categories, numRounds]);
   
   const fetchLatestRFIDAnswer = useCallback(async () => {
     if (!isGameRunning || gameEnded || rfidReceived) return;
@@ -448,6 +457,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     fadeInAnimation();
     setIsClickable(false);
 
+    // ✅ Play correct sound
+    setCurrentSound(correctSound);
+    setPlaySound(true);
+
     let updatedScore = correctFirstTry;
     if (!hasTried) {
       updatedScore += 1;
@@ -483,6 +496,11 @@ const handleWrongAnswer = () => {
     fadeInAnimation();
     triggerShake();
     Vibration.vibrate(100);
+
+    // ❌ Play wrong sound
+    setCurrentSound(wrongSound);
+    setPlaySound(true);
+
     setHasTried(true);
     moveToNextRound(correctFirstTry);
   };
@@ -865,7 +883,7 @@ const handleWrongAnswer = () => {
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate("Home");
+          navigation.navigate("Home", {studentId});
           setIsPaused(false);
         }}
       />
@@ -1039,4 +1057,4 @@ const styles = StyleSheet.create({
     height: 80,
     resizeMode: "contain",
   },
-});
+}); 

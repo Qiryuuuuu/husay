@@ -14,6 +14,7 @@ import SettingsModal from "../setting";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute } from '@react-navigation/native';
+import AudioPlayer from "../audio/AudioPlayer";
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -21,8 +22,9 @@ const correctImg = require("../../../assets/validation/correct.png");
 const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
-
-
+// Import sound files
+const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
+const wrongSound = require("../../../assets/voiceOver/misc/answerValidation/wrong.mp3");
 
 // Define types for shape, color and count options
 const shapeOptions = ["Rectangle", "Triangle", "Square", "Circle"];
@@ -96,6 +98,10 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     "shape"
   );
 
+   // New audio playback state
+    const [currentSound, setCurrentSound] = useState<any>(null);
+    const [playSound, setPlaySound] = useState(false);
+
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -104,22 +110,21 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
   const totalRounds =
     numShapeRounds + numColorRounds + (includeCountRound ? 1 : 0);
 
-
-   //RFID
-      const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
-      const [latestRFID, setLatestRFID] = useState<string | null>(null);
-      const [fetchingRFID, setFetchingRFID] = useState(false);
-      const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-      const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
-      const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
+  // RFID state
+  const [rfidReceived, setRfidReceived] = useState(false); // Prevent multiple reads
+  const [latestRFID, setLatestRFID] = useState<string | null>(null);
+  const [fetchingRFID, setFetchingRFID] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
      
-    //Routes
-      const route = useRoute();
-      const { studentId } = route.params as { studentId: string };
+  // Routes
+  const route = useRoute();
+  const { studentId } = route.params as { studentId: string };
       
-      useEffect(() => {
-          console.log("Student ID received as prop:", studentId);
-        }, [studentId]);
+  useEffect(() => {
+    console.log("Student ID received as prop:", studentId);
+  }, [studentId]);
 
   // Generate rounds
   const generateRounds = useCallback(() => {
@@ -207,9 +212,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     setCorrectFirstTry(0);
     elapsedTimeRef.current = 0;
     setHasTried(false);
-     // --- Reset RFID state for new game ---
-     setLatestRFID(null);
-     setRfidReceived(false);
+    // --- Reset RFID state for new game ---
+    setLatestRFID(null);
+    setRfidReceived(false);
   };
 
   useEffect(() => {
@@ -283,8 +288,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     fadeInAnimation();
     setIsClickable(false);
 
-
-
+     // Play correct sound
+     setCurrentSound(correctSound);
+     setPlaySound(true);
 
     let updatedScore = correctFirstTry;
     if (!hasTried) {
@@ -306,6 +312,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     }, 1500);
   };
 
+  // --- Updated handleWrongAnswer to automatically proceed to the next round ---
   const handleWrongAnswer = () => {
     setIsCorrect(false);
     const randomWrongDialogue =
@@ -318,7 +325,24 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     triggerShake();
     Vibration.vibrate(100);
     setHasTried(true);
-  
+    setIsClickable(false);
+
+     // Play correct sound
+     setCurrentSound(wrongSound);
+     setPlaySound(true);
+
+    setTimeout(() => {
+      if (currentRound < rounds.length - 1) {
+        setCurrentRound(currentRound + 1);
+      } else {
+        setIsGameRunning(false);
+        setTimeout(() => {
+          if (onGameComplete) {
+            onGameComplete(correctFirstTry, elapsedTimeRef.current);
+          }
+        }, 500);
+      }
+    }, 1500);
   };
 
   const triggerShake = () => {
@@ -373,6 +397,11 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
       useNativeDriver: true,
     }).start();
   };
+  
+  // Audio playback status handler
+    const handlePlaybackStatusUpdate = useCallback((status) => {
+      if (status.didJustFinish) setPlaySound(false);
+    }, []);
 
   const getQuestionText = () => {
     if (!rounds[currentRound]) return "";
@@ -419,7 +448,6 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
   const processRFIDAnswer = useCallback(
     async (rfidData: string) => {
-
       let validStudentId = studentId;
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = await AsyncStorage.getItem("studentId");
@@ -460,7 +488,6 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     [isClickable, currentRound, rounds, handleCorrectAnswer, handleWrongAnswer]
   );
 
-  // Start polling for RFID input every 3 seconds while the game is running
   useEffect(() => {
     if (isGameRunning && !rfidReceived) {
       pollingIntervalRef.current = setInterval(fetchLatestRFIDAnswer, 3000);
@@ -480,6 +507,14 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
   return (
     <View style={styles.container}>
+      {playSound && currentSound && (
+        <AudioPlayer
+          audioSource={currentSound}
+          onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+          autoPlay={true}
+        />
+      )}
+      
       <TouchableOpacity
         style={styles.pauseContainer}
         onPress={() => {
@@ -523,7 +558,6 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
                 ]}
               />
             </View>
-
           </>
         )}
       </View>
@@ -555,7 +589,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate("Home");
+          navigation.navigate("Home", { studentId });
           setIsPaused(false);
         }}
       />
