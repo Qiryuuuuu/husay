@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log("✅ Connected to MongoDB Atlas"))
+.then(() => console.log("✅ Connected to husayDB"))
 .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 /**
@@ -139,5 +139,5 @@ app.post("/data", async (req, res) => {
  * ✅ Start RFID Microservice
  */
 app.listen(PORT, () => {
-  console.log(`✅ RFID Microservice running on port ${PORT}`);
+  console.log(`🚀 RFID Microservice running on port ${PORT}`);
 });

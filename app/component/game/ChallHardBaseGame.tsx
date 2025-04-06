@@ -1,4 +1,4 @@
-//ChallHardBase.tsx
+// ChallHardBase.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
@@ -15,6 +15,9 @@ import AudioPlayer from "../../component/audio/AudioPlayer";
 import AudioChall from "../audio/ChallAudio";
 import { FrameType } from "../game/challenge/HardMode/ChallengeHard";
 import figures from "../../data/hardQuestions";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRoute } from '@react-navigation/native';
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -23,8 +26,12 @@ const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
 const shapeOptions = ["Rectangle", "Triangle", "Square", "Circle"];
-const colorOptions = ["Red", "Blue", "Green", "Yellow"];
-const countOptions = ["1", "2", "3", "4", "5"];
+const colorOptions = ["Red", "Blue", "Green", "Yellow", "Black", "Gray", "White"];
+const countOptions = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+
+// Import sound files
+const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
+const wrongSound = require("../../../assets/voiceOver/misc/answerValidation/wrong.mp3");
 
 interface FigureProperties {
   shape: string;
@@ -46,6 +53,20 @@ export interface RoundData {
   type: "shape" | "color" | "number";
 }
 
+export interface RecommendationData {
+  Easy: {
+    Shapes: string[];
+    Colors: string[];
+    Numbers: string[];
+  };
+  Medium: {
+    Mixed: string[];
+  };
+  Hard: {
+    Mixed: string[];
+  };
+}
+
 interface NpcConfig {
   [key: string]: {
     idle: any;
@@ -56,6 +77,7 @@ interface NpcConfig {
 }
 
 interface BaseHardGameProps {
+  studentId: string;
   figures: {
     house: Figure[];
     car: Figure[];
@@ -79,6 +101,7 @@ interface BaseHardGameProps {
   outro: any;
   structuredRounds: RoundData[]; // ✅ New prop
   setStructuredRounds: React.Dispatch<React.SetStateAction<RoundData[]>>; // ✅ New prop
+  recommendations?: RecommendationData; // NEW: recommendations prop
 }
 
 export const BaseHardGame: React.FC<BaseHardGameProps> = ({
@@ -94,6 +117,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   numRounds = 11,
   structuredRounds,
   setStructuredRounds,
+  recommendations,
 }) => {
   const [npcImage, setNpcImage] = useState(npcConfig["EVA"].idle);
   const [totalTime, setTotalTime] = useState(0);
@@ -119,9 +143,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const [isGameRunning, setIsGameRunning] = useState(true);
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
-  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(
-    null
-  );
+  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(null);
   const [questionType, setQuestionType] = useState<"shape" | "color" | "count">(
     "shape"
   );
@@ -133,14 +155,69 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
   const hasTriedRef = useRef(false);
 
+  // RFID-related states
+  const [rfidReceived, setRfidReceived] = useState(false); // Prevent multiple reads
+  const [latestRFID, setLatestRFID] = useState<string | null>(null);
+  const [fetchingRFID, setFetchingRFID] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
+
+  // Routes
+  const route = useRoute();
+  const { studentId } = route.params as { studentId: string };
+
+  useEffect(() => {
+    console.log("Student ID received as prop:", studentId);
+  }, [studentId]);
+
   const generateRounds = useCallback(() => {
+    if (
+      recommendations &&
+      recommendations.Hard &&
+      recommendations.Hard.Mixed &&
+      recommendations.Hard.Mixed.length >= numRounds
+    ) {
+      const recNames = recommendations.Hard.Mixed.slice(0, numRounds);
+      const figureTypes = Object.keys(figures);
+      let allRounds: Figure[] = [];
+
+      recNames.forEach((recName) => {
+        let found = false;
+        for (const ft of figureTypes) {
+          const matchingFigure = figures[ft].find(
+            (f) =>
+              f.correctAnswer &&
+              f.correctAnswer.toLowerCase() === recName.toLowerCase()
+          );
+          if (matchingFigure) {
+            allRounds.push(matchingFigure);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          console.warn(`Recommended figure "${recName}" not found; using fallback.`);
+          allRounds.push({
+            source: null,
+            properties: { shape: recName, color: recName, count: recName },
+            questionType: "shape",
+            correctAnswer: recName,
+          });
+        }
+      });
+
+      setRounds(allRounds);
+      setStructuredRounds(generateRoundsData(allRounds)); // ✅ pass generated rounds directly
+      resetGameState();
+      return;
+    }
+
     const figureTypes = Object.keys(figures);
     if (figureTypes.length === 0) return;
 
-    const randomFigureType =
-      figureTypes[Math.floor(Math.random() * figureTypes.length)];
+    const randomFigureType = figureTypes[Math.floor(Math.random() * figureTypes.length)];
     setSelectedFigureType(randomFigureType);
-
     const selectedFigures = figures[randomFigureType];
     if (!selectedFigures || !selectedFigures[0]?.properties) {
       console.error("Invalid figure data:", randomFigureType, selectedFigures);
@@ -148,8 +225,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     }
 
     let allRounds: Figure[] = [];
-
-    // Generate shape rounds (1-5)
     for (let i = 0; i < numShapeRounds; i++) {
       allRounds.push({
         ...selectedFigures[i + 1],
@@ -157,8 +232,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         correctAnswer: selectedFigures[i + 1].properties.shape,
       });
     }
-
-    // Generate color rounds (6-10)
     for (let i = 0; i < numColorRounds; i++) {
       allRounds.push({
         ...selectedFigures[i + 1],
@@ -166,8 +239,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         correctAnswer: selectedFigures[i + 1].properties.color,
       });
     }
-
-    // Add count round (11)
     if (includeCountRound) {
       allRounds.push({
         ...selectedFigures[0],
@@ -178,21 +249,63 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
 
     setRounds(allRounds);
     resetGameState();
-  }, [figures, numShapeRounds, numColorRounds, includeCountRound]);
+  }, [figures, numShapeRounds, numColorRounds, includeCountRound, numRounds, recommendations]);
 
-  const generateRoundsData = useCallback(() => {
-    const newRounds: RoundData[] = rounds.map((round) => ({
-      correct: false, // Default false, will be updated during gameplay
-      image: round.source, // Assuming `source` contains the image reference
-      name: round.correctAnswer || "Unknown",
-      type:
-        round.questionType === "count"
-          ? "number"
-          : round.questionType || "shape",
-    }));
-
-    return newRounds;
+  const generateRoundsData = useCallback((roundData: Figure[] = rounds): RoundData[] => {
+    return roundData.map((round) => {
+      let type: "shape" | "color" | "number";
+      switch (round.questionType) {
+        case "shape":
+          type = "shape";
+          break;
+        case "color":
+          type = "color";
+          break;
+        case "count":
+          type = "number";
+          break;
+        default:
+          type = "shape";
+      }
+  
+      return {
+        correct: false,
+        image: round.source,
+        name: round.correctAnswer || "Unknown",
+        type,
+      };
+    });
   }, [rounds]);
+  
+
+  const fetchLatestRFIDAnswer = useCallback(async () => {
+    if (!isGameRunning || gameEnded || rfidReceived) return;
+    if (fetchingRFID) return;
+    setFetchingRFID(true);
+
+    try {
+      console.log("🔄 Fetching latest RFID answer...");
+      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
+
+      if (response.data.success) {
+        const { category, answer, timestamp } = response.data.data;
+        console.log(`✅ Received RFID Answer: ${answer} (Category: ${category}) at ${timestamp}`);
+
+        const answerTime = new Date(timestamp);
+        if (answerTime >= roundStartTime && answer !== lastProcessedRFID) {
+          processRFIDAnswer(answer);
+        } else {
+          console.log("⚠️ Stale RFID answer or already processed, ignoring.");
+        }
+      } else {
+        console.warn("⚠️ No RFID data found. Retrying...");
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching latest RFID answer:", error.message);
+    } finally {
+      setFetchingRFID(false);
+    }
+  }, [fetchingRFID, isGameRunning, gameEnded, rfidReceived, roundStartTime, lastProcessedRFID]);
 
   const resetGameState = () => {
     setCurrentRound(0);
@@ -210,28 +323,33 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   };
 
   useEffect(() => {
-    if (structuredRounds.length === 0) {
-      setStructuredRounds(generateRoundsData());
-      console.log("✅ Initialized Structured Rounds:", generateRoundsData());
+    if (structuredRounds.length === 0 && rounds.length > 0) {
+      const newStructuredRounds: RoundData[] = generateRoundsData(rounds);
+      console.log("✅ Initializing Structured Rounds:", newStructuredRounds);
+      setStructuredRounds(newStructuredRounds);
     }
   }, [rounds]);
 
   useEffect(() => {
-    console.log(
-      "📦 BaseHardGame structuredRounds passed up:",
-      structuredRounds
-    );
+    console.log("📦 BaseHardGame structuredRounds passed up:", structuredRounds);
   }, [structuredRounds]);
 
   useEffect(() => {
     if (figures && Object.keys(figures).length > 0) {
       generateRounds();
-      console.log("Initial Score:", correctFirstTry); // Add this line
+      console.log("Initial Score:", correctFirstTry);
     }
   }, [generateRounds, figures]);
 
+  // ─── PHASE 1: RESET RFID FLAGS AND ROUND TIMING AT THE START OF EACH ROUND ──────────────────────────────
   useEffect(() => {
     if (rounds.length > 0 && currentRound < rounds.length) {
+      // Reset RFID-related states for the new round.
+      setRfidReceived(false);
+      setLastProcessedRFID(null);
+      setRoundStartTime(new Date()); // Update round start time
+
+      // ─── PHASE 2: SET UP THE ROUND (Question Type, Options, NPC, etc.) ──────────────────────────────
       const currentQuestion = rounds[currentRound];
       if (!currentQuestion) {
         console.error("Invalid round data:", currentRound, rounds);
@@ -272,15 +390,14 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       }
     }
   }, [currentRound, rounds, dialogues?.idle, npcConfig.idle, storyScenes]);
+  // ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
   const handleSelection = useCallback(
     (selectedAnswer: string) => {
       if (!isClickable || currentRound >= rounds.length) return;
 
       const normalizedSelection = selectedAnswer.toLowerCase();
-      const normalizedCorrectAnswer = (
-        rounds[currentRound].correctAnswer || ""
-      ).toLowerCase();
+      const normalizedCorrectAnswer = (rounds[currentRound].correctAnswer || "").toLowerCase();
 
       if (normalizedSelection === normalizedCorrectAnswer) {
         handleCorrectAnswer();
@@ -294,49 +411,43 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
     const randomCorrectDialogue =
-      dialogues?.correct?.[
-        Math.floor(Math.random() * dialogues.correct.length)
-      ] || "Correct!";
+      dialogues?.correct?.[Math.floor(Math.random() * dialogues.correct.length)] || "Correct!";
     setFeedbackText(randomCorrectDialogue);
     animateNpcBounce();
-    const characterKey = currentFrame?.character.toUpperCase();
+    const characterKey = currentFrame?.character?.toUpperCase();
     setNpcImage(npcConfig[characterKey]?.correct || npcConfig["EVA"].correct);
     fadeInAnimation();
     setIsClickable(false);
 
-    // ✅ Only mark the round as correct if it was answered on the first try
+    // Play correct sound
+    setCurrentSound(correctSound);
+    setPlaySound(true);
+
     if (!hasTriedRef.current) {
-      setStructuredRounds((prevRounds) => {
-        return prevRounds.map((round, index) =>
+      setStructuredRounds((prevRounds) =>
+        prevRounds.map((round, index) =>
           index === currentRound ? { ...round, correct: true } : round
-        );
-      });
+        )
+      );
 
       setCorrectFirstTry((prevScore) => {
-        console.log(
-          `Round ${currentRound + 1}: Correct on first try! Score: ${
-            prevScore + 1
-          }`
-        );
+        console.log(`🎯 Round ${currentRound + 1}: Correct! Score: ${prevScore + 1}`);
         return prevScore + 1;
       });
     }
 
-    console.log(
-      `🚀 Updated structuredRounds for round ${
-        currentRound + 1
-      } (First try: ${!hasTriedRef.current})`
-    );
+    console.log(`🚀 Correct answer! Preparing to move to round ${currentRound + 1}`);
 
-    // ✅ Reset hasTriedRef for the next round
     hasTriedRef.current = false;
 
+    // For certain rounds, show a correct frame before moving on.
     if ([4, 9, 10].includes(currentRound)) {
       const roundKey = `round${currentRound + 1}`;
       const correctFrame = storyScenes[roundKey]?.find(
         (frame) => frame.type === FrameType.CORRECT_ANSWER
       );
       if (correctFrame) {
+        console.log(`🟢 Showing correct frame before moving to next round.`);
         setCurrentFrame(correctFrame);
         setIsWaitingForTap(true);
         return;
@@ -344,10 +455,11 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     }
 
     setTimeout(() => {
-      setCurrentRound((prevRound) => {
-        console.log(`✅ Moving to Round ${prevRound + 2}`);
-        return prevRound + 1;
-      });
+      if (currentRound + 1 === numRounds) {
+        startOutroSequence(correctFirstTry); // ✅ triggers outro flow
+      } else {
+        setCurrentRound((prevRound) => prevRound + 1);
+      }
     }, 1500);
   };
 
@@ -357,34 +469,116 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] ||
         "Try again!"
     );
-    const characterKey = currentFrame?.character.toUpperCase();
+    const characterKey = currentFrame?.character?.toUpperCase();
     setNpcImage(npcConfig[characterKey]?.wrong || npcConfig["EVA"].wrong);
     fadeInAnimation();
     animateNpcBounce();
     triggerShake();
     Vibration.vibrate(100);
 
+    // Play wrong sound
+    setCurrentSound(wrongSound);
+    setPlaySound(true);
+
     hasTriedRef.current = true;
-    console.log(
-      `Round ${currentRound + 1}: Wrong answer. hasTriedRef set to true.`
-    );
+    console.log(`❌ Round ${currentRound + 1}: Wrong answer. Try again.`);
 
-    setStructuredRounds((prevRounds) => {
-      const updatedRounds = prevRounds.map((round, index) =>
+    setStructuredRounds((prevRounds) =>
+      prevRounds.map((round, index) =>
         index === currentRound ? { ...round, correct: false } : round
-      );
-      console.log(
-        "🚨 structuredRounds AFTER wrong answer:",
-        JSON.stringify(updatedRounds, null, 2)
-      );
-      return updatedRounds;
-    });
-
-    console.log(
-      `❌ Updated structuredRounds after wrong answer:`,
-      structuredRounds
+      )
     );
+
+    setTimeout(() => {
+      if (currentRound + 1 === numRounds) {
+        startOutroSequence(correctFirstTry); // ✅ triggers outro flow
+      } else {
+        setCurrentRound((prevRound) => prevRound + 1);
+      }
+      }, 1500);
   };
+
+  const processRFIDAnswer = useCallback(
+    async (rfidData: string) => {
+      let validStudentId = studentId;
+      if (!validStudentId || validStudentId.trim() === "") {
+        validStudentId = await AsyncStorage.getItem("studentId");
+        if (!validStudentId || validStudentId.trim() === "") {
+          console.error("Student ID is missing, cannot update score.");
+          return;
+        }
+      }
+
+      if (!isClickable || currentRound >= rounds.length) return;
+
+      const currentQuestion = rounds[currentRound];
+      const correctAnswer = (currentQuestion.correctAnswer || "").toLowerCase();
+
+      console.log(`🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`);
+
+      setIsClickable(false);
+      setRfidReceived(true);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      setLastProcessedRFID(rfidData);
+
+      const isAnswerCorrect = rfidData.trim().toLowerCase() === correctAnswer;
+      console.log(`✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+
+      setIsCorrect(isAnswerCorrect);
+
+      try {
+        await axios.post("http://10.0.2.2:5001/rfid-result", {
+          result: isAnswerCorrect ? "Correct" : "Incorrect",
+        });
+        console.log(`📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+      } catch (error: any) {
+        console.error("❌ Error sending RFID result:", error.message);
+      }
+
+      try {
+        const authToken = await AsyncStorage.getItem("authToken");
+        const response = await axios.put(
+          "http://10.0.2.2:5000/api/students/update-score",
+          {
+            studentId: validStudentId,
+            category: questionType,
+            isCorrect: isAnswerCorrect,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          console.log("✅ Student score updated successfully.");
+        } else {
+          console.error(`⚠️ Unexpected response: ${response.status}`);
+        }
+      } catch (error: any) {
+        console.error("❌ Error updating student score:", error.message);
+      }
+
+      if (isAnswerCorrect) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [currentRound, rounds, isClickable, questionType, handleCorrectAnswer, handleWrongAnswer]
+  );
+
+  useEffect(() => {
+    if (isGameRunning && !rfidReceived) {
+      pollingIntervalRef.current = setInterval(fetchLatestRFIDAnswer, 3000);
+    }
+    return () => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    };
+  }, [isGameRunning, currentRound, rfidReceived, fetchLatestRFIDAnswer]);
 
   const triggerShake = () => {
     Animated.sequence([
@@ -464,7 +658,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     }
   }, []);
 
-  const startOutroSequence = (finalScore) => {
+  const startOutroSequence = (finalScore: number) => {
     setIsInOutroSequence(true);
     const outroScenes = storyScenes["outro"];
 
@@ -473,16 +667,15 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       setCurrentFrame(outroScenes[0]);
       setIsWaitingForTap(true);
     } else {
-      // If there are no outro scenes, end the game immediately
       endGame(finalScore);
     }
   };
 
   useEffect(() => {
     if (currentFrame?.type === FrameType.QUESTION) {
-      startTimer(); // ✅ Start when in a question
+      startTimer();
     } else {
-      stopTimer(); // ✅ Stop when leaving a question
+      stopTimer();
     }
 
     return () => {
@@ -507,18 +700,14 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     }
   };
 
-  const endGame = (finalScore) => {
+  const endGame = (finalScore: number) => {
     if (!gameEnded) {
       setGameEnded(true);
       setIsGameRunning(false);
       stopTimer();
-      console.log(
-        "🚀 BEFORE SUBMISSION structuredRounds:",
-        JSON.stringify(structuredRounds, null, 2)
-      );
+      console.log("🚀 BEFORE SUBMISSION structuredRounds:", JSON.stringify(structuredRounds, null, 2));
 
       if (onGameComplete) {
-        // Use the score passed to this function
         onGameComplete(totalTime, finalScore, structuredRounds);
       }
     }
@@ -535,9 +724,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   useEffect(() => {
     if (currentFrame?.audio) {
       console.log("🎼 New Frame Audio Detected:", currentFrame.audio);
-      setCurrentAudioSources([...currentFrame.audio]); // ✅ Ensure all audios are set
+      setCurrentAudioSources([...currentFrame.audio]);
     } else {
-      setCurrentAudioSources([]); // ✅ Clear audio if the frame has no sound
+      setCurrentAudioSources([]);
     }
   }, [currentFrame]);
 
@@ -605,7 +794,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
               );
 
               if (followingFrames.length > 0) {
-                // Find the first FOLLOWING frame
                 const nextIndex = storyScenes[roundKey].findIndex(
                   (frame) => frame.type === FrameType.FOLLOWING
                 );
@@ -613,7 +801,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
                 setCurrentFrame(storyScenes[roundKey][nextIndex]);
                 setIsWaitingForTap(true);
               } else {
-                // No FOLLOWING frames, move to next round
                 if (currentRound + 1 === numRounds) {
                   startOutroSequence(correctFirstTry);
                 } else {
@@ -635,7 +822,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
               );
 
               if (nextFollowingFrames.length > 0) {
-                // Find the next FOLLOWING frame
                 const nextIndex = storyScenes[roundKey].findIndex(
                   (frame, index) =>
                     frame.type === FrameType.FOLLOWING &&
@@ -645,7 +831,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
                 setCurrentFrame(storyScenes[roundKey][nextIndex]);
                 setIsWaitingForTap(true);
               } else {
-                // No more FOLLOWING frames, move to next round
                 if (currentRound + 1 === numRounds) {
                   startOutroSequence(correctFirstTry);
                 } else {
@@ -667,7 +852,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
                 setIsInOutroSequence(false);
                 setGameEnded(true);
                 setIsWaitingForTap(false);
-                // Use the current score state when ending the game after outro
                 endGame(correctFirstTry);
               }
               return;
@@ -722,16 +906,16 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
-          <Stopwatch
-            isRunning={true}
-            onStop={(finalTime) => setTotalTime(finalTime)}
-          />
+          <View style={styles.stopwatchContainer}>
+            <Stopwatch 
+              isRunning={true}
+              onStop={(finalTime) => setTotalTime(finalTime)}
+            />
+          </View>
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
-          <Text style={styles.roundText}>
-            Round {currentRound + 1} of {numRounds}
-          </Text>
+          <Text style={styles.roundText}>Round {currentRound + 1} of {numRounds}</Text>
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
@@ -744,19 +928,6 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
                   { transform: [{ translateX: shakeAnim }] },
                 ]}
               />
-            </View>
-
-            <View style={styles.buttonContainer}>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleSelection(option)}
-                  style={[styles.button, !isClickable && styles.disabledButton]}
-                  disabled={!isClickable}
-                >
-                  <Text style={styles.buttonText}>{option}</Text>
-                </TouchableOpacity>
-              ))}
             </View>
           </>
         )}
@@ -777,7 +948,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate("Home");
+          navigation.navigate("Home", { studentId });
           setIsPaused(false);
         }}
       />
@@ -798,7 +969,7 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1, // Ensures it receives taps
+    zIndex: 1,
     flex: 1,
   },
   pauseContainer: {
@@ -822,9 +993,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   validationContainer: {
-    height: 50,
-    justifyContent: "center",
+    position: "absolute",
+    top: "8%",
+    width: "100%",
     alignItems: "center",
+    zIndex: 30,
   },
   validationImage: {
     width: 44,
@@ -832,7 +1005,16 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     resizeMode: "contain",
   },
+  stopwatchContainer: {
+    position: "absolute",
+    top: "15%",
+    width: "100%",
+    alignItems: "center",
+    zIndex: 20,
+  },
   roundText: {
+    position: "absolute",
+    top: "25%",
     backgroundColor: "rgba(0,0,0,0.7)",
     color: "white",
     paddingVertical: 8,
@@ -840,8 +1022,18 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
     textAlign: "center",
+    zIndex: 20,
+  },
+  itemContainer: {
+    width: "100%",
+    height: 270,
+    position: "absolute",
+    top: "35%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 10,
   },
   categoryTitle: {
     backgroundColor: "#5A8EF4",
@@ -853,14 +1045,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 15,
     textAlign: "center",
-  },
-  itemContainer: {
-    width: "100%",
-    height: 270,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 20,
-    marginBottom: 30,
   },
   itemImage: {
     width: "100%",

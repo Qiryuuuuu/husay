@@ -93,13 +93,9 @@ export default function PracMainScreen({ route }) {
             {/* Main content */}
             <View style={styles.cardContainer}>
               <TouchableOpacity
-                onPress={() => {
-                  console.log(
-                    "Navigating to EasyMenuInterface with studentId:",
-                    studentId
-                  ); // Debugging
-                  navigation.navigate("EasyMenuInteface", { studentId });
-                }}
+                onPress={() => 
+                  navigation.navigate("EasyMenuInteface", { studentId })
+                }
               >
                 <Image source={easyCard} style={styles.cards} />
               </TouchableOpacity>

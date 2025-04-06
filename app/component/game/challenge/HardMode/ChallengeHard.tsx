@@ -839,6 +839,8 @@ interface ChallengeHardGameProps {
     Numbers: Record<string, number>;
   }) => void;
   structuredRounds: RoundData[]; // ✅ New prop
+  studentId: string;
+  updatedRecommendations: any;
 }
 
 const formattedFigures = {
@@ -852,40 +854,48 @@ const formattedFigures = {
 const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
   onGameComplete,
   navigation,
+  onScoreUpdate,
+  structuredRounds, // 👈 Received from props
+  studentId,
+  updatedRecommendations,
 }) => {
-  const [structuredRounds, setStructuredRounds] = useState<RoundData[]>(
-    () => structuredRounds || []
-  );
+  const [localStructuredRounds, setLocalStructuredRounds] = useState<RoundData[]>(structuredRounds || []);
 
   const handleGameComplete = (
     time: number,
     score: number,
-    structuredRounds: any
+    updatedRounds: any
   ) => {
-    console.log("🔍 Challenge Hard Game received rounds:", structuredRounds);
+    console.log("🔍 Challenge Hard Game received rounds:", updatedRounds);
 
-    if (!structuredRounds || !Array.isArray(structuredRounds)) {
+    if (!studentId) {
+      console.error("❌ ERROR: Missing studentId before navigation!");
+      return;
+    }
+
+    if (!updatedRounds || !Array.isArray(updatedRounds)) {
       console.error(
         "❌ ERROR: Rounds array is missing or invalid before navigation!",
-        structuredRounds
+        updatedRounds
       );
       return;
     }
-    setStructuredRounds([...structuredRounds]); // ✅ Clone structured rounds before passing up
+
+    setLocalStructuredRounds([...updatedRounds]); // ✅ Save internally if needed
     console.log(
       "🚀 Final structuredRounds being passed to ChallengeHard.js:",
-      structuredRounds
+      updatedRounds
     );
     console.log(
       "✅ Final Correct Count:",
-      structuredRounds.filter((r) => r.correct).length
+      updatedRounds.filter((r) => r.correct).length
     );
     console.log(
       "✅ Final Incorrect Count:",
-      structuredRounds.filter((r) => !r.correct).length
+      updatedRounds.filter((r) => !r.correct).length
     );
 
-    onGameComplete(time, score, [...structuredRounds]); // ✅ Ensure correct rounds are sent
+    onGameComplete(time, score, [...updatedRounds]); // ✅ Pass to parent
   };
 
   return (
@@ -901,18 +911,13 @@ const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
       numRounds={11}
       outro={outro}
       storyScenes={storyScenes}
-      structuredRounds={structuredRounds} // ✅ Pass structuredRounds
-      setStructuredRounds={setStructuredRounds} // ✅ Allow updates
+      structuredRounds={localStructuredRounds} // ✅ Use local version
+      setStructuredRounds={setLocalStructuredRounds} // ✅ Pass setter
+      studentId={studentId}
+      recommendations={updatedRecommendations}
     />
   );
 };
 
-export default (props) => {
-  console.log(
-    "🚀 Final structuredRounds being passed to ChallengeHard.js:",
-    props.structuredRounds
-  );
-  return (
-    <ChallengeHardGame {...props} structuredRounds={props.structuredRounds} />
-  );
-};
+
+export default ChallengeHardGame;

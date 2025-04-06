@@ -272,6 +272,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   useEffect(() => {
     if (Object.keys(categories).length > 0) {
       generateRounds();
+      startTimer();
     }
   }, [generateRounds]);
 
@@ -580,7 +581,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       stopTimer();
   
       if (onGameComplete) {
-        onGameComplete(finalScore, totalTime, currentCategoryType, [...rounds]);
+        onGameComplete(elapsedTimeRef.current, finalScore, currentCategoryType, [...rounds]);
       }
     }
   };
@@ -746,7 +747,11 @@ export const BaseGame: React.FC<BaseGameProps> = ({
           <View style={styles.stopwatchContainer}>
             <Stopwatch 
               isRunning={stopwatchRunning}
-              onStop={(finalTime) => setTotalTime(finalTime)}
+              onStop={(finalElapsedSeconds: number) => {
+                console.log("⏱️ Stopwatch stopped with:", finalElapsedSeconds, "seconds");
+                setTotalTime(finalElapsedSeconds);
+                elapsedTimeRef.current = finalElapsedSeconds;
+              }}
             />
           </View>
         )}
@@ -833,9 +838,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   validationContainer: {
-    height: 50,
-    justifyContent: "center",
+    position: "absolute",
+    top: "8%",
+    width: "100%",
     alignItems: "center",
+    zIndex: 30,
   },
   validationImage: {
     width: 44,

@@ -84,8 +84,8 @@ const PracticeMediumGame = ({ onGameComplete, setGamePhase, navigation }) => {
     console.log("✅ Game Finished in PracticeMediumGame!");
     console.log("Time Taken:", timeTaken);
     console.log("Final Score Received:", score);
-
-    onGameComplete(score, timeTaken); // ✅ Correct order
+    
+    onGameComplete(score, timeTaken); // ✅ Correct order\
   };
   return (
     <BaseMediumGame

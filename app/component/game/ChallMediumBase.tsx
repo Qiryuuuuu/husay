@@ -928,9 +928,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   validationContainer: {
-    height: 50,
-    justifyContent: "center",
+    position: "absolute",
+    top: "8%",
+    width: "100%",
     alignItems: "center",
+    zIndex: 30,
   },
   validationImage: {
     width: 44,
