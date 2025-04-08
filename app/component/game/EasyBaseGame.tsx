@@ -95,6 +95,10 @@ export const BaseGame: React.FC<GameProps> = ({
   const route = useRoute();
   const { studentId } = route.params as { studentId: string };
 
+  //Stopwatch
+  const [stopwatchRunning, setStopwatchRunning] = useState(true); // Changes
+
+
   useEffect(() => {
     console.log("Student ID received as prop:", studentId);
   }, [studentId]);
@@ -184,15 +188,22 @@ export const BaseGame: React.FC<GameProps> = ({
     [currentRound, rounds, isClickable]
   );
 
+  // Changes
   const handleGameEnd = () => {
     console.log("✅ BaseGame detected game end!");
-    const finalScore = correctFirstTryRef.current; // Get the latest score
-    const totalTime = elapsedTimeRef.current; // Get total elapsed time
-    if (typeof onGameComplete === "function") {
-      onGameComplete(finalScore, totalTime); // Pass time and score
-    }
+    setStopwatchRunning(false); // ✅ This will trigger onStop
+  
+    setTimeout(() => {
+      const finalScore = correctFirstTryRef.current;
+      const finalTime = typeof elapsedTimeRef.current === 'number' && !isNaN(elapsedTimeRef.current) //changes
+  ? elapsedTimeRef.current
+  : 0;
+      console.log("🎯 Final time to submit:", elapsedTimeRef.current); // changes
+      onGameComplete(finalScore, finalTime);
+    }, 300); // wait a little to allow Stopwatch to trigger onStop
   };
-
+  // Changes
+  
   // ========== CORRECT / INCORRECT ANSWER HANDLERS ==========
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
@@ -218,11 +229,13 @@ export const BaseGame: React.FC<GameProps> = ({
       return prev;
     });
 
+   
     setTimeout(() => {
       if (currentRound < numRounds - 1) {
         setCurrentRound(currentRound + 1);
       } else {
         setIsGameRunning(false);
+        setStopwatchRunning(false); // Changes
         setTimeout(handleGameEnd, 500);
       }
     }, 1500);
@@ -248,11 +261,15 @@ export const BaseGame: React.FC<GameProps> = ({
 
     // Disable further input and move to the next round after a short delay
     setIsClickable(false);
+
+
+
     setTimeout(() => {
       if (currentRound < numRounds - 1) {
         setCurrentRound(currentRound + 1);
       } else {
         setIsGameRunning(false);
+        setStopwatchRunning(false); // Changes
         setTimeout(handleGameEnd, 500);
       }
     }, 1500);
@@ -439,13 +456,16 @@ export const BaseGame: React.FC<GameProps> = ({
             />
           )}
         </View>
-
+        
+      
         <Stopwatch
-          isRunning={isGameRunning}
+          isRunning={stopwatchRunning} // Changes
           onStop={(finalTime) => {
+            console.log("🔥 Elapsed Time from Stopwatch:", finalTime);
             elapsedTimeRef.current = finalTime; // ✅ Save total time
           }}
         />
+    
 
         <Text style={styles.roundText}>
           Round {currentRound + 1} of {numRounds}

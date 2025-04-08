@@ -101,6 +101,12 @@ const StageCompletion = ({
   // ✅ Calculate mistakes
   const mistakes = totalRounds - correctAnswers;
 
+  //Time taken in minutes and seconds
+  const formattedTime =
+  typeof timeTaken === "number"
+    ? `${Math.floor(timeTaken / 60)}:${(timeTaken % 60).toString().padStart(2, "0")}`
+    : timeTaken; 
+
   // ✅ Determine star count
   let starCount = 1; // Default: 1 star
   if (mistakes === 0) {
@@ -146,7 +152,7 @@ const StageCompletion = ({
         <View style={styles.scoreContainer}>
           <View style={[styles.resultContainer, styles.timeContainer]}>
             <Text style={styles.stat}>Time Taken: </Text>
-            <Text style={styles.stat}>{timeTaken}</Text>
+            <Text style={styles.stat}>{formattedTime}</Text>
           </View>
           <View style={[styles.resultContainer, styles.scoreDetails]}>
             <Text style={styles.stat}>Correct Answers: </Text>

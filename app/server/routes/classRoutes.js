@@ -37,7 +37,11 @@ router.post("/add-student", authenticateUser, async (req, res) => {
       userClass = new Class({
         employeeNo,
         students: [],
-        subjects: ["Colors", "Shapes", "Numbers"], // ✅ Default subjects
+        subjects: [
+          { name: "Colors" },
+          { name: "Shapes" },
+          { name: "Numbers" },
+        ], // ✅ Default subjects
       });
       await userClass.save();
     }

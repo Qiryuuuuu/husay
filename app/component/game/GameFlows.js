@@ -95,7 +95,7 @@ const GameFlows = ({
       {gamePhase === "completed" && (
         <View style={styles.fullscreenContainer}>
           <StageCompletionComponent
-            timeTaken={`${Math.floor(finalTime / 60)}:${(finalTime % 60).toString().padStart(2, "0")}`}
+            timeTaken={finalTime}
             correctAnswers={finalScore}
             onRestart={() => setGamePhase("countdown")}
             setGamePhase={setGamePhase} // ✅ Pass this so it can control game phases
