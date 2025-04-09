@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   useWindowDimensions,
+  Platform
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,21 +26,24 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both Email Address and password.");
-      return;
-    }
+  const baseUrl =
+  Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://10.0.2.2:5000";
 
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        "http://10.0.2.2:5000/api/auth/signin",
-        {
-          email,
-          password,
-        }
-      );
+const handleSignIn = async () => {
+  if (!email || !password) {
+    Alert.alert("Error", "Please enter both Email Address and password.");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const response = await axios.post(`${baseUrl}/api/auth/signin`, {
+      email,
+      password,
+    });
+  
 
       console.log("🧐 Raw Response:", response.data);
 

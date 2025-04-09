@@ -1,3 +1,4 @@
+//dashboard.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,6 +11,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Platform
 } from "react-native";
 import { PieChart } from "react-native-svg-charts";
 import { Text as SVGText } from "react-native-svg";
@@ -58,13 +60,18 @@ export default function DashboardScreen({ navigation }) {
         return;
       }
 
-      const response = await fetch("http://10.0.2.2:5000/api/auth/user", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+    
+    const response = await fetch(`${baseUrl}/api/auth/user`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
       const data = await response.json();
       console.log("🔹 User Data:", data);
@@ -99,16 +106,21 @@ export default function DashboardScreen({ navigation }) {
 
       console.log(`🔍 Fetching class data for employeeNo: ${employeeNo}...`);
 
-      const response = await fetch(
-        `http://10.0.2.2:5000/api/class/get-students?employeeNo=${employeeNo}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+    
+    const response = await fetch(
+      `${baseUrl}/api/class/get-students?employeeNo=${employeeNo}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
       const data = await response.json();
       console.log("🔹 Class API Response:", data);
@@ -131,22 +143,28 @@ export default function DashboardScreen({ navigation }) {
       console.log("🔍 Fetching students for employeeNo:", employeeNo);
 
       const token = await AsyncStorage.getItem("authToken");
+      console.log("🔐 Token:", token);
+
       if (!token) {
         console.error("❌ No token found, user might be logged out.");
         return;
       }
 
-      const response = await fetch(
-        `http://10.0.2.2:5000/api/students/all?employeeNo=${employeeNo}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+    
+    const response = await fetch(
+      `${baseUrl}/api/students/all?employeeNo=${employeeNo}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
       const data = await response.json();
       console.log(
         "🔹 Fresh Student API Response:",
@@ -182,17 +200,21 @@ export default function DashboardScreen({ navigation }) {
         return;
       }
 
-      const response = await fetch(
-        `http://10.0.2.2:5000/api/students/get/${studentId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+    
+    const response = await fetch(
+      `${baseUrl}/api/students/get/${studentId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
       const data = await response.json();
       console.log("🔹 Full API Response:", JSON.stringify(data, null, 2));
 
@@ -601,21 +623,26 @@ export default function DashboardScreen({ navigation }) {
 
       console.log(`🔄 Updating student: ${selectedStudent._id}`);
 
-      const response = await fetch(
-        `http://10.0.2.2:5000/api/students/edit/${selectedStudent._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            fullName: editName.trim(),
-            age: parseInt(editAge, 10),
-            gender: editGender.trim(),
-          }),
-        }
-      );
+      const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+    
+    const response = await fetch(
+      `${baseUrl}/api/students/edit/${selectedStudent._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullName: editName.trim(),
+          age: parseInt(editAge, 10),
+          gender: editGender.trim(),
+        }),
+      }
+    );
 
       const text = await response.text();
       console.log("🔹 Raw Update Response:", text);
@@ -678,15 +705,20 @@ export default function DashboardScreen({ navigation }) {
       console.log(`🗑️ Attempting to delete student: ${selectedStudent._id}`);
 
       // ✅ Send DELETE request to backend
-      const response = await fetch(
-        `http://10.0.2.2:5000/api/students/delete/${selectedStudent._id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+    
+    const response = await fetch(
+      `${baseUrl}/api/students/delete/${selectedStudent._id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
       const text = await response.text();
       console.log("🔹 Raw Delete Response:", text); // ✅ Log backend response
@@ -945,30 +977,26 @@ export default function DashboardScreen({ navigation }) {
 
           {/* Student Dropdown List */}
           {studentDropdownOpen && (
-            <View style={styles.studentDropdownMenu}>
-              <ScrollView
-                style={{ maxHeight: 200 }} // 👈 Adjust height as needed
-                nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={true}
-              >
-                {students.length > 0 ? (
-                  students.map((student) => (
-                    <TouchableOpacity
-                      key={student._id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setSelectedStudent(student);
-                        setStudentDropdownOpen(false);
-                        setMenuOpenStudentId(null);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{student.fullName}</Text>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <Text style={styles.noStudentText}>No students found</Text>
-                )}
-              </ScrollView>
+            <View style={styles.studentDropdownMenu} onPress={toggleMenu}>
+              {students.length > 0 ? (
+                students.map((student) => (
+                  <TouchableOpacity
+                    key={student._id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setSelectedStudent(student); // ✅ Correctly selects student
+                      setStudentDropdownOpen(false); // ✅ Close dropdown
+                      setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
+                    }}
+                  >
+                    <Text style={styles.dropdownItemText}>
+                      {student.fullName}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noStudentText}>No students found</Text>
+              )}
             </View>
           )}
 
@@ -1344,7 +1372,7 @@ export default function DashboardScreen({ navigation }) {
                   <View
                     style={[styles.legendColor, { backgroundColor: "#4CD964" }]}
                   />
-                  <Text style={styles.legendText}>Spent</Text>
+                  <Text style={styles.legendText}>Left</Text>
                 </View>
                 <View
                   style={[styles.legendItem, { marginLeft: 15, marginTop: 15 }]}
@@ -1352,7 +1380,7 @@ export default function DashboardScreen({ navigation }) {
                   <View
                     style={[styles.legendColor, { backgroundColor: "#FF3B30" }]}
                   />
-                  <Text style={styles.legendText}>Left</Text>
+                  <Text style={styles.legendText}>Spent</Text>
                 </View>
               </View>
             </View>
@@ -1490,7 +1518,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     borderWidth: 1,
     borderColor: "#E5E5EA",
-    overflow: "hidden",
   },
   menuContainer: {
     position: "relative",

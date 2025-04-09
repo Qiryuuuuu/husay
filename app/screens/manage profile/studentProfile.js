@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform
 } from "react-native";
 import { Searchbar } from "react-native-paper";
 import axios from "axios";
@@ -16,8 +17,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome, Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
-const API_URL = "http://10.0.2.2:5000/api/class/get-students";
-
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:5000/api/class/get-students"
+    : "http://10.0.2.2:5000/api/class/get-students";
+    
 const logoImg = require("../../../assets/logo.png");
 const defaultProfile = require("../../../assets/default-profile.png");
 
