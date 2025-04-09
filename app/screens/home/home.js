@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   ImageBackground,
   Alert,
+  Platform
 } from "react-native";
 import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
@@ -51,16 +52,22 @@ export default function HomeScreen({ route }) {
         }
 
         // Separate the URL from the options object
-        const response = await fetch(
-          `http://10.0.2.2:5000/api/students/get-student-name/${studentId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+
+        const baseUrl =
+        Platform.OS === 'web'
+          ? 'http://localhost:5000' // Web: use localhost
+          : 'http://10.0.2.2:5000'; // Android emulator
+      
+      const response = await fetch(
+        `${baseUrl}/api/students/get-student-name/${studentId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
         if (!response.ok) {
           throw new Error("Network response was not ok");
