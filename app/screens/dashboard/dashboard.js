@@ -257,12 +257,12 @@ export default function DashboardScreen({ navigation }) {
         setAttendanceData(getAttendanceData([student]));
         console.log("✅ Attendance Data Processed and Set.");
 
-         // ✅ Update accuracy data
-          setAccuracyData({
-            correct: student.accuracy?.correct || 0,
-            incorrect: student.accuracy?.incorrect || 0,
-          });
-          console.log("✅ Accuracy Data Processed and Set.");
+        // ✅ Update accuracy data
+        setAccuracyData({
+          correct: student.accuracy?.correct || 0,
+          incorrect: student.accuracy?.incorrect || 0,
+        });
+        console.log("✅ Accuracy Data Processed and Set.");
         // ✅ Fetch familiarity data
         fetchFamiliarityData(student);
       } else {
@@ -306,6 +306,25 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  function parseCustomDate(dateString) {
+    // The dateString is something like:
+    //  "Date: 04-09-2025, 01:57:58 PM | Time: 04/09/2025, 01:57:58 PM"
+
+    // 1) Split on "| Time: "
+    const parts = dateString.split("| Time: ");
+    if (parts.length === 2) {
+      // parts[1] is "04/09/2025, 01:57:58 PM"
+      return moment(parts[1].trim(), "MM/DD/YYYY, hh:mm:ss A", true);
+    }
+
+    // Fallback in case the string doesn't have the expected structure
+    return moment(
+      dateString,
+      ["YYYY-MM-DD", "MM-DD-YYYY hh:mm:ss A", "MM/DD/YYYY, hh:mm:ss A"],
+      true
+    );
+  }
+
   // ✅ Function to Process Attendance Data
   const getAttendanceData = (students) => {
     if (!students || students.length === 0) {
@@ -325,30 +344,17 @@ export default function DashboardScreen({ navigation }) {
       }
 
       student.attendance.forEach(({ date, status }) => {
-        if (!date) {
-          console.warn(
-            `⚠️ Skipping record with missing date for ${student.fullName}.`
-          );
-          return;
-        }
+        if (!date) return; // skip
 
-        // ✅ Extract date based on different possible formats
-        let parsedDate = moment(
-          date,
-          ["YYYY-MM-DD", "MM-DD-YYYY hh:mm:ss A"],
-          true
-        );
-
+        let parsedDate = parseCustomDate(date);
         if (!parsedDate.isValid()) {
-          console.warn(
-            `⚠️ Invalid parsed date: ${date} for ${student.fullName}.`
-          );
+          console.warn(`⚠️ Invalid date: ${date} for ${student.fullName}`);
           return;
         }
 
-        const month = parsedDate.month(); // 0-based index for month
-        const day = parsedDate.date() - 1; // Zero-based day index
-
+        // Now parsedDate works, so we can mark attendance
+        const month = parsedDate.month(); // 0-based
+        const dayIndex = parsedDate.date() - 1; // 0-based
         if (!data[month]) {
           const daysInMonth = moment(
             `${currentYear}-${month + 1}`,
@@ -356,8 +362,7 @@ export default function DashboardScreen({ navigation }) {
           ).daysInMonth();
           data[month] = Array(daysInMonth).fill("");
         }
-
-        data[month][day] = status ? status.toLowerCase() : "";
+        data[month][dayIndex] = status?.toLowerCase() || "";
       });
     });
 
@@ -729,17 +734,18 @@ export default function DashboardScreen({ navigation }) {
           console.log("✅ Student deleted successfully:", data);
 
           // ✅ Remove student from state
-        setStudents((prevStudents) => {
-          const updatedStudents = prevStudents.filter(
-            (student) => student._id !== selectedStudent._id
-          );
+          setStudents((prevStudents) => {
+            const updatedStudents = prevStudents.filter(
+              (student) => student._id !== selectedStudent._id
+            );
 
-          // ✅ Auto-select the first student in the updated list (if any)
-          setSelectedStudent(updatedStudents.length > 0 ? updatedStudents[0] : null);
+            // ✅ Auto-select the first student in the updated list (if any)
+            setSelectedStudent(
+              updatedStudents.length > 0 ? updatedStudents[0] : null
+            );
 
-          return updatedStudents;
-        });
-
+            return updatedStudents;
+          });
         } else {
           console.error("❌ Error deleting student:", data.message);
         }
@@ -977,26 +983,32 @@ export default function DashboardScreen({ navigation }) {
 
           {/* Student Dropdown List */}
           {studentDropdownOpen && (
-            <View style={styles.studentDropdownMenu} onPress={toggleMenu}>
-              {students.length > 0 ? (
-                students.map((student) => (
-                  <TouchableOpacity
-                    key={student._id}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedStudent(student); // ✅ Correctly selects student
-                      setStudentDropdownOpen(false); // ✅ Close dropdown
-                      setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>
-                      {student.fullName}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noStudentText}>No students found</Text>
-              )}
+            <View style={styles.studentDropdownMenu}>
+              <ScrollView
+                style={{ maxHeight: 200 }} // 👈 Adjust height as needed
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {students.length > 0 ? (
+                  students.map((student) => (
+                    <TouchableOpacity
+                      key={student._id}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedStudent(student);
+                        setStudentDropdownOpen(false);
+                        setMenuOpenStudentId(null);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>
+                        {student.fullName}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noStudentText}>No students found</Text>
+                )}
+              </ScrollView>
             </View>
           )}
 
