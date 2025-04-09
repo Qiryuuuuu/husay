@@ -14,6 +14,7 @@ import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTimer } from "../../contexts/TimerContext";
 
 /* Background image */
 const bgImg = require("../../../assets/gameBackground/blue.png");
@@ -36,6 +37,8 @@ export default function HomeScreen({ route }) {
 
   const navigation = useNavigation();
   const { studentId } = route.params || {}; // Get studentName from params
+  const { stopTimer } = useTimer();
+
   console.log("🏠 HomeScreen received studentId:", studentId); // Debugging
   useEffect(() => {
     playMusic("appBg");
@@ -94,25 +97,30 @@ export default function HomeScreen({ route }) {
 
   const handleLogout = async () => {
     try {
-      // Remove authentication token from storage
+      await stopTimer(); // ✅ stop timer first
       await AsyncStorage.clear();
-
-      // Show alert confirmation and navigate to login
+  
       Alert.alert("Logged Out", "You have been logged out.", [
         { text: "OK", onPress: () => navigation.replace("Login") },
       ]);
-
+  
       console.log("✅ User successfully logged out.");
     } catch (error) {
       console.error("❌ Error logging out:", error);
     }
   };
+  
 
-  const handleSwitchProfile = () => { 
-    console.log("Switching Profile...");
-    navigation.navigate("StudentProfile"); // Navigate back to Student Profile
-  }
-
+  const handleSwitchProfile = async () => {
+    try {
+      await stopTimer(); // ✅ stop timer when switching profile
+      console.log("Switching Profile...");
+      navigation.navigate("StudentProfile");
+    } catch (error) {
+      console.error("❌ Error switching profile:", error);
+    }
+  };
+  
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>

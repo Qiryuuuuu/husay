@@ -1,3 +1,4 @@
+//studentProfile.js
 import React, { useState } from "react";
 import {
   View,
@@ -16,12 +17,14 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome, Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useTimer } from "../../contexts/TimerContext";
+
 
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:5000/api/class/get-students"
     : "http://10.0.2.2:5000/api/class/get-students";
-    
+
 const logoImg = require("../../../assets/logo.png");
 const defaultProfile = require("../../../assets/default-profile.png");
 
@@ -31,7 +34,8 @@ export default function StudentProfileScreen({ navigation }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const homeNavigation = useNavigation(); // Using useNavigation hook
-
+  const { startTimer } = useTimer();
+  
   useFocusEffect(
     React.useCallback(() => {
       fetchStudents();
@@ -159,6 +163,7 @@ export default function StudentProfileScreen({ navigation }) {
                 style={styles.studentCard}
                 onPress={() => {
                   console.log("Navigating to Home with studentId:", item._id); // Debugging
+                  startTimer(item._id);
                   navigation.navigate("Home", {
                     studentName: item.fullName,
                     studentId: item._id,

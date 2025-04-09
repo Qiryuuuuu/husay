@@ -1,4 +1,5 @@
 import React from "react";
+import { TimerProvider } from "./contexts/TimerContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
@@ -40,6 +41,7 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
+      <TimerProvider>
       <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
@@ -148,6 +150,7 @@ export default function App() {
           options={{ title: "ChallHard" }}
         />
       </Stack.Navigator>
+      </TimerProvider>
     </NavigationContainer>
   );
 }
