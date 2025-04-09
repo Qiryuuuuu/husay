@@ -271,6 +271,7 @@ export const BaseGame: React.FC<GameProps> = ({
       } else {
         setIsGameRunning(false);
         setStopwatchRunning(false); // Changes
+        setStopwatchRunning(false); // Changes
         setTimeout(handleGameEnd, 500);
       }
     }, 1500);

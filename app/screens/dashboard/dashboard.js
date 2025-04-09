@@ -945,26 +945,30 @@ export default function DashboardScreen({ navigation }) {
 
           {/* Student Dropdown List */}
           {studentDropdownOpen && (
-            <View style={styles.studentDropdownMenu} onPress={toggleMenu}>
-              {students.length > 0 ? (
-                students.map((student) => (
-                  <TouchableOpacity
-                    key={student._id}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedStudent(student); // ✅ Correctly selects student
-                      setStudentDropdownOpen(false); // ✅ Close dropdown
-                      setMenuOpenStudentId(null); // ✅ Ensure menu resets when selecting new student
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>
-                      {student.fullName}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noStudentText}>No students found</Text>
-              )}
+            <View style={styles.studentDropdownMenu}>
+              <ScrollView
+                style={{ maxHeight: 200 }} // 👈 Adjust height as needed
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {students.length > 0 ? (
+                  students.map((student) => (
+                    <TouchableOpacity
+                      key={student._id}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setSelectedStudent(student);
+                        setStudentDropdownOpen(false);
+                        setMenuOpenStudentId(null);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>{student.fullName}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noStudentText}>No students found</Text>
+                )}
+              </ScrollView>
             </View>
           )}
 
@@ -1486,6 +1490,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     borderWidth: 1,
     borderColor: "#E5E5EA",
+    overflow: "hidden",
   },
   menuContainer: {
     position: "relative",

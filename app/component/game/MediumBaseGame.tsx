@@ -98,6 +98,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   // Routes
   const route = useRoute();
   const { studentId } = route.params as { studentId: string };
+
+  //Stopwatch
+    const [stopwatchRunning, setStopwatchRunning] = useState(true); // Changes
+  
     
   useEffect(() => {
     console.log("Student ID received as prop:", studentId);
@@ -255,7 +259,9 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         setCurrentRound(currentRound + 1);
       } else {
         setIsGameRunning(false);
+        setStopwatchRunning(false); // Changes
         setTimeout(() => {
+          
           if (onGameComplete) {
             onGameComplete(updatedScore, elapsedTimeRef.current);
           }
@@ -286,6 +292,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         setCurrentRound(currentRound + 1);
       } else {
         setIsGameRunning(false);
+        setStopwatchRunning(false); // Changes
         setTimeout(() => {
           if (onGameComplete) {
             onGameComplete(correctFirstTry, elapsedTimeRef.current);
@@ -443,7 +450,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         </View>
       
         <Stopwatch 
-          isRunning={isGameRunning} 
+          isRunning={stopwatchRunning} // Changes
           onStop={(finalTime) => { 
             elapsedTimeRef.current = finalTime;
           }} 
