@@ -18,18 +18,29 @@ const colors = [
   { name: "White", image: require("../../../../../assets/color/white.png") },
 ];
 
-const ColorGame = ({ onGameComplete, setGamePhase, navigation }) => {
- const route = useRoute();
-   const { studentId } = route.params as { studentId: string }; // Get studentId from navigation params
-   const [startTime, setStartTime] = useState(Date.now());
- 
-   useEffect(() => {
-     setStartTime(Date.now()); // Start tracking time when game starts
- 
-     if (!studentId) {
-       console.error("❌ ERROR: Missing studentId from navigation params!");
-     }
-   }, [studentId]);
+interface ColorGameProps {
+  onGameComplete: (score: number, timeTaken: number) => void;
+  setGamePhase: (phase: string) => void;
+  navigation: any; // Adjust type as per your navigation prop
+  studentId: any;
+}
+
+const ColorGame: React.FC<ColorGameProps> = ({
+  onGameComplete,
+  setGamePhase,
+  navigation,
+}) => {
+  const route = useRoute();
+  const { studentId } = route.params as { studentId: string }; // Get studentId from navigation params
+  const [startTime, setStartTime] = useState(Date.now());
+
+  useEffect(() => {
+    setStartTime(Date.now()); // Start tracking time when game starts
+
+    if (!studentId) {
+      console.error("❌ ERROR: Missing studentId from navigation params!");
+    }
+  }, [studentId]);
 
   const finishGame = (score, timeTaken) => {
     console.log("✅ Game Finished in ColorGame!");
@@ -44,13 +55,15 @@ const ColorGame = ({ onGameComplete, setGamePhase, navigation }) => {
       items={colors}
       onGameComplete={finishGame}
       navigation={navigation}
+      studentId={studentId}
       npcConfig={{
         idle: dolorIdleImg,
         correct: dolorCorrectImg,
         wrong: dolorWrongImg,
         name: "Dolor",
       }}
-      dialogues={colorDialogues} studentId={studentId}    />
+      dialogues={colorDialogues}
+    />
   );
 };
 

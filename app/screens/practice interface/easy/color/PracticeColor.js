@@ -64,18 +64,20 @@ const colorCompletionNpc = {
 };
 
 const ColorModeScreen = ({ route }) => {
+  const [finalTime, setFinalTime] = useState(null);
+  const [finalScore, setFinalScore] = useState(null);
+  const [gameFinished, setGameFinished] = useState(false);
   const navigation = useNavigation();
   const { studentId } = route.params || {};
-  
+
   useEffect(() => {
     playMusic("easyBg");
     return () => stopMusic();
   }, []);
 
-
   console.log("Practice Color easy received studentID: ", studentId);
 
-  const handleGameComplete = async (score, timeTaken, setGamePhase, setFinalScore, setFinalTime) => {
+  const handleGameComplete = async (score, timeTaken, setGamePhase) => {
     console.log("Submitting game results...");
     console.log("Student ID:", studentId);
     console.log("Score:", score);
@@ -88,33 +90,35 @@ const ColorModeScreen = ({ route }) => {
     const stars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
 
     try {
-      const response = await fetch(
-        "http://10.0.2.2:5000/api/students/update-score",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            studentId,
-            subject: "Colors",
-            difficulty: "Easy",
-            mode: "practice",
-            points: score,
-            stars,
-          }),
-        }
-      );
-      const data = await response.json();
-      console.log("Score update response:", data);
+      // const response = await fetch(
+      //   "http://10.0.2.2:5000/api/students/update-easy-score",
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       studentId,
+      //       subject: "Colors",
+      //       difficulty: "Easy",
+      //       mode: "practice",
+      //       points: score,
+      //       stars,
+      //     }),
+      //   }
+      // );
+      // const data = await response.json();
 
       // ✅ Store final values
       setFinalScore(score);
       setFinalTime(timeTaken);
+      console.log("Final Score:", finalScore);
+      console.log("Final Time:", finalTime);
 
       // ✅ Transition to Stage Completion
       console.log("✅ Updating game phase to 'completed'");
-      setGamePhase("completed"); 
+      setGamePhase("completed");
+      setGameFinished(true); // ✅ Set game finished state
     } catch (error) {
       console.error("Error updating score:", error);
     }
@@ -128,23 +132,44 @@ const ColorModeScreen = ({ route }) => {
       )}
       CountdownComponent={Countdown}
       GameComponent={(props) => (
-        <ColorGame 
+        <ColorGame
           {...props}
           onGameComplete={(score, timeTaken) =>
-            handleGameComplete(score, timeTaken, props.setGamePhase,props.setFinalScore, props.setFinalTime)
+            handleGameComplete(
+              score,
+              timeTaken,
+              props.setGamePhase,
+              props.setFinalScore,
+              props.setFinalTime
+            )
           } // ✅ Pass setGamePhase when calling handleGameComplete
           setGamePhase={props.setGamePhase}
-          setFinalScore={props.setFinalScore}  // ✅ Ensure these are passed
-          setFinalTime={props.setFinalTime} 
+          setFinalScore={props.setFinalScore}
+          setFinalTime={props.setFinalTime}
         />
       )}
       navigation={navigation}
       StageCompletionComponent={(props) => (
         <StageCompletion
           {...props}
+          mode="practice"
+          level="Color"
+          navigation={navigation}
           dialoguesData={colorDialogues}
+          studentId={studentId} // Pass studentId to StageCompletion
+          isChallengeMode={false}
+          timeTaken={finalTime}
+          correctAnswers={finalScore}
+          totalRounds={5} // Ensure this matches `numRounds` in BaseGame.tsx
           completionNpc={colorCompletionNpc}
-          navigation={() => navigation.navigate("PracMainScreen")}
+          onRestart={() => {
+            setGameFinished(false);
+            setFinalScore(null);
+            setFinalTime(null); // Reset final time
+            navigation.replace("PracticeColor", {
+              studentId, // Pass studentId when navigating
+            });
+          }}
         />
       )}
     />
