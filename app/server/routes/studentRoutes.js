@@ -101,9 +101,9 @@ router.put(
   }
 );
 
-router.put("/update-score", async (req, res) => {
+router.put("/update-score", authenticateUser, async (req, res) => {
   try {
-    console.log("🔍 Received Data in API Request:", req.body);
+    console.log("🔍 Received Data in API Request:", req.body); // ✅ Log request data
 
     const {
       studentId,
@@ -122,14 +122,13 @@ router.put("/update-score", async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // ✅ Mapping for categories
+    // ✅ Update subject scores
     const categoryMapping = {
       shape: "Shapes",
       color: "Colors",
       number: "Numbers",
     };
 
-    // ✅ Mapping for number subcategory
     const numberMapping = {
       1: "One",
       2: "Two",
@@ -143,7 +142,6 @@ router.put("/update-score", async (req, res) => {
       10: "Ten",
     };
 
-    // ✅ Update subject scores
     Object.entries(scoresByCategory).forEach(([cat, subcats]) => {
       const correctCategory = categoryMapping[cat];
       if (!correctCategory || !student.subjects[correctCategory]) return;
@@ -155,9 +153,8 @@ router.put("/update-score", async (req, res) => {
           mappedSubcat = numberMapping[parseInt(subcat, 10)] || subcat;
         }
 
-        if (!mappedSubcat || !student.subjects[correctCategory][mappedSubcat]) {
+        if (!mappedSubcat || !student.subjects[correctCategory][mappedSubcat])
           return;
-        }
 
         student.subjects[correctCategory][mappedSubcat].correct +=
           scoreData.correct;
@@ -190,7 +187,7 @@ router.put("/update-score", async (req, res) => {
       }
     }
 
-    // ✅ Recalculate stats & recommendations (assuming you have a method on the model)
+    // ✅ Recalculate stats & recommendations
     student.calculateStats();
 
     await student.save();
