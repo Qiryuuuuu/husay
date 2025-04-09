@@ -18,7 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome, Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useTimer } from "../../contexts/TimerContext";
-
+import PopupModal from "../../component/PopupModal"
 
 const API_URL =
   Platform.OS === "web"
@@ -35,7 +35,8 @@ export default function StudentProfileScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const homeNavigation = useNavigation(); // Using useNavigation hook
   const { startTimer } = useTimer();
-  
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+
   useFocusEffect(
     React.useCallback(() => {
       fetchStudents();
@@ -161,14 +162,41 @@ export default function StudentProfileScreen({ navigation }) {
             <View style={styles.cardWrapper}>
               <TouchableOpacity
                 style={styles.studentCard}
-                onPress={() => {
-                  console.log("Navigating to Home with studentId:", item._id); // Debugging
-                  startTimer(item._id);
-                  navigation.navigate("Home", {
-                    studentName: item.fullName,
-                    studentId: item._id,
-                  });
-                }}
+                  onPress={async () => {
+                    console.log("🧠 Attempting to select student:", item._id);
+
+                    const token = await AsyncStorage.getItem("authToken");
+                    const baseUrl = Platform.OS === "web" ? "http://localhost:5000" : "http://10.0.2.2:5000";
+
+                    try {
+                      const response = await fetch(`${baseUrl}/api/students/get/${item._id}`, {
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      });
+
+                      const data = await response.json();
+                      const timeLeft = data?.student?.gameTime?.timeLeft ?? 0;
+
+                      console.log("⏳ Time Left for selected student:", timeLeft);
+
+                      if (timeLeft <= 0) {
+                        console.log("🚫 This student has already used up their screen time.");
+                        setShowLimitPopup(true);
+                        return;
+                      }
+                      
+
+                      startTimer(item._id);
+                      navigation.navigate("Home", {
+                        studentName: item.fullName,
+                        studentId: item._id,
+                      });
+                    } catch (err) {
+                      console.error("❌ Error checking student time:", err);
+                      Alert.alert("Error", "Could not verify student's screen time.");
+                    }
+                  }}
               >
                 <Image
                   source={
@@ -187,6 +215,13 @@ export default function StudentProfileScreen({ navigation }) {
       ) : (
         <Text style={styles.noStudentsText}>No students added yet</Text>
       )}
+
+      
+      <PopupModal
+        visible={showLimitPopup}
+        message="This student has already reached the 60-minute screen time limit. Please select another student."
+        onClose={() => setShowLimitPopup(false)}
+      />
     </View>
   );
 }
