@@ -1,5 +1,6 @@
+//signup.js
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, Platform } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
 const element1 = require("../../../assets/element1.png");
@@ -15,6 +16,8 @@ const eyeOpen = require("../../../assets/show-icon.png");
 const eyeClosed = require("../../../assets/hide-icon.png");
 const nameIcon = require("../../../assets/name-icon.png");
 const emplNum = require("../../../assets/employee-icon.png");
+
+
 
 export default function SignUpScreen({ navigation }) {
   // State variables
@@ -37,38 +40,67 @@ export default function SignUpScreen({ navigation }) {
   const hasNumber = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*?/.,]/.test(password);
 
+  const [emailError, setEmailError] = useState("");
+
+  // Define the base URL depending on the platform
+  const baseUrl =
+    Platform.OS === "web"
+      ? "http://localhost:5000"
+      : "http://10.0.2.2:5000";
+  
   // Function to handle Sign-Up
   const handleSignUp = async () => {
-    if (!email || !phoneNumber || !fullName || !employeeNo || !password || !confirmPassword) {
+    if (
+      !email ||
+      !phoneNumber ||
+      !fullName ||
+      !employeeNo ||
+      !password ||
+      !confirmPassword
+    ) {
       Alert.alert("Error", "All fields are required.");
       return;
     }
 
+    if (!email.endsWith("@plm.edu.ph")) {
+      setEmailError("Invalid email. Must use @plm.edu.ph domain.");
+      return;
+    }
+  
     if (password !== confirmPassword) {
       Alert.alert("Error", "Passwords do not match.");
       return;
     }
-
+  
     try {
-      const response = await fetch("http://10.0.2.2:5000/api/auth/signup", {
+      const response = await fetch(`${baseUrl}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, phoneNumber, fullName, employeeNo, password, securityQuestions: [] }),
+        body: JSON.stringify({
+          email,
+          phoneNumber,
+          fullName,
+          employeeNo,
+          password,
+          securityQuestions: [],
+        }),
       });
-
+  
       const data = await response.json();
+  
       if (response.ok) {
         console.log("✅ Sign-up Successful:", data);
         Alert.alert("Success", "Account created successfully!");
         navigation.navigate("SecurityQuestion", { email });
       } else {
-        Alert.alert("Error", data.message);
+        Alert.alert("Error", data.message || "Sign-up failed");
       }
     } catch (error) {
       console.error("❌ Error signing up:", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -90,16 +122,25 @@ export default function SignUpScreen({ navigation }) {
 
       <View style={styles.inputContainer}>
         {/* Phone Number Input with Icon */}
-        <View style={styles.inputWrapper}>
-            <Image source={userIcon} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              placeholderTextColor="#BDBDBD"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
+        <View style={[
+          styles.inputWrapper,
+          emailError ? { borderColor: "red" } : null
+        ]}>
+        <Image source={userIcon} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor="#BDBDBD"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError(""); // Clear error as user types
+            }}
+          />
+        </View>
+        {emailError !== "" && (
+          <Text style={{ color: "red", marginBottom: 10, marginLeft: 5 }}>{emailError}</Text>
+        )}
 
         {/* Phone Number Input with Icon */}
         <View style={styles.inputWrapper}>

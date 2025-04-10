@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const Student = require("../models/Student");
 
 // ⏰ Schedule to run every day at midnight (00:00)
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   console.log("🕛 Running daily reset of game time...");
 
   try {

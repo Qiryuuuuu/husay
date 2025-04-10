@@ -8,13 +8,17 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://10.0.2.2:5000/api/class/add-student";
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:5000/api/class/add-student"
+    : "http://10.0.2.2:5000/api/class/add-student";
 
 const backIcon = require("../../../assets/addStudent/Back.png");
 const logoImg = require("../../../assets/Husay.png");

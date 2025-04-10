@@ -71,6 +71,7 @@ router.get("/user", authenticateUser, async (req, res) => {
 });
 
 // ✅ User Registration (Sign Up)
+// ✅ User Registration (Sign Up)
 router.post("/signup", async (req, res) => {
   try {
     const {
@@ -82,10 +83,20 @@ router.post("/signup", async (req, res) => {
       securityQuestions,
     } = req.body;
 
+    // ✅ Check if email ends with @plm.edu.ph
+    if (!email.toLowerCase().endsWith("@plm.edu.ph")) {
+      console.error("❌ Signup Error: Invalid Email Domain");
+      return res.status(400).json({
+        message: "Only emails with the @plm.edu.ph domain are allowed.",
+      });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       console.error("❌ Signup Error: Email Already in Use");
-      return res.status(400).json({ message: "Email Address already in use." });
+      return res
+        .status(400)
+        .json({ message: "Email Address already in use." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -105,6 +116,7 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ message: "Server error." });
   }
 });
+
 
 // ✅ User Login (Sign In)
 router.post("/signin", async (req, res) => {

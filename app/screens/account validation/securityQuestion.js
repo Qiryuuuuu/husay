@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const logoImg = require("../../../assets/logo.png");
@@ -35,37 +35,53 @@ export default function SecurityQuestionScreen({ navigation, route }) {
     { question: selectedQuestion3, answer: answer3 },
   ];
 
-  // Function to handle saving security questions during registration
+  // Reuse or define this once in your file or config
+  const baseUrl =
+    Platform.OS === "web"
+      ? "http://localhost:5000"
+      : "http://10.0.2.2:5000";
+  
   const handleSaveSecurityQuestions = async () => {
-    if (!selectedQuestion1 || !answer1 || !selectedQuestion2 || !answer2 || !selectedQuestion3 || !answer3) {
+    if (
+      !selectedQuestion1 ||
+      !answer1 ||
+      !selectedQuestion2 ||
+      !answer2 ||
+      !selectedQuestion3 ||
+      !answer3
+    ) {
       Alert.alert("Error", "Please select and answer all security questions.");
       return;
     }
-
+  
     console.log("🔄 Saving security questions to server:", securityAnswers);
-
+  
     try {
-      const response = await fetch("http://10.0.2.2:5000/api/auth/save-security", {
+      const response = await fetch(`${baseUrl}/api/auth/save-security`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, securityQuestions: securityAnswers }),
+        body: JSON.stringify({
+          email,
+          securityQuestions: securityAnswers,
+        }),
       });
-
+  
       const data = await response.json();
       console.log("🔄 Server Response:", data);
-
+  
       if (response.ok) {
         console.log("✅ Security Questions Saved!");
         Alert.alert("Success", "Security questions saved successfully!");
         navigation.navigate("Login"); // Adjust based on next step
       } else {
-        Alert.alert("Error", data.message);
+        Alert.alert("Error", data.message || "Failed to save security questions.");
       }
     } catch (error) {
       console.error("❌ Error saving security questions:", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
+  
 
   return (
     <View style={styles.container}>
