@@ -48,6 +48,19 @@ export default function SignUpScreen({ navigation }) {
       ? "http://localhost:5000"
       : "http://10.0.2.2:5000";
   
+  // Phone number validation
+  const isPhoneValid = /^9\d{9}$/.test(phoneNumber); // Philippine number format without +63
+  const [showPhoneRequirements, setShowPhoneRequirements] = useState(false);
+
+  // Employee number validation
+  const currentYear = new Date().getFullYear();
+  const employeeRegex = /^(\d{4})(\d{5})$/;
+  const isEmployeeValid =
+    employeeRegex.test(employeeNo) &&
+    parseInt(employeeNo.substring(0, 4)) >= 2000 &&
+    parseInt(employeeNo.substring(0, 4)) <= currentYear;
+  const [showEmployeeRequirements, setShowEmployeeRequirements] = useState(false);
+
   // Function to handle Sign-Up
   const handleSignUp = async () => {
     if (
@@ -71,7 +84,30 @@ export default function SignUpScreen({ navigation }) {
       Alert.alert("Error", "Passwords do not match.");
       return;
     }
-  
+
+    // Normalize number
+    let normalizedPhone = phoneNumber;
+
+    // Remove leading 0 and prepend +63
+    if (normalizedPhone.startsWith("0")) {
+      normalizedPhone = "+63" + normalizedPhone.substring(1);
+    } else if (normalizedPhone.startsWith("9")) {
+      normalizedPhone = "+63" + normalizedPhone;
+    }
+
+    if (!/^(\+63)(9\d{9})$/.test(normalizedPhone)) {
+      Alert.alert("Error", "Please enter a valid Philippine mobile number.");
+      return;
+    }
+
+    if (!isEmployeeValid) {
+      Alert.alert(
+        "Invalid Employee No.",
+        `Please enter a valid 9-digit employee number starting with a year between 2000 and ${currentYear}.`
+      );
+      return;
+    }
+
     try {
       const response = await fetch(`${baseUrl}/api/auth/signup`, {
         method: "POST",
@@ -147,12 +183,30 @@ export default function SignUpScreen({ navigation }) {
           <Image source={userIcon} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Phone Number"
+            placeholder="Phone Number (+63)"
             placeholderTextColor="#BDBDBD"
             value={phoneNumber}
-            onChangeText={setPhoneNumber}
+            keyboardType="numeric"
+            onFocus={() => setShowPhoneRequirements(true)}
+            onBlur={() => setShowPhoneRequirements(false)}
+            onChangeText={(text) => {
+              const digits = text.replace(/\D/g, "");
+              if (digits === "") {
+                setPhoneNumber("");
+              } else if (digits.length <= 10 && digits.startsWith("9")) {
+                setPhoneNumber(digits);
+              }
+            }}
           />
         </View>
+
+        {showPhoneRequirements && (
+          <View style={styles.passwordRequirements}>
+            <Text style={[styles.requirementText, isPhoneValid && styles.validRequirement]}>
+              • Philippine number format only: starts with 9 and has 10 digits (e.g. 9123456789)
+            </Text>
+          </View>
+        )}
 
         {/* Full Name & Employee No. */}
         <View style={styles.inputRow}>
@@ -172,11 +226,44 @@ export default function SignUpScreen({ navigation }) {
               style={styles.input}
               placeholder="Employee No."
               placeholderTextColor="#BDBDBD"
+              keyboardType="numeric"
               value={employeeNo}
-              onChangeText={setEmployeeNo}
+              onFocus={() => setShowEmployeeRequirements(true)}
+              onBlur={() => setShowEmployeeRequirements(false)}
+              onChangeText={(text) => {
+                const currentYear = new Date().getFullYear();
+                const digits = text.replace(/\D/g, "");
+              
+                if (digits.length > 9) return;
+              
+                // If still typing the year (less than 4 digits)
+                if (digits.length < 4) {
+                  if (digits === "" || /^2\d{0,3}$/.test(digits)) {
+                    // Allow empty or digits starting with 2 (e.g., 2, 20, 200, 2000...)
+                    setEmployeeNo(digits);
+                  }
+                  return;
+                }
+              
+                // After 4 digits - check if year is valid
+                const year = parseInt(digits.slice(0, 4), 10);
+                const sequence = digits.slice(4);
+              
+                if (year >= 2000 && year <= currentYear && sequence.length <= 5) {
+                  setEmployeeNo(digits);
+                }
+              }}
             />
-          </View>
+            
+          </View> 
         </View>
+        {showEmployeeRequirements && (
+              <View style={styles.passwordRequirements}>
+                <Text style={[styles.requirementText, isEmployeeValid && styles.validRequirement]}>
+                  • Must be a 9-digit number starting with a year between 2000 and {currentYear}
+                </Text>
+              </View>
+            )}
 
         {/* Password Input with Icon & Show/Hide */}
         <View style={styles.inputWrapper}>

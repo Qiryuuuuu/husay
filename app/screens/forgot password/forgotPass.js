@@ -12,6 +12,12 @@ const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 
 export default function ForgotPasswordScreen({ navigation }) {
+
+  // Phone number validation
+  const [phoneNumber, setPhoneNumber] = React.useState("");
+  const [showPhoneValidation, setShowPhoneValidation] = React.useState(false);
+  const isPhoneValid = /^9\d{9}$/.test(phoneNumber);
+
   return (
     <View style={styles.container}>
       <Image source={element1} style={styles.element1} />
@@ -46,10 +52,29 @@ export default function ForgotPasswordScreen({ navigation }) {
           <Image source={phoneIcon} style={styles.inputIcon} />
           <TextInput 
             style={styles.input} 
-            placeholder="Phone Number" 
+            placeholder="Phone Number (+63)" 
             placeholderTextColor="#BDBDBD"
+            keyboardType="numeric"
+            value={phoneNumber}
+            onFocus={() => setShowPhoneValidation(true)}
+            onBlur={() => setShowPhoneValidation(false)}
+            onChangeText={(text) => {
+              const digitsOnly = text.replace(/\D/g, "");
+              if (digitsOnly === "") {
+                setPhoneNumber("");
+              } else if (digitsOnly.length <= 10 && digitsOnly.startsWith("9")) {
+                setPhoneNumber(digitsOnly);
+              }
+            }}
           />
         </View>
+
+
+        {showPhoneValidation && (
+          <Text style={[styles.requirementText, isPhoneValid && styles.validRequirement]}>
+            • Philippine number format only: starts with 9 and has 10 digits (e.g. 9123456789)
+          </Text>
+        )}
 
         <TouchableOpacity>
           <Text 
@@ -60,8 +85,22 @@ export default function ForgotPasswordScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]}>
-          <Text style={styles.buttonText}>Send</Text>
+        <TouchableOpacity
+            style={[styles.button, styles.shadow]}
+            onPress={() => {
+              if (!isPhoneValid) {
+                setShowPhoneValidation(true);
+                return alert("❌ Invalid phone number. It must start with 9 and be 10 digits long.");
+              }
+
+              // Format and proceed
+              const formatted = "+63" + phoneNumber;
+              console.log("📞 Sending reset link to:", formatted);
+
+              // Proceed with API request or navigation...
+            }}
+          >
+            <Text style={styles.buttonText}>Send</Text>
         </TouchableOpacity>
       </View>
 
@@ -157,6 +196,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#333",
+  },
+  requirementText: {
+    fontSize: 14,
+    color: "#777",
+    marginBottom: 5,
+    marginLeft: 5,
+  },
+  validRequirement: {
+    color: "green",
+    fontWeight: "bold",
+  },
+  securityQuestion: {
+    fontSize: 16,
+    color: "#555",
+    textAlign: "center",
+    marginVertical: 10,
   },
   securityQuestionText: {
     color: "#5A8EF4",

@@ -227,7 +227,7 @@ export default function AddStudentScreen({ navigation }) {
                   style={styles.picker}
                   onValueChange={(itemValue) => setGender(itemValue)}
                 >
-                  <Picker.Item label="Gender" value="" />
+                  <Picker.Item label="Sex" value="" />
                   <Picker.Item label="Male" value="Male" />
                   <Picker.Item label="Female" value="Female" />
                   <Picker.Item label="Other" value="Other" />
