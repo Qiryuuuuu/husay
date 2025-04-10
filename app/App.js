@@ -1,6 +1,8 @@
 import React from "react";
+import { TimerProvider } from "./contexts/TimerContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import { navigationRef } from "./component/navigationRef";
 
 import LoginScreen from "./screens/account validation/signIn";
 import SignUpScreen from "./screens/account validation/signUp";
@@ -39,7 +41,8 @@ import ChallengeHard from "../app/screens/challenge interface/hard/ChallengeHard
 const Stack = createStackNavigator();
 export default function App() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
+      <TimerProvider>
       <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
@@ -148,6 +151,7 @@ export default function App() {
           options={{ title: "ChallHard" }}
         />
       </Stack.Navigator>
+      </TimerProvider>
     </NavigationContainer>
   );
 }

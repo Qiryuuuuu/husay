@@ -86,24 +86,20 @@ const StudentSchema = new mongoose.Schema({
   gameTime: {
     timeSpent: {
       type: Number,
-      default: 0, // Store in hours internally
+      default: 0,
       min: 0,
-      max: 1, // 1 hour max
-      get: (v) => (v ? v.toFixed(2) : "0.00"), // Ensure it's formatted as a string for frontend
-      set: (v) => (v ? parseFloat((v / 3600).toFixed(2)) : 0), // Convert seconds to hours before saving
+      max: 60
     },
     timeLeft: {
       type: Number,
-      default: 1, // 1 hour max in hours
+      default: 60,
       min: 0,
-      max: 1, // Store in hours (1 hour max)
-      get: (v) => (v ? v.toFixed(2) : "0.00"),
-      set: (v) => (v ? parseFloat((v / 3600).toFixed(2)) : 0),
+      max: 60
     },
     sessionStart: { type: String, default: null },
     sessionEnd: { type: String, default: null },
   },
-
+  
   createdAt: { type: String, default: () => formatDate(new Date()) },
   updatedAt: { type: String, default: null },
 });
@@ -287,10 +283,13 @@ StudentSchema.methods.calculateRecommendations = function () {
   }
 };
 
-// ✅ Pre-save Hook to Auto-Update Fields Before Saving
+
 StudentSchema.pre("save", function (next) {
-  if (this.timeTaken !== undefined) {
-    this.updateGameTime(this.timeTaken);
+  const isManualTimeUpdate =
+    this.isModified("gameTime.timeSpent") || this.isModified("gameTime.timeLeft");
+
+  if (!isManualTimeUpdate) {
+    this.updateGameTime();
   }
 
   this.calculateStats();

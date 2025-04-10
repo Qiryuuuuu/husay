@@ -350,4 +350,37 @@ router.get(
   }
 );
 
+// ✅ New Route: Update both timeSpent and timeLeft manually
+router.put("/update-time/:studentId", authenticateUser, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { timeSpent, timeLeft } = req.body;
+
+    if (typeof timeSpent !== "number" || typeof timeLeft !== "number") {
+      return res.status(400).json({ message: "Invalid time data" });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    const now = new Date();
+    const formattedNow = formatDate(now);
+
+    student.gameTime.timeSpent = Math.min(timeSpent, 60);
+    student.gameTime.timeLeft = Math.max(timeLeft, 0);
+    student.gameTime.sessionEnd = formattedNow;
+
+    await student.save();
+
+    res.status(200).json({
+      message: "Game time manually updated",
+      gameTime: student.gameTime,
+    });
+  } catch (err) {
+    console.error("❌ Error in /update-time route:", err);
+    res.status(500).json({ message: "Server error updating time" });
+  }
+});
+
+
 module.exports = router;
