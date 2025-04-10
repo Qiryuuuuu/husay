@@ -578,15 +578,44 @@ export default function DashboardScreen({ navigation }) {
   };
 
   // Handle edit button press
-  const handleEditPress = () => {
-    if (selectedStudent) {
-      setEditName(selectedStudent.fullName || "");
-      setEditAge(selectedStudent.age ? selectedStudent.age.toString() : "");
-      setEditGender(selectedStudent.gender || "");
+  const handleEditPress = async () => {
+    if (selectedStudent && selectedStudent._id) {
+      const token = await AsyncStorage.getItem("authToken");
+      const baseUrl =
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+  
+      try {
+        const response = await fetch(`${baseUrl}/api/students/get/${selectedStudent._id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok && data.student) {
+          const student = data.student;
+  
+          // ✅ Now populate edit fields safely
+          setEditName(student.fullName || "");
+          setEditAge(student.age ? student.age.toString() : "");
+          setEditGender(student.gender || "");
+  
+          setShowEditModal(true); // ✅ Open modal after data is set
+        } else {
+          Alert.alert("Error", data.message || "Failed to load student data.");
+        }
+      } catch (error) {
+        console.error("❌ Error fetching student for editing:", error);
+      }
     }
-    setShowEditModal(true);
     setMenuOpenStudentId(null);
   };
+  
 
   // Handle delete button press
   const handleDeletePress = () => {
@@ -801,7 +830,7 @@ export default function DashboardScreen({ navigation }) {
                   style={styles.textInput}
                   value={editGender}
                   onChangeText={setEditGender}
-                  placeholder="Gender"
+                  placeholder="Sex"
                 />
               </View>
             </View>

@@ -145,41 +145,56 @@ export default function LeaderboardScreen({ navigation, route }) {
         )}
       </View>
 
-      <View style={styles.tableContainer}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.headerText, styles.centerText]}>Ranking</Text>
-          <Text style={[styles.headerText, styles.centerText]}>Name</Text>
-          <Text style={[styles.headerText, styles.centerText]}>Stars</Text>
+        <View style={styles.tableContainer}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.headerText, styles.centerText]}>Ranking</Text>
+            <Text style={[styles.headerText, styles.centerText]}>Name</Text>
+            <Text style={[styles.headerText, styles.centerText]}>Stars</Text>
+          </View>
+
+          {showAll ? (
+            <FlatList
+              data={students}
+              keyExtractor={(item) => item._id.toString()}
+              renderItem={({ item, index }) => (
+                <View style={styles.tableRow}>
+                  <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
+                  <Text style={[styles.cell, styles.centerText]}>{item.fullName}</Text>
+                  <View style={[styles.cell, styles.centerText, styles.starContainer]}>
+                    <Image source={starIcon} style={styles.starIcon} />
+                    <Text style={styles.cell}>
+                      {typeof item.stars === "object"
+                        ? item.stars.totalStars || 0
+                        : item.stars}
+                    </Text>
+                  </View>
+                </View>
+              )}
+              ListEmptyComponent={
+                <Text style={styles.noResults}>No students found.</Text>
+              }
+              style={styles.scrollList}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={true}
+            />
+          ) : (
+            displayedStudents.map((item, index) => (
+              <View key={item._id} style={styles.tableRow}>
+                <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
+                <Text style={[styles.cell, styles.centerText]}>{item.fullName}</Text>
+                <View style={[styles.cell, styles.centerText, styles.starContainer]}>
+                  <Image source={starIcon} style={styles.starIcon} />
+                  <Text style={styles.cell}>
+                    {typeof item.stars === "object"
+                      ? item.stars.totalStars || 0
+                      : item.stars}
+                  </Text>
+                </View>
+              </View>
+            ))
+          )}
         </View>
 
-        <FlatList
-          data={displayedStudents}
-          keyExtractor={(item) => item._id.toString()}
-          renderItem={({ item, index }) => (
-            <View style={styles.tableRow}>
-              <Text style={[styles.cell, styles.centerText]}>{index + 1}.</Text>
-              <Text style={[styles.cell, styles.centerText]}>
-                {item.fullName}
-              </Text>
-              <View
-                style={[styles.cell, styles.centerText, styles.starContainer]}
-              >
-                <Image source={starIcon} style={styles.starIcon} />
-                <Text style={styles.cell}>
-                  {typeof item.stars === "object"
-                    ? item.stars.totalStars || 0
-                    : item.stars}
-                </Text>
-              </View>
-            </View>
-          )}
-          ListEmptyComponent={
-            <Text style={styles.noResults}>No students found.</Text>
-          }
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={true}
-        />
-      </View>
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>
@@ -288,6 +303,38 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 20,
   },
+
+  topStudentContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  
+  squareProfileContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#5A8EF4",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  
+  squareProfileImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  
+  topStudentName: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    maxWidth: 200,
+  },
   tableContainer: {
     width: "50%",
     borderWidth: 1,
@@ -299,6 +346,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "#5A8EF4",
     paddingVertical: 10,
+  },
+
+  scrollList: {
+    maxHeight: 300, // or use Dimensions.get("window").height * 0.4 for dynamic height
   },
   headerText: {
     color: "#fff",
