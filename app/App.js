@@ -44,7 +44,7 @@ export default function App() {
     <NavigationContainer ref={navigationRef}>
       <TimerProvider>
       <Stack.Navigator
-        initialRouteName="Login"
+        initialRouteName="ForgotSecurityQuestion"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />

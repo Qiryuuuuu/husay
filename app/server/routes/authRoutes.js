@@ -209,6 +209,35 @@ router.post("/validate-security", async (req, res) => {
   }
 });
 
+// ✅ Reset User Password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: "Email and password required." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.error("❌ Password Reset Error: User Not Found");
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful." });
+  } catch (error) {
+    console.error("❌ Error Resetting Password:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+
+
 // ✅ Get Total Number of Students Assigned to User (Optimized)
 router.get("/count", authenticateUser, async (req, res) => {
   try {

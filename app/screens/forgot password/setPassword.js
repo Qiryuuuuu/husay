@@ -1,5 +1,7 @@
+//setPasssword.js
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { useRoute } from "@react-navigation/native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
 
 const logoImg = require("../../../assets/logo.png");
 const keyIcon = require("../../../assets/key-icon.png");
@@ -18,6 +20,11 @@ export default function SetPasswordScreen({ navigation }) {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const [password, setPassword] = useState("");
+  const route = useRoute();
+  const email = route.params?.email;
+
+  const [confirmPassword, setConfirmPassword] = useState("");
+
 
   // Password validation checks
   const isLengthValid = password.length >= 8;
@@ -25,6 +32,50 @@ export default function SetPasswordScreen({ navigation }) {
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*?/.,]/.test(password);
+
+  const handleResetPassword = async () => {
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+  
+    if (
+      !isLengthValid ||
+      !hasLowercase ||
+      !hasUppercase ||
+      !hasNumber ||
+      !hasSpecialChar
+    ) {
+      alert("Password does not meet the requirements.");
+      return;
+    }
+  
+    const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+  
+    try {
+      const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newPassword: password }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert("Password reset successful!");
+        navigation.navigate("Login");
+      } else {
+        alert(data.message || "Failed to reset password.");
+      }
+    } catch (error) {
+      console.error("Reset error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -91,6 +142,8 @@ export default function SetPasswordScreen({ navigation }) {
             placeholder="Confirm Password"
             placeholderTextColor="#BDBDBD"
             secureTextEntry={!confirmPasswordVisible}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
           />
           <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
             <Image source={confirmPasswordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
@@ -98,9 +151,10 @@ export default function SetPasswordScreen({ navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]}>
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleResetPassword}>
         <Text style={styles.buttonText}>Reset Password</Text>
       </TouchableOpacity>
+
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>

@@ -1,5 +1,6 @@
+//forgotSecuQuestions.js
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const logoImg = require("../../../assets/logo.png");
@@ -13,12 +14,57 @@ const element6 = require("../../../assets/element6.png");
 const answerIcon = require("../../../assets/book-icon.png");
 
 export default function ForgotSecurityQuestionScreen({ navigation }) {
+  const [email, setEmail] = useState("");
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
   const [selectedQuestion2, setSelectedQuestion2] = useState("");
   const [selectedQuestion3, setSelectedQuestion3] = useState("");
   const [answer1, setAnswer1] = useState("");
   const [answer2, setAnswer2] = useState("");
   const [answer3, setAnswer3] = useState("");
+  const handleSubmit = async () => {
+    if (
+      !email ||
+      !selectedQuestion1 || !answer1 ||
+      !selectedQuestion2 || !answer2 ||
+      !selectedQuestion3 || !answer3
+    ) {
+      alert("Please fill in all fields.");
+      return;
+    }
+  
+    const securityAnswers = [
+      { question: selectedQuestion1, answer: answer1 },
+      { question: selectedQuestion2, answer: answer2 },
+      { question: selectedQuestion3, answer: answer3 },
+    ];
+  
+    const baseUrl =
+      Platform.OS === "web"
+        ? "http://localhost:5000"
+        : "http://10.0.2.2:5000";
+  
+    try {
+      const response = await fetch(`${baseUrl}/api/auth/validate-security`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, securityAnswers }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert("Security answers verified!");
+        navigation.navigate("SetPassword", { email }); // pass email to the next screen
+      } else {
+        alert(data.message || "Incorrect answers.");
+      }
+    } catch (error) {
+      console.error("Error validating security answers:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+  
+
 
   const securityQuestions = [
     "What is your pet’s name?",
@@ -53,6 +99,20 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
       </View>
 
       <View style={styles.inputContainer}>
+
+      <View style={styles.inputWrapper}>
+        <Image source={answerIcon} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email"
+          placeholderTextColor="#BDBDBD"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
+      </View>
+        
         {/* Security Question 1 */}
         <View style={styles.inputWrapper}>
           <Picker
@@ -126,9 +186,10 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("StudentProfile")}>
+      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
+
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
