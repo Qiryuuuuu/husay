@@ -1,3 +1,4 @@
+//forgotPass.js
 import React, { useRef, useState } from "react";
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { auth } from "../../config/firebaseConfig"; // path to firebaseConfig.js
