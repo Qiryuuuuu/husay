@@ -1,3 +1,4 @@
+//home.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -32,6 +33,7 @@ const settingHeader = require("../../../assets/headerText/setting-header.png");
 export default function HomeScreen({ route }) {
   const { width, height } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [studentImage, setStudentImage] = useState(null);
   const [studentName, setStudentName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -95,6 +97,34 @@ export default function HomeScreen({ route }) {
     }
   }, [studentId]);
 
+
+  useEffect(() => {
+    async function fetchStudentImage() {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const baseUrl =
+          Platform.OS === 'web'
+            ? 'http://localhost:5000'
+            : 'http://10.0.2.2:5000';
+  
+        const response = await fetch(`${baseUrl}/api/students/get-student-image/${studentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const data = await response.json();
+        setStudentImage(data.profileImage || null);
+      } catch (error) {
+        console.error("❌ Error fetching student image:", error);
+      }
+    }
+  
+    if (studentId) {
+      fetchStudentImage();
+    }
+  }, [studentId]);
+
   const handleLogout = async () => {
     try {
       await stopTimer(); // ✅ stop timer first
@@ -130,7 +160,14 @@ export default function HomeScreen({ route }) {
           <Image source={logoImg} style={styles.logo} />
 
           <View style={styles.studentInfo}>
-            <Image source={studentImg} style={styles.studentImg} />
+          <Image
+            source={
+              studentImage
+                ? { uri: studentImage }
+                : studentImg // fallback default
+            }
+            style={styles.studentImg}
+          />
             <Text style={styles.studentName}>
               {studentName || "Student Name"}
             </Text>

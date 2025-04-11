@@ -332,6 +332,24 @@ router.get("/get/:studentId", authenticateUser, async (req, res) => {
   }
 });
 
+// ✅ Get only the student's profile image
+router.get("/get-student-image/:studentId", authenticateUser, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const student = await Student.findById(studentId).select("profileImage");
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.json({ profileImage: student.profileImage });
+  } catch (error) {
+    console.error("❌ Error fetching student image:", error);
+    res.status(500).json({ message: "Server error fetching student image" });
+  }
+});
+
+
 router.get(
   "/get-student-name/:studentId",
   authenticateUser,
