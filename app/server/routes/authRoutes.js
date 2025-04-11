@@ -251,6 +251,39 @@ router.put("/update", authenticateUser, async (req, res) => {
   }
 });
 
+// ✅ Reset Password via Phone (Firebase SMS flow)
+router.post("/reset-password-sms", async (req, res) => {
+  try {
+    let { phoneNumber, newPassword } = req.body;
+
+    if (!phoneNumber || !newPassword) {
+      return res.status(400).json({ success: false, message: "Missing phone or password." });
+    }
+
+    // Strip +63 or 0 to match DB format (e.g., 9066041979)
+    if (phoneNumber.startsWith("+63")) {
+      phoneNumber = phoneNumber.replace("+63", "");
+    } else if (phoneNumber.startsWith("09")) {
+      phoneNumber = phoneNumber.slice(1); // removes leading "0"
+    }
+
+    const user = await User.findOne({ phoneNumber });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.json({ success: true, message: "Password updated successfully." });
+  } catch (err) {
+    console.error("❌ Reset password error:", err);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+
 // ✅ Function to format Date and Time in required format (YYYY-MM-DD | HH:MM:SS AM/PM)
 function formatDate(date) {
   const options = {

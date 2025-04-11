@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { auth } from "../../config/firebaseConfig"; // path to firebaseConfig.js
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+import { PhoneAuthProvider, signInWithPhoneNumber } from "firebase/auth";
 
 const logoImg = require("../../../assets/logo.png");
 const backIcon = require("../../../assets/back-icon.png");
@@ -18,8 +21,43 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [showPhoneValidation, setShowPhoneValidation] = React.useState(false);
   const isPhoneValid = /^9\d{9}$/.test(phoneNumber);
 
+  const recaptchaVerifier = useRef(null);
+
+  const handleSendCode = async () => {
+    if (!isPhoneValid) {
+      setShowPhoneValidation(true);
+      Alert.alert("❌ Invalid number", "It must start with 9 and be 10 digits long.");
+      return;
+    }
+
+    const formattedPhone = "+639762290845";
+
+    try {
+      const provider = new PhoneAuthProvider(auth);
+      const verificationId = await provider.verifyPhoneNumber(
+        formattedPhone,
+        recaptchaVerifier.current
+      );
+
+      navigation.navigate("EnterCode", {
+        phoneNumber: formattedPhone,
+        verificationId,
+      });
+    } catch (error) {
+      console.error("❌ OTP send error:", error);
+      Alert.alert("Error", "Failed to send verification code.");
+    }
+  };
+
   return (
     <View style={styles.container}>
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={auth.app.options}
+        attemptInvisibleVerification={true}
+      />
+
+      
       <Image source={element1} style={styles.element1} />
       <Image source={element2} style={styles.element2} />
       <Image source={element3} style={styles.element3} />
@@ -86,23 +124,21 @@ export default function ForgotPasswordScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-            style={[styles.button, styles.shadow]}
-            onPress={() => {
-              if (!isPhoneValid) {
-                setShowPhoneValidation(true);
-                return alert("❌ Invalid phone number. It must start with 9 and be 10 digits long.");
-              }
-
-              // Format and proceed
-              const formatted = "+63" + phoneNumber;
-              console.log("📞 Sending reset link to:", formatted);
-
-              // Proceed with API request or navigation...
-            }}
-          >
-            <Text style={styles.buttonText}>Send</Text>
+          style={[styles.button, styles.shadow]}
+          onPress={handleSendCode}
+        >
+          <Text style={styles.buttonText}>Send</Text>
         </TouchableOpacity>
-      </View>
+        
+        <TouchableOpacity>
+          <Text
+            style={styles.securityQuestionText}
+            onPress={() => navigation.navigate("ForgotSecurityQuestion")}
+          >
+            Try another way
+          </Text>
+        </TouchableOpacity>
+      </View >
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>

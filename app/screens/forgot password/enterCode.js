@@ -1,5 +1,8 @@
-import React from "react";
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { auth } from "../../config/firebaseConfig"; // path to firebaseConfig.js
+import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 
 const logoImg = require("../../../assets/logo.png");
 const backIcon = require("../../../assets/back-icon.png");
@@ -10,7 +13,24 @@ const element4 = require("../../../assets/element4.png")
 const element5 = require("../../../assets/element5.png")
 const element6 = require("../../../assets/element6.png")
 
-export default function EnterCodeScreen({ navigation }) {
+export default function EnterCodeScreen() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { verificationId, phoneNumberForAuth, phoneNumber } = route.params;
+
+  const [code, setCode] = React.useState("");
+
+  const verifyCode = async () => {
+    try {
+      const credential = PhoneAuthProvider.credential(verificationId, code);
+      await signInWithCredential(auth, credential);
+      navigation.navigate("SetPassword", { phoneNumber });
+    } catch (error) {
+      console.error("❌ Code verification failed:", error);
+      Alert.alert("Error", "Invalid verification code. Please try again.");
+    }
+  };
+
   return (
     <View style={styles.container}>
         <Image source={element1} style={styles.element1} />
@@ -47,10 +67,13 @@ export default function EnterCodeScreen({ navigation }) {
             style={styles.input} 
             placeholder="Enter code" 
             placeholderTextColor="#BDBDBD"
+            keyboardType="number-pad"
+            value={code}
+            onChangeText={setCode}
           />
         </View>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]}>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={verifyCode}>
           <Text style={styles.buttonText}>Verify</Text>
         </TouchableOpacity>
       </View>

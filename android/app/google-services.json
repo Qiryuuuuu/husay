@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "964762345333",
+    "project_id": "husay-polychroma",
+    "storage_bucket": "husay-polychroma.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964762345333:android:35e3e3d4d8c577edc2fd3c",
+        "android_client_info": {
+          "package_name": "husay.polychroma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOUDM5zyHWp6VMivssJdWE3PceiDIbC3k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

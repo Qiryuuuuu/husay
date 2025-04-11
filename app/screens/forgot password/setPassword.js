@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { auth } from "../../config/firebaseConfig"; // adjust path if needed
 
 const logoImg = require("../../../assets/logo.png");
 const keyIcon = require("../../../assets/key-icon.png");
@@ -13,11 +15,16 @@ const element4 = require("../../../assets/element4.png");
 const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 
-export default function SetPasswordScreen({ navigation }) {
+export default function SetPasswordScreen({}) {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { verificationId, phoneNumberForAuth, phoneNumber } = route.params;
+
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Password validation checks
   const isLengthValid = password.length >= 8;
@@ -25,6 +32,54 @@ export default function SetPasswordScreen({ navigation }) {
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*?/.,]/.test(password);
+
+  const isPasswordValid = isLengthValid && hasLowercase && hasUppercase && hasNumber && hasSpecialChar;
+
+  const handleResetPassword = async () => {
+    if (!password || !confirmPassword) {
+      Alert.alert("Error", "Please enter and confirm your password.");
+      return;
+    }
+  
+    if (!isPasswordValid) {
+      Alert.alert("Error", "Password does not meet the required criteria.");
+      return;
+    }
+  
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+  
+    // ✅ Normalize phoneNumber to match DB format (e.g. "9066041979")
+    let normalizedPhone = phoneNumber;
+    if (normalizedPhone.startsWith("+63")) {
+      normalizedPhone = normalizedPhone.replace("+63", "");
+    } else if (normalizedPhone.startsWith("09")) {
+      normalizedPhone = normalizedPhone.slice(1);
+    }
+  
+    try {
+      const response = await fetch("http://10.0.2.2:5000/api/auth/reset-password-sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber: normalizedPhone, newPassword: password }),
+      });
+  
+      const result = await response.json();
+  
+      if (result.success) {
+        Alert.alert("Success", "Password reset successful. Please log in.");
+        navigation.navigate("Login");
+      } else {
+        Alert.alert("Error", result.message || "Failed to reset password.");
+      }
+    } catch (error) {
+      console.error("❌ Reset error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -91,6 +146,8 @@ export default function SetPasswordScreen({ navigation }) {
             placeholder="Confirm Password"
             placeholderTextColor="#BDBDBD"
             secureTextEntry={!confirmPasswordVisible}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
           />
           <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
             <Image source={confirmPasswordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
@@ -98,7 +155,10 @@ export default function SetPasswordScreen({ navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.shadow]}>
+      <TouchableOpacity
+        style={[styles.button, styles.shadow]}
+        onPress={handleResetPassword}
+      >
         <Text style={styles.buttonText}>Reset Password</Text>
       </TouchableOpacity>
 

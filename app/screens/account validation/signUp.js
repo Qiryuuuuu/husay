@@ -157,7 +157,7 @@ export default function SignUpScreen({ navigation }) {
       </View>
 
       <View style={styles.inputContainer}>
-        {/* Phone Number Input with Icon */}
+        {/* Email Input with Icon */}
         <View style={[
           styles.inputWrapper,
           emailError ? { borderColor: "red" } : null
