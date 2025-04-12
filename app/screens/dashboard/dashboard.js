@@ -43,11 +43,15 @@ export default function DashboardScreen({ navigation }) {
   const [timeSpentData, setTimeSpentData] = useState({
     timeSpent: 0,
     timeLeft: 60,
+    timeSpentColor: "#FF3B30",
+    timeLeftColor: "#4CD964",
   });
   const [attendanceData, setAttendanceData] = useState({});
 
-  const [currentQuarter, setCurrentQuarter] = useState(1);
-  const [currentYear, setCurrentYear] = useState(moment().year());
+  const today = moment(); // gets current date
+const detectedQuarter = Math.floor(today.month() / 3) + 1;
+const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
+  const [currentYear, setCurrentYear] = useState(today.year());
 
   // ✅ Fetch User Data
   const fetchUser = async () => {
@@ -125,12 +129,17 @@ export default function DashboardScreen({ navigation }) {
       const data = await response.json();
       console.log("🔹 Class API Response:", data);
 
-      if (response.ok && data.students.length > 0) {
+      if (response.ok && Array.isArray(data.students) && data.students.length > 0) {
         setStudents(data.students);
-        setSelectedStudent(data.students[0]); // ✅ Set default student
+        setSelectedStudent(data.students[0]);
+      } else if (response.ok && Array.isArray(data.students) && data.students.length === 0) {
+        console.log("ℹ️ No students found, new user likely.");
+        setStudents([]);
+        setSelectedStudent(null);
       } else {
-        console.error("❌ No students found:", data.message);
-        setStudents([]); // ✅ Ensure students is an empty array if no data is returned
+        console.error("❌ Unexpected class fetch error:", data.message || "Unknown error");
+        setStudents([]);
+        setSelectedStudent(null);
       }
     } catch (error) {
       console.error("❌ Server error fetching students:", error);
@@ -1042,29 +1051,30 @@ export default function DashboardScreen({ navigation }) {
           )}
 
           {/* Menu Button with Dropdown (Only for Selected Student) */}
-          {selectedStudent && (
+          
             <View style={styles.menuContainer}>
-              <TouchableOpacity
-                onPress={() =>
-                  setMenuOpenStudentId(
-                    menuOpenStudentId === selectedStudent._id
-                      ? null
-                      : selectedStudent._id
-                  )
+            <TouchableOpacity
+              onPress={() => {
+                if (!selectedStudent) {
+                  Alert.alert("No student selected", "Please add a student first.");
+                  return;
                 }
-              >
+                setMenuOpenStudentId(
+                  menuOpenStudentId === selectedStudent._id ? null : selectedStudent._id
+                );
+              }}
+            >
                 <Image
-                  source={
-                    menuOpenStudentId === selectedStudent._id
-                      ? require("../../../assets/dashboard/Close.png") // 'X' when open
-                      : require("../../../assets/dashboard/menu.png") // Burger menu when closed
-                  }
-                  style={styles.menuIcon}
-                />
-              </TouchableOpacity>
-
+                source={
+                  selectedStudent && menuOpenStudentId === selectedStudent._id
+                    ? require("../../../assets/dashboard/Close.png")
+                    : require("../../../assets/dashboard/menu.png")
+                }
+                style={styles.menuIcon}
+            />
+            </TouchableOpacity>
               {/* Edit/Delete Menu */}
-              {menuOpenStudentId === selectedStudent._id && (
+              {selectedStudent && menuOpenStudentId === selectedStudent._id && (
                 <View style={styles.dropdownMenu}>
                   <TouchableOpacity
                     style={styles.dropdownItem}
@@ -1081,7 +1091,7 @@ export default function DashboardScreen({ navigation }) {
                 </View>
               )}
             </View>
-          )}
+
         </View>
 
         {/* Attendance Container */}
@@ -1234,7 +1244,9 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Shape Familiarity</Text>
             <View style={styles.shapeChart}>
               <View style={styles.chartBarsContainer}>
-                {Object.entries(familiarityData?.Shapes || {}).map(
+              {Object.entries(familiarityData?.Shapes || {
+                Square: 0, Triangle: 0, Circle: 0, Rectangle: 0
+              }).map(
                   ([label, percentage], index) => (
                     <View key={`shape-${index}`} style={styles.chartBarGroup}>
                       <Text style={styles.percentageLabel}>{percentage}%</Text>
@@ -1260,7 +1272,9 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Color Familiarity</Text>
             <View style={styles.colorChart}>
               <View style={styles.chartBarsContainer}>
-                {Object.entries(familiarityData?.Colors || {}).map(
+              {Object.entries(familiarityData?.Colors || {
+                Red: 0, Yellow: 0, Blue: 0, Green: 0, Black: 0, Gray: 0, White: 0
+              }).map(
                   ([label, percentage], index) => (
                     <View key={`color-${index}`} style={styles.chartBarGroup}>
                       <Text style={styles.percentageLabel}>{percentage}%</Text>
@@ -1286,7 +1300,10 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.chartTitle}>Number Familiarity</Text>
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
-                {Object.entries(familiarityData?.Numbers || {}).map(
+              {Object.entries(familiarityData?.Numbers || {
+                "One (1)": 0, "Two (2)": 0, "Three (3)": 0, "Four (4)": 0, "Five (5)": 0,
+                "Six (6)": 0, "Seven (7)": 0, "Eight (8)": 0, "Nine (9)": 0, "Ten (10)": 0
+              }).map(
                   ([label, percentage], index) => (
                     <View key={`number-${index}`} style={styles.chartBarGroup}>
                       <Text style={styles.percentageLabel}>{percentage}%</Text>
@@ -1389,18 +1406,26 @@ export default function DashboardScreen({ navigation }) {
                 style={{ height: 250 }}
                 valueAccessor={({ item }) => item.value}
                 data={[
-                  {
-                    key: 1,
-                    value: timeSpentData.timeSpent,
-                    label: `${timeSpentData.timeSpent} mins`,
-                    svg: { fill: timeSpentData.timeSpentColor }, // 🔴 Red for Spent
-                  },
-                  {
-                    key: 2,
-                    value: timeSpentData.timeLeft,
-                    label: `${timeSpentData.timeLeft} mins`,
-                    svg: { fill: timeSpentData.timeLeftColor }, // 🟢 Green or 🔴 Red based on condition
-                  },
+                  ...(timeSpentData.timeSpent > 0
+                    ? [
+                        {
+                          key: 1,
+                          value: timeSpentData.timeSpent,
+                          label: `${timeSpentData.timeSpent} mins`,
+                          svg: { fill: timeSpentData.timeSpentColor },
+                        },
+                      ]
+                    : []),
+                  ...(timeSpentData.timeLeft > 0
+                    ? [
+                        {
+                          key: 2,
+                          value: timeSpentData.timeLeft,
+                          label: `${timeSpentData.timeLeft} mins`,
+                          svg: { fill: timeSpentData.timeLeftColor },
+                        },
+                      ]
+                    : []),
                 ]}
                 spacing={0}
                 outerRadius={"100%"}

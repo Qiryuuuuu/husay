@@ -59,14 +59,19 @@ export default function StudentProfileScreen({ navigation }) {
       });
 
       if (response.status === 200) {
-        setStudents(response.data.students);
+        const fetched = response.data.students;
+        setStudents(fetched);
+      
+        // Do NOT alert if just empty list
+        if (!fetched || fetched.length === 0) {
+          console.log("ℹ️ No students found — showing empty state.");
+        }
       } else {
-        setStudents([]);
         Alert.alert("Error", "Failed to fetch students.");
       }
     } catch (error) {
-      console.error("❌ Error fetching students:", error);
-      Alert.alert("Error", "Could not fetch student data.");
+      console.error("❌ Unexpected fetch error:", error.message);
+      Alert.alert("Error", "Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
     }

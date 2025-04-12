@@ -132,7 +132,7 @@ router.get("/get-students", authenticateUser, async (req, res) => {
     });
 
     if (!userClass) {
-      return res.status(404).json({ message: "Class not found." });
+      return res.status(200).json({ students: [] });
     }
 
     res.status(200).json({ students: userClass.students });
