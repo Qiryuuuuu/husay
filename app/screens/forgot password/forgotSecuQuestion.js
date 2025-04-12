@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 
 const logoImg = require("../../../assets/logo.png");
@@ -13,20 +14,67 @@ const element6 = require("../../../assets/element6.png");
 const answerIcon = require("../../../assets/book-icon.png");
 
 export default function ForgotSecurityQuestionScreen({ navigation }) {
-  const [selectedQuestion1, setSelectedQuestion1] = useState("");
-  const [selectedQuestion2, setSelectedQuestion2] = useState("");
-  const [selectedQuestion3, setSelectedQuestion3] = useState("");
-  const [answer1, setAnswer1] = useState("");
-  const [answer2, setAnswer2] = useState("");
-  const [answer3, setAnswer3] = useState("");
+  const [email, setEmail] = useState("");
+  const [fetchedQuestions, setFetchedQuestions] = useState([]);
+  const [selectedQuestion, setSelectedQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-  const securityQuestions = [
-    "What is your pet’s name?",
-    "What is your mother’s maiden name?",
-    "What was the name of your first school?",
-    "What is your favorite movie?",
-    "What city were you born in?",
-  ];
+  const handleFetchQuestions = async () => {
+    if (!email) {
+      Alert.alert("Error", "Please enter your email.");
+      return;
+    }
+
+    try {
+      setLoadingQuestions(true);
+      const response = await fetch("http://10.0.2.2:5000/api/auth/user/security-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFetchedQuestions(data.questions);
+        setSelectedQuestion(data.questions[0]?.question || "");
+      } else {
+        Alert.alert("Error", data.message || "No questions found.");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      Alert.alert("Error", "Server error. Please try again.");
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!selectedQuestion || !answer) {
+      Alert.alert("Error", "Please select a question and enter your answer.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://10.0.2.2:5000/api/auth/validate-security", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          securityAnswers: [{ question: selectedQuestion, answer }],
+        }),
+      });
+
+      const data = await response.json();
+      if (data.message === "Security questions verified successfully.") {
+        navigation.navigate("SetPassword", { phoneNumber: "", email });
+      } else {
+        Alert.alert("Error", data.message || "Incorrect answer.");
+      }
+    } catch (error) {
+      console.error("Validation error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -48,87 +96,68 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
         <Image source={logoImg} style={styles.logo} />
         <View style={styles.textHeader}>
           <Text style={styles.title}>Forgot password</Text>
-          <Text style={styles.subtitle}>Provide answers to secure your account</Text>
+          <Text style={styles.subtitle}>Choose one security question to verify</Text>
         </View>
       </View>
 
       <View style={styles.inputContainer}>
-        {/* Security Question 1 */}
+        {/* Email Input */}
         <View style={styles.inputWrapper}>
-          <Picker
-            selectedValue={selectedQuestion1}
-            onValueChange={(itemValue) => setSelectedQuestion1(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select a Security Question" value="" />
-            {securityQuestions.map((question, index) => (
-              <Picker.Item key={index} label={question} value={question} />
-            ))}
-          </Picker>
-        </View>
-        <View style={styles.inputWrapper}>
-          <Image source={answerIcon} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Answer"
+            placeholder="Enter your PLM email"
             placeholderTextColor="#BDBDBD"
-            value={answer1}
-            onChangeText={setAnswer1}
+            keyboardType="email-address"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (text.trim() === "") {
+                setFetchedQuestions([]);
+                setSelectedQuestion("");
+                setAnswer("");
+              }
+            }}
+            autoCapitalize="none"
           />
         </View>
 
-        {/* Security Question 2 */}
-        <View style={styles.inputWrapper}>
-          <Picker
-            selectedValue={selectedQuestion2}
-            onValueChange={(itemValue) => setSelectedQuestion2(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select a Security Question" value="" />
-            {securityQuestions.map((question, index) => (
-              <Picker.Item key={index} label={question} value={question} />
-            ))}
-          </Picker>
-        </View>
-        <View style={styles.inputWrapper}>
-          <Image source={answerIcon} style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Answer"
-            placeholderTextColor="#BDBDBD"
-            value={answer2}
-            onChangeText={setAnswer2}
-          />
-        </View>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleFetchQuestions} disabled={loadingQuestions}>
+          <Text style={styles.buttonText}>Get Security Questions</Text>
+        </TouchableOpacity>
 
-        {/* Security Question 3 */}
-        <View style={styles.inputWrapper}>
-          <Picker
-            selectedValue={selectedQuestion3}
-            onValueChange={(itemValue) => setSelectedQuestion3(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select a Security Question" value="" />
-            {securityQuestions.map((question, index) => (
-              <Picker.Item key={index} label={question} value={question} />
-            ))}
-          </Picker>
-        </View>
-        <View style={styles.inputWrapper}>
-          <Image source={answerIcon} style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Answer"
-            placeholderTextColor="#BDBDBD"
-            value={answer3}
-            onChangeText={setAnswer3}
-          />
-        </View>
+        {fetchedQuestions.length > 0 && (
+          <>
+            {/* Dropdown Picker */}
+            <View style={styles.inputWrapper}>
+              <Picker
+                selectedValue={selectedQuestion}
+                onValueChange={(itemValue) => setSelectedQuestion(itemValue)}
+                style={styles.picker}
+              >
+                {fetchedQuestions.map((q, index) => (
+                  <Picker.Item key={index} label={q.question} value={q.question} />
+                ))}
+              </Picker>
+            </View>
+
+            {/* Answer Field */}
+            <View style={styles.inputWrapper}>
+              <Image source={answerIcon} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Answer"
+                placeholderTextColor="#BDBDBD"
+                value={answer}
+                onChangeText={setAnswer}
+              />
+            </View>
+
+            <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSubmitAnswer}>
+              <Text style={styles.buttonText}>Submit</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
-
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate("StudentProfile")}>
-        <Text style={styles.buttonText}>Submit</Text>
-      </TouchableOpacity>
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>

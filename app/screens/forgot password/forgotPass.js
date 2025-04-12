@@ -115,15 +115,6 @@ export default function ForgotPasswordScreen({ navigation }) {
           </Text>
         )}
 
-        <TouchableOpacity>
-          <Text 
-            style={styles.securityQuestionText} 
-            onPress={() => navigation.navigate("ForgotSecurityQuestion")}
-          >
-            Try another ways
-          </Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.button, styles.shadow]}
           onPress={handleSendCode}

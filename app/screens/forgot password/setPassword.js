@@ -19,7 +19,7 @@ const element6 = require("../../../assets/element6.png");
 export default function SetPasswordScreen({}) {
   const route = useRoute();
   const navigation = useNavigation();
-  const { verificationId, phoneNumberForAuth, phoneNumber } = route.params;
+  const { verificationId, phoneNumberForAuth, phoneNumber, email } = route.params;
 
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
@@ -52,19 +52,34 @@ export default function SetPasswordScreen({}) {
       return;
     }
   
-    // ✅ Normalize phoneNumber to match DB format (e.g. "9066041979")
-    let normalizedPhone = phoneNumber;
-    if (normalizedPhone.startsWith("+63")) {
-      normalizedPhone = normalizedPhone.replace("+63", "");
-    } else if (normalizedPhone.startsWith("09")) {
-      normalizedPhone = normalizedPhone.slice(1);
+    let identifier = phoneNumber || email;
+    let endpoint = "";
+    let payload = {};
+  
+    if (!identifier) {
+      Alert.alert("Error", "Missing phone number or email.");
+      return;
+    }
+  
+    if (phoneNumber) {
+      // Normalize phone for DB format
+      if (identifier.startsWith("+63")) {
+        identifier = identifier.replace("+63", "");
+      } else if (identifier.startsWith("09")) {
+        identifier = identifier.slice(1);
+      }
+      endpoint = "http://10.0.2.2:5000/api/auth/reset-password-sms";
+      payload = { phoneNumber: identifier, newPassword: password };
+    } else {
+      endpoint = "http://10.0.2.2:5000/api/auth/reset-password-email";
+      payload = { email: identifier, newPassword: password };
     }
   
     try {
-      const response = await fetch("http://10.0.2.2:5000/api/auth/reset-password-sms", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: normalizedPhone, newPassword: password }),
+        body: JSON.stringify(payload),
       });
   
       const result = await response.json();

@@ -182,30 +182,50 @@ router.post("/validate-security", async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.error("❌ Security Validation Error: User Not Found");
       return res.status(400).json({ message: "User not found." });
     }
 
     if (!securityAnswers || securityAnswers.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Security answers are required." });
+      return res.status(400).json({ message: "Security answers are required." });
     }
 
-    const isValid = user.securityQuestions.every(
-      (sq, index) =>
-        sq.answer.toLowerCase() === securityAnswers[index].answer.toLowerCase()
+    const { question, answer } = securityAnswers[0];
+    const match = user.securityQuestions.find(
+      (sq) =>
+        sq.question === question &&
+        sq.answer.toLowerCase() === answer.toLowerCase()
     );
 
-    if (!isValid) {
-      console.error("❌ Security Validation Error: Incorrect Answers");
-      return res.status(400).json({ message: "Security answers incorrect." });
+    if (!match) {
+      return res.status(400).json({ message: "Security answer is incorrect." });
     }
 
-    res.json({ message: "Security questions verified successfully." });
+    return res.json({ message: "Security questions verified successfully." });
   } catch (error) {
     console.error("❌ Error Validating Security Questions:", error);
-    res.status(500).json({ message: "Server error." });
+    return res.status(500).json({ message: "Server error." });
+  }
+});
+
+
+// ✅ Fetch user's security questions by email
+router.post("/user/security-questions", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user || !user.securityQuestions || user.securityQuestions.length === 0) {
+      return res.status(404).json({ success: false, message: "No security questions found." });
+    }
+
+    const questions = user.securityQuestions.map((q) => ({
+      question: q.question,
+    }));
+
+    res.json({ success: true, questions });
+  } catch (err) {
+    console.error("❌ Error fetching security questions:", err);
+    res.status(500).json({ success: false, message: "Server error." });
   }
 });
 
@@ -283,6 +303,30 @@ router.post("/reset-password-sms", async (req, res) => {
   }
 });
 
+// ✅ Reset Password via Email (Security Question Flow)
+router.post("/reset-password-email", async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ success: false, message: "Missing email or password." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.json({ success: true, message: "Password updated successfully." });
+  } catch (err) {
+    console.error("❌ Reset password (email) error:", err);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+});
 
 // ✅ Function to format Date and Time in required format (YYYY-MM-DD | HH:MM:SS AM/PM)
 function formatDate(date) {
