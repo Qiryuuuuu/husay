@@ -258,8 +258,8 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         setTimeSpentData({
           timeSpent,
           timeLeft,
-          timeSpentColor: timeSpent > 0 ? "#FF3B30" : "#FF3B30", // Always Red for Spent
-          timeLeftColor: timeLeft < 60 ? "#4CD964" : "#FF3B30", // Green if some time is left, Red if full 60 mins
+          timeSpentColor: "#FF3B30", // Always Red for Spent
+          timeLeftColor: timeLeft > 0? "#4CD964" : "#FF3B30", // Green if some time is left, Red if full 60 mins
         });
 
         // ✅ Update attendance data
