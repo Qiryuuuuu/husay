@@ -1,14 +1,21 @@
 //MediumBaseGame.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Text, Animated, Vibration } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Animated,
+  Vibration,
+} from "react-native";
 import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRoute } from '@react-navigation/native';
+import { useRoute } from "@react-navigation/native";
 import AudioPlayer from "../audio/AudioPlayer";
-
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -70,7 +77,8 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [isClickable, setIsClickable] = useState(true);
   const [feedbackText, setFeedbackText] = useState(
-    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!"
+    dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+      "Let's begin!"
   );
   const [npcImage, setNpcImage] = useState(npcConfig.idle);
   const [isGameRunning, setIsGameRunning] = useState(true);
@@ -88,21 +96,22 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
 
   // RFID state
-  const [rfidReceived, setRfidReceived] = useState(false);  // Prevent multiple reads
+  const [rfidReceived, setRfidReceived] = useState(false); // Prevent multiple reads
   const [latestRFID, setLatestRFID] = useState<string | null>(null);
   const [fetchingRFID, setFetchingRFID] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(
+    null
+  );
   const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
-   
+
   // Routes
   const route = useRoute();
   const { studentId } = route.params as { studentId: string };
 
   //Stopwatch
-    const [stopwatchRunning, setStopwatchRunning] = useState(true); // Changes
-  
-    
+  const [stopwatchRunning, setStopwatchRunning] = useState(true); // Changes
+
   useEffect(() => {
     console.log("Student ID received as prop:", studentId);
   }, [studentId]);
@@ -110,46 +119,52 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   const generateRounds = useCallback(() => {
     // Get all category types
     const categoryTypes = Object.keys(categories);
-    
+
     // Select one category to be guaranteed in the game
-    const guaranteedCategoryIndex = Math.floor(Math.random() * categoryTypes.length);
+    const guaranteedCategoryIndex = Math.floor(
+      Math.random() * categoryTypes.length
+    );
     const guaranteedCategory = categoryTypes[guaranteedCategoryIndex];
-    
+
     // Create an array to hold the remaining categories
-    const remainingCategories = categoryTypes.filter(cat => cat !== guaranteedCategory);
-    
+    const remainingCategories = categoryTypes.filter(
+      (cat) => cat !== guaranteedCategory
+    );
+
     // Create empty rounds array
     let selectedRounds: CategoryItem[] = [];
-    
+
     // Ensure we have one round from the guaranteed category
     const guaranteedCategoryItems = categories[guaranteedCategory];
     const guaranteedItem = {
-      ...guaranteedCategoryItems[Math.floor(Math.random() * guaranteedCategoryItems.length)],
-      type: guaranteedCategory
+      ...guaranteedCategoryItems[
+        Math.floor(Math.random() * guaranteedCategoryItems.length)
+      ],
+      type: guaranteedCategory,
     };
-    
+
     selectedRounds.push(guaranteedItem);
-    
+
     // Create a pool of all possible items from remaining categories
     let itemPool: CategoryItem[] = [];
-    
-    remainingCategories.forEach(category => {
+
+    remainingCategories.forEach((category) => {
       // Add items with their category
-      categories[category].forEach(item => {
+      categories[category].forEach((item) => {
         itemPool.push({ ...item, type: category });
       });
     });
-    
+
     // Shuffle the item pool
     itemPool.sort(() => Math.random() - 0.5);
-    
+
     // Select remaining items to complete our rounds
     const additionalItems = itemPool.slice(0, numRounds - 1);
     selectedRounds = [...selectedRounds, ...additionalItems];
-    
+
     // Final shuffle of the rounds to randomize order
     selectedRounds.sort(() => Math.random() - 0.5);
-    
+
     setRounds(selectedRounds);
     resetGameState();
   }, [categories, numRounds]);
@@ -158,7 +173,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     setCurrentRound(0);
     setIsCorrect(null);
     setIsClickable(true);
-    setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's begin!");
+    setFeedbackText(
+      dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+        "Let's begin!"
+    );
     setNpcImage(npcConfig.idle);
     setIsGameRunning(true);
     setCorrectFirstTry(0);
@@ -182,7 +200,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
       generateOptions(currentType, rounds[currentRound].name);
       setIsCorrect(null);
       setIsClickable(true);
-      setFeedbackText(dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] || "Let's continue!");
+      setFeedbackText(
+        dialogues?.idle?.[Math.floor(Math.random() * dialogues.idle.length)] ||
+          "Let's continue!"
+      );
       setNpcImage(npcConfig.idle);
       setHasTried(false);
       // --- Reset RFID state for new round ---
@@ -194,59 +215,77 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
 
   const generateOptions = (type: string, correctAnswer: string) => {
     if (!type || !categories[type]) {
-      console.error(`Error: Invalid category type '${type}'`);
+      console.log(`Error: Invalid category type '${type}'`);
       return;
     }
 
     const categoryArray = categories[type];
-    
+
     // Filter out the correct answer
-    const otherOptions = categoryArray.filter(item => item.name !== correctAnswer);
-    
+    const otherOptions = categoryArray.filter(
+      (item) => item.name !== correctAnswer
+    );
+
     // Shuffle and select wrong options (up to 6)
     const shuffledOptions = otherOptions.sort(() => Math.random() - 0.5);
-    const wrongOptions = shuffledOptions.slice(0, Math.min(6, shuffledOptions.length));
-    
+    const wrongOptions = shuffledOptions.slice(
+      0,
+      Math.min(6, shuffledOptions.length)
+    );
+
     // Add the correct answer and shuffle again
     const allOptions = [
-      ...wrongOptions, 
-      categoryArray.find(item => item.name === correctAnswer) || { name: correctAnswer, image: null }
+      ...wrongOptions,
+      categoryArray.find((item) => item.name === correctAnswer) || {
+        name: correctAnswer,
+        image: null,
+      },
     ];
-    
+
     setOptions(allOptions.sort(() => Math.random() - 0.5));
   };
 
   const getCategoryTitle = (type: string) => {
     switch (type) {
-      case "shape": return "Identify the Shape";
-      case "color": return "Identify the Color";
-      case "number": return "Identify the Number";
-      default: return `Identify the ${type}`;
+      case "shape":
+        return "Identify the Shape";
+      case "color":
+        return "Identify the Color";
+      case "number":
+        return "Identify the Number";
+      default:
+        return `Identify the ${type}`;
     }
   };
 
-  const handleSelection = useCallback((selectedName: string) => {
-    if (!isClickable) return;
+  const handleSelection = useCallback(
+    (selectedName: string) => {
+      if (!isClickable) return;
 
-    if (selectedName === rounds[currentRound].name) {
-      handleCorrectAnswer();
-    } else {
-      handleWrongAnswer();
-    }
-  }, [currentRound, rounds, isClickable, correctFirstTry, hasTried]);
+      if (selectedName === rounds[currentRound].name) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    },
+    [currentRound, rounds, isClickable, correctFirstTry, hasTried]
+  );
 
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
-    const randomCorrectDialogue = dialogues?.correct?.[Math.floor(Math.random() * dialogues.correct.length)] || "Correct!";
+    const randomCorrectDialogue =
+      dialogues?.correct?.[
+        Math.floor(Math.random() * dialogues.correct.length)
+      ] || "Correct!";
     setFeedbackText(randomCorrectDialogue);
     animateNpcBounce();
     setNpcImage(npcConfig.correct);
     fadeInAnimation();
     setIsClickable(false);
 
-     // Play correct sound
-     setCurrentSound(correctSound);
-     setPlaySound(true);
+    // Play correct sound
+    setCurrentSound(correctSound);
+    setPlaySound(true);
 
     let updatedScore = correctFirstTry;
     if (!hasTried) {
@@ -261,7 +300,6 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         setIsGameRunning(false);
         setStopwatchRunning(false); // Changes
         setTimeout(() => {
-          
           if (onGameComplete) {
             onGameComplete(updatedScore, elapsedTimeRef.current);
           }
@@ -273,7 +311,9 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
   // --- Modified handleWrongAnswer to automatically move to the next round ---
   const handleWrongAnswer = () => {
     setIsCorrect(false);
-    const randomWrongDialogue = dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] || "Try again!";
+    const randomWrongDialogue =
+      dialogues?.wrong?.[Math.floor(Math.random() * dialogues.wrong.length)] ||
+      "Try again!";
     setFeedbackText(randomWrongDialogue);
     setNpcImage(npcConfig.wrong);
     fadeInAnimation();
@@ -283,10 +323,10 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
     setHasTried(true);
     setIsClickable(false);
 
-     // Play correct sound
-     setCurrentSound(wrongSound);
-     setPlaySound(true);
-    
+    // Play correct sound
+    setCurrentSound(wrongSound);
+    setPlaySound(true);
+
     setTimeout(() => {
       if (currentRound < numRounds - 1) {
         setCurrentRound(currentRound + 1);
@@ -304,18 +344,46 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
 
   const triggerShake = () => {
     Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnim, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
   const animateNpcBounce = () => {
     Animated.sequence([
-      Animated.timing(npcBounceAnim, { toValue: 1.1, duration: 150, useNativeDriver: true }),
-      Animated.timing(npcBounceAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1.1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -342,13 +410,19 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
 
     try {
       console.log("🔄 Fetching latest RFID answer...");
-      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
+      const response = await axios.get(
+        "http://10.0.2.2:5001/latest-rfid-answer"
+      );
       if (response.data.success) {
         const { answer, timestamp } = response.data.data;
         console.log(`✅ Received RFID Answer: ${answer} at ${timestamp}`);
 
         const answerTime = new Date(timestamp);
-        if (answer && answerTime >= roundStartTime && answer !== lastProcessedRFID) {
+        if (
+          answer &&
+          answerTime >= roundStartTime &&
+          answer !== lastProcessedRFID
+        ) {
           processRFIDAnswer(answer);
         } else {
           console.log("⚠️ Stale RFID answer or already processed, ignoring.");
@@ -357,30 +431,37 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         console.warn("⚠️ No RFID data found. Retrying...");
       }
     } catch (error: any) {
-      console.error("❌ Error fetching latest RFID answer:", error.message);
+      console.log("❌ Error fetching latest RFID answer:", error.message);
     } finally {
       setFetchingRFID(false);
     }
-  }, [isGameRunning, rfidReceived, fetchingRFID, roundStartTime, lastProcessedRFID]);
+  }, [
+    isGameRunning,
+    rfidReceived,
+    fetchingRFID,
+    roundStartTime,
+    lastProcessedRFID,
+  ]);
 
   // Process the RFID answer without updating the score on the main server.
   const processRFIDAnswer = useCallback(
     async (rfidData: string) => {
-
       let validStudentId = studentId;
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = await AsyncStorage.getItem("studentId");
         if (!validStudentId || validStudentId.trim() === "") {
-          console.error("Student ID is missing, cannot update score.");
+          console.log("Student ID is missing, cannot update score.");
           return;
         }
       }
-      
+
       if (!isClickable || currentRound >= rounds.length) return;
       const currentQuestion = rounds[currentRound];
       const correctAnswer = currentQuestion.name;
-      console.log(`🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`);
-      
+      console.log(
+        `🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`
+      );
+
       // Prevent further processing for this round
       setIsClickable(false);
       setRfidReceived(true);
@@ -389,7 +470,8 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         pollingIntervalRef.current = null;
       }
       setLastProcessedRFID(rfidData);
-      const isAnswerCorrect = rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+      const isAnswerCorrect =
+        rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
       console.log(`✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
       setIsCorrect(isAnswerCorrect);
 
@@ -398,9 +480,11 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         await axios.post("http://10.0.2.2:5001/rfid-result", {
           result: isAnswerCorrect ? "Correct" : "Incorrect",
         });
-        console.log(`📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+        console.log(
+          `📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`
+        );
       } catch (error: any) {
-        console.error("❌ Error sending RFID result:", error.message);
+        console.log("❌ Error sending RFID result:", error.message);
       }
 
       // Trigger the appropriate answer handler
@@ -422,7 +506,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
   }, [isGameRunning, rfidReceived, fetchLatestRFIDAnswer]);
-  
+
   return (
     <View style={styles.container}>
       {playSound && currentSound && (
@@ -432,31 +516,37 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
           autoPlay={true}
         />
       )}
-      
-      <TouchableOpacity 
-        style={styles.pauseContainer} 
+
+      <TouchableOpacity
+        style={styles.pauseContainer}
         onPress={() => {
           setIsPaused(true);
           setIsGameRunning(false);
-        }}>
+        }}
+      >
         <Image source={pauseBtn} style={styles.pause} />
       </TouchableOpacity>
 
       <View style={styles.contentContainer}>
         <View style={styles.validationContainer}>
           {isCorrect !== null && (
-            <Image source={isCorrect ? correctImg : wrongImg} style={styles.validationImage} />
+            <Image
+              source={isCorrect ? correctImg : wrongImg}
+              style={styles.validationImage}
+            />
           )}
         </View>
-      
-        <Stopwatch 
+
+        <Stopwatch
           isRunning={stopwatchRunning} // Changes
-          onStop={(finalTime) => { 
+          onStop={(finalTime) => {
             elapsedTimeRef.current = finalTime;
-          }} 
+          }}
         />
-        <Text style={styles.roundText}>Round {currentRound + 1} of {numRounds}</Text>
-        
+        <Text style={styles.roundText}>
+          Round {currentRound + 1} of {numRounds}
+        </Text>
+
         {rounds.length > 0 && currentCategoryType && (
           <Text style={styles.categoryTitle}>
             {getCategoryTitle(currentCategoryType)}
@@ -466,9 +556,12 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         {rounds.length > 0 && (
           <>
             <View style={styles.itemContainer}>
-              <Animated.Image 
-                source={rounds[currentRound].image} 
-                style={[styles.itemImage, { transform: [{ translateX: shakeAnim }] }]} 
+              <Animated.Image
+                source={rounds[currentRound].image}
+                style={[
+                  styles.itemImage,
+                  { transform: [{ translateX: shakeAnim }] },
+                ]}
               />
             </View>
           </>
@@ -476,9 +569,9 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
       </View>
 
       <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
-        <Animated.Image 
-          source={npcImage} 
-          style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]} 
+        <Animated.Image
+          source={npcImage}
+          style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]}
         />
 
         <View style={styles.dialogueContainer}>
@@ -487,8 +580,8 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
         </View>
       </Animated.View>
 
-      <SettingsModal 
-        visible={isPaused} 
+      <SettingsModal
+        visible={isPaused}
         onClose={() => {
           setIsPaused(false);
           setIsGameRunning(true);
@@ -502,7 +595,7 @@ export const BaseMediumGame: React.FC<BaseMediumGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate('Home', {studentId});
+          navigation.navigate("Home", { studentId });
           setIsPaused(false);
         }}
       />
@@ -515,7 +608,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     position: "absolute",
     top: 40,
-    left: 50
+    left: 50,
   },
   container: {
     flex: 1,
@@ -529,7 +622,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     paddingBottom: 150,
-    zIndex: 10
+    zIndex: 10,
   },
   validationContainer: {
     height: 50,
@@ -589,7 +682,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   button: {
     backgroundColor: "#5A8EF4",
@@ -599,7 +692,7 @@ const styles = StyleSheet.create({
     width: 120,
     alignItems: "center",
     zIndex: 20,
-    marginBottom: 10
+    marginBottom: 10,
   },
   npcContainer: {
     position: "absolute",
@@ -626,14 +719,14 @@ const styles = StyleSheet.create({
     maxWidth: 600,
     elevation: 3,
     borderWidth: 4,
-    borderColor: "white"
+    borderColor: "white",
   },
   npcName: {
     fontWeight: "bold",
     alignSelf: "flex-start",
     marginBottom: 5,
     paddingLeft: 60,
-    fontSize: 18
+    fontSize: 18,
   },
   npcDialogue: {
     textAlign: "center",
@@ -642,11 +735,11 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   disabledButton: {
-    backgroundColor: "#A0A0A0", 
+    backgroundColor: "#A0A0A0",
   },
   pause: {
     width: 80,
     height: 80,
-    resizeMode: "contain"
-  }
+    resizeMode: "contain",
+  },
 });

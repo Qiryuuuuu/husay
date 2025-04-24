@@ -231,12 +231,12 @@ const ColorGame: React.FC<BaseGameProps> = ({
     console.log("🔍 Challenge Color Game received rounds:", rounds);
     // Fetch studentId from AsyncStorage
     if (!studentId) {
-      console.error("❌ ERROR: Missing studentId before navigation!");
+      console.log("❌ ERROR: Missing studentId before navigation!");
       return;
     }
 
     if (!rounds || !Array.isArray(rounds)) {
-      console.error(
+      console.log(
         "❌ ERROR: Rounds array is missing or invalid before navigation!",
         rounds
       );
@@ -261,7 +261,9 @@ const ColorGame: React.FC<BaseGameProps> = ({
       }}
       storyScenes={storyScenes} // Pass storyScenes correctly
       dialogues={{ idle: [], correct: [], wrong: [] }}
-      onStateChange={onStateChange} studentId={""}    />
+      onStateChange={onStateChange}
+      studentId={""}
+    />
   );
 };
 

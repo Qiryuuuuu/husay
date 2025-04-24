@@ -362,7 +362,7 @@ export const BaseGame: React.FC<GameProps> = ({
         console.warn("⚠️ No RFID data found. Retrying...");
       }
     } catch (error: any) {
-      console.error("❌ Error fetching latest RFID answer:", error.message);
+      console.log("❌ Error fetching latest RFID answer:", error.message);
     } finally {
       setFetchingRFID(false);
     }
@@ -382,7 +382,7 @@ export const BaseGame: React.FC<GameProps> = ({
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = (await AsyncStorage.getItem("studentId")) || "";
         if (!validStudentId || validStudentId.trim() === "") {
-          console.error("Student ID is missing, cannot update score.");
+          console.log("Student ID is missing, cannot update score.");
           return;
         }
       }
@@ -414,7 +414,7 @@ export const BaseGame: React.FC<GameProps> = ({
           `📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`
         );
       } catch (error: any) {
-        console.error("❌ Error sending RFID result:", error.message);
+        console.log("❌ Error sending RFID result:", error.message);
       }
 
       // Trigger the appropriate answer handler

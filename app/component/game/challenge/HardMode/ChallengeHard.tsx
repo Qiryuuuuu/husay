@@ -859,7 +859,9 @@ const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
   studentId,
   updatedRecommendations,
 }) => {
-  const [localStructuredRounds, setLocalStructuredRounds] = useState<RoundData[]>(structuredRounds || []);
+  const [localStructuredRounds, setLocalStructuredRounds] = useState<
+    RoundData[]
+  >(structuredRounds || []);
 
   const handleGameComplete = (
     time: number,
@@ -869,12 +871,12 @@ const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
     console.log("🔍 Challenge Hard Game received rounds:", updatedRounds);
 
     if (!studentId) {
-      console.error("❌ ERROR: Missing studentId before navigation!");
+      console.log("❌ ERROR: Missing studentId before navigation!");
       return;
     }
 
     if (!updatedRounds || !Array.isArray(updatedRounds)) {
-      console.error(
+      console.log(
         "❌ ERROR: Rounds array is missing or invalid before navigation!",
         updatedRounds
       );
@@ -918,6 +920,5 @@ const ChallengeHardGame: React.FC<ChallengeHardGameProps> = ({
     />
   );
 };
-
 
 export default ChallengeHardGame;

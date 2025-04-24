@@ -17,7 +17,7 @@ import { FrameType } from "../game/challenge/HardMode/ChallengeHard";
 import figures from "../../data/hardQuestions";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRoute } from '@react-navigation/native';
+import { useRoute } from "@react-navigation/native";
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -26,8 +26,27 @@ const wrongImg = require("../../../assets/validation/wrong.png");
 const modalBg = require("../../../assets/gameBackground/setting-bg.png");
 
 const shapeOptions = ["Rectangle", "Triangle", "Square", "Circle"];
-const colorOptions = ["Red", "Blue", "Green", "Yellow", "Black", "Gray", "White"];
-const countOptions = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+const colorOptions = [
+  "Red",
+  "Blue",
+  "Green",
+  "Yellow",
+  "Black",
+  "Gray",
+  "White",
+];
+const countOptions = [
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+];
 
 // Import sound files
 const correctSound = require("../../../assets/voiceOver/misc/answerValidation/correct.mp3");
@@ -143,7 +162,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const [isGameRunning, setIsGameRunning] = useState(true);
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
-  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(null);
+  const [selectedFigureType, setSelectedFigureType] = useState<string | null>(
+    null
+  );
   const [questionType, setQuestionType] = useState<"shape" | "color" | "count">(
     "shape"
   );
@@ -160,7 +181,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const [latestRFID, setLatestRFID] = useState<string | null>(null);
   const [fetchingRFID, setFetchingRFID] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(
+    null
+  );
   const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
 
   // Routes
@@ -197,7 +220,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
           }
         }
         if (!found) {
-          console.warn(`Recommended figure "${recName}" not found; using fallback.`);
+          console.warn(
+            `Recommended figure "${recName}" not found; using fallback.`
+          );
           allRounds.push({
             source: null,
             properties: { shape: recName, color: recName, count: recName },
@@ -216,11 +241,12 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
     const figureTypes = Object.keys(figures);
     if (figureTypes.length === 0) return;
 
-    const randomFigureType = figureTypes[Math.floor(Math.random() * figureTypes.length)];
+    const randomFigureType =
+      figureTypes[Math.floor(Math.random() * figureTypes.length)];
     setSelectedFigureType(randomFigureType);
     const selectedFigures = figures[randomFigureType];
     if (!selectedFigures || !selectedFigures[0]?.properties) {
-      console.error("Invalid figure data:", randomFigureType, selectedFigures);
+      console.log("Invalid figure data:", randomFigureType, selectedFigures);
       return;
     }
 
@@ -249,34 +275,43 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
 
     setRounds(allRounds);
     resetGameState();
-  }, [figures, numShapeRounds, numColorRounds, includeCountRound, numRounds, recommendations]);
+  }, [
+    figures,
+    numShapeRounds,
+    numColorRounds,
+    includeCountRound,
+    numRounds,
+    recommendations,
+  ]);
 
-  const generateRoundsData = useCallback((roundData: Figure[] = rounds): RoundData[] => {
-    return roundData.map((round) => {
-      let type: "shape" | "color" | "number";
-      switch (round.questionType) {
-        case "shape":
-          type = "shape";
-          break;
-        case "color":
-          type = "color";
-          break;
-        case "count":
-          type = "number";
-          break;
-        default:
-          type = "shape";
-      }
-  
-      return {
-        correct: false,
-        image: round.source,
-        name: round.correctAnswer || "Unknown",
-        type,
-      };
-    });
-  }, [rounds]);
-  
+  const generateRoundsData = useCallback(
+    (roundData: Figure[] = rounds): RoundData[] => {
+      return roundData.map((round) => {
+        let type: "shape" | "color" | "number";
+        switch (round.questionType) {
+          case "shape":
+            type = "shape";
+            break;
+          case "color":
+            type = "color";
+            break;
+          case "count":
+            type = "number";
+            break;
+          default:
+            type = "shape";
+        }
+
+        return {
+          correct: false,
+          image: round.source,
+          name: round.correctAnswer || "Unknown",
+          type,
+        };
+      });
+    },
+    [rounds]
+  );
 
   const fetchLatestRFIDAnswer = useCallback(async () => {
     if (!isGameRunning || gameEnded || rfidReceived) return;
@@ -285,11 +320,15 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
 
     try {
       console.log("🔄 Fetching latest RFID answer...");
-      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
+      const response = await axios.get(
+        "http://10.0.2.2:5001/latest-rfid-answer"
+      );
 
       if (response.data.success) {
         const { category, answer, timestamp } = response.data.data;
-        console.log(`✅ Received RFID Answer: ${answer} (Category: ${category}) at ${timestamp}`);
+        console.log(
+          `✅ Received RFID Answer: ${answer} (Category: ${category}) at ${timestamp}`
+        );
 
         const answerTime = new Date(timestamp);
         if (answerTime >= roundStartTime && answer !== lastProcessedRFID) {
@@ -301,11 +340,18 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         console.warn("⚠️ No RFID data found. Retrying...");
       }
     } catch (error: any) {
-      console.error("❌ Error fetching latest RFID answer:", error.message);
+      console.log("❌ Error fetching latest RFID answer:", error.message);
     } finally {
       setFetchingRFID(false);
     }
-  }, [fetchingRFID, isGameRunning, gameEnded, rfidReceived, roundStartTime, lastProcessedRFID]);
+  }, [
+    fetchingRFID,
+    isGameRunning,
+    gameEnded,
+    rfidReceived,
+    roundStartTime,
+    lastProcessedRFID,
+  ]);
 
   const resetGameState = () => {
     setCurrentRound(0);
@@ -331,7 +377,10 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   }, [rounds]);
 
   useEffect(() => {
-    console.log("📦 BaseHardGame structuredRounds passed up:", structuredRounds);
+    console.log(
+      "📦 BaseHardGame structuredRounds passed up:",
+      structuredRounds
+    );
   }, [structuredRounds]);
 
   useEffect(() => {
@@ -352,7 +401,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       // ─── PHASE 2: SET UP THE ROUND (Question Type, Options, NPC, etc.) ──────────────────────────────
       const currentQuestion = rounds[currentRound];
       if (!currentQuestion) {
-        console.error("Invalid round data:", currentRound, rounds);
+        console.log("Invalid round data:", currentRound, rounds);
         return;
       }
 
@@ -397,7 +446,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       if (!isClickable || currentRound >= rounds.length) return;
 
       const normalizedSelection = selectedAnswer.toLowerCase();
-      const normalizedCorrectAnswer = (rounds[currentRound].correctAnswer || "").toLowerCase();
+      const normalizedCorrectAnswer = (
+        rounds[currentRound].correctAnswer || ""
+      ).toLowerCase();
 
       if (normalizedSelection === normalizedCorrectAnswer) {
         handleCorrectAnswer();
@@ -411,7 +462,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
     const randomCorrectDialogue =
-      dialogues?.correct?.[Math.floor(Math.random() * dialogues.correct.length)] || "Correct!";
+      dialogues?.correct?.[
+        Math.floor(Math.random() * dialogues.correct.length)
+      ] || "Correct!";
     setFeedbackText(randomCorrectDialogue);
     animateNpcBounce();
     const characterKey = currentFrame?.character?.toUpperCase();
@@ -431,12 +484,16 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       );
 
       setCorrectFirstTry((prevScore) => {
-        console.log(`🎯 Round ${currentRound + 1}: Correct! Score: ${prevScore + 1}`);
+        console.log(
+          `🎯 Round ${currentRound + 1}: Correct! Score: ${prevScore + 1}`
+        );
         return prevScore + 1;
       });
     }
 
-    console.log(`🚀 Correct answer! Preparing to move to round ${currentRound + 1}`);
+    console.log(
+      `🚀 Correct answer! Preparing to move to round ${currentRound + 1}`
+    );
 
     hasTriedRef.current = false;
 
@@ -495,7 +552,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       } else {
         setCurrentRound((prevRound) => prevRound + 1);
       }
-      }, 1500);
+    }, 1500);
   };
 
   const processRFIDAnswer = useCallback(
@@ -504,7 +561,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = await AsyncStorage.getItem("studentId");
         if (!validStudentId || validStudentId.trim() === "") {
-          console.error("Student ID is missing, cannot update score.");
+          console.log("Student ID is missing, cannot update score.");
           return;
         }
       }
@@ -514,7 +571,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       const currentQuestion = rounds[currentRound];
       const correctAnswer = (currentQuestion.correctAnswer || "").toLowerCase();
 
-      console.log(`🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`);
+      console.log(
+        `🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`
+      );
 
       setIsClickable(false);
       setRfidReceived(true);
@@ -533,9 +592,11 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         await axios.post("http://10.0.2.2:5001/rfid-result", {
           result: isAnswerCorrect ? "Correct" : "Incorrect",
         });
-        console.log(`📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+        console.log(
+          `📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`
+        );
       } catch (error: any) {
-        console.error("❌ Error sending RFID result:", error.message);
+        console.log("❌ Error sending RFID result:", error.message);
       }
 
       try {
@@ -556,10 +617,10 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         if (response.status === 200) {
           console.log("✅ Student score updated successfully.");
         } else {
-          console.error(`⚠️ Unexpected response: ${response.status}`);
+          console.log(`⚠️ Unexpected response: ${response.status}`);
         }
       } catch (error: any) {
-        console.error("❌ Error updating student score:", error.message);
+        console.log("❌ Error updating student score:", error.message);
       }
 
       if (isAnswerCorrect) {
@@ -568,7 +629,14 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         handleWrongAnswer();
       }
     },
-    [currentRound, rounds, isClickable, questionType, handleCorrectAnswer, handleWrongAnswer]
+    [
+      currentRound,
+      rounds,
+      isClickable,
+      questionType,
+      handleCorrectAnswer,
+      handleWrongAnswer,
+    ]
   );
 
   useEffect(() => {
@@ -705,7 +773,10 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
       setGameEnded(true);
       setIsGameRunning(false);
       stopTimer();
-      console.log("🚀 BEFORE SUBMISSION structuredRounds:", JSON.stringify(structuredRounds, null, 2));
+      console.log(
+        "🚀 BEFORE SUBMISSION structuredRounds:",
+        JSON.stringify(structuredRounds, null, 2)
+      );
 
       if (onGameComplete) {
         onGameComplete(totalTime, finalScore, structuredRounds);
@@ -907,7 +978,7 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
 
         {currentFrame?.type === FrameType.QUESTION && (
           <View style={styles.stopwatchContainer}>
-            <Stopwatch 
+            <Stopwatch
               isRunning={true}
               onStop={(finalTime) => setTotalTime(finalTime)}
             />
@@ -915,7 +986,9 @@ export const BaseHardGame: React.FC<BaseHardGameProps> = ({
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (
-          <Text style={styles.roundText}>Round {currentRound + 1} of {numRounds}</Text>
+          <Text style={styles.roundText}>
+            Round {currentRound + 1} of {numRounds}
+          </Text>
         )}
 
         {currentFrame?.type === FrameType.QUESTION && (

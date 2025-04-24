@@ -489,12 +489,12 @@ const ChallengeMediumGame: React.FC<ChallengeMediumGameProps> = ({
     console.log("🔍 ChallengeMediumGame received rounds:", rounds);
     // Fetch studentId from AsyncStorage
     if (!studentId) {
-      console.error("❌ ERROR: Missing studentId before navigation!");
+      console.log("❌ ERROR: Missing studentId before navigation!");
       return;
     }
 
     if (!rounds || !Array.isArray(rounds)) {
-      console.error(
+      console.log(
         "❌ ERROR: Rounds array is missing or invalid before navigation!",
         rounds
       );
@@ -515,8 +515,8 @@ const ChallengeMediumGame: React.FC<ChallengeMediumGameProps> = ({
       outro={outro}
       storyScenes={storyScenes}
       currentCategoryType={currentCategoryType} // ✅ Pass category type
-      studentId={""}      
-      recommendations={updatedRecommendations} 
+      studentId={""}
+      recommendations={updatedRecommendations}
     />
   );
 };

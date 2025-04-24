@@ -16,7 +16,7 @@ import AudioChall from "../audio/ChallAudio";
 import { FrameType } from "../game/challenge/EasyMode/ChallengeShape"; // Import FrameType from ChallengeShape
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRoute } from '@react-navigation/native';
+import { useRoute } from "@react-navigation/native";
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
 const pauseHeader = require("../../../assets/headerText/pause-header.png");
@@ -98,7 +98,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const [isWaitingForTap, setIsWaitingForTap] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   const [currentAudioSources, setCurrentAudioSources] = useState([]);
-    
+
   // New audio playback state
   const [currentSound, setCurrentSound] = useState<any>(null);
   const [playSound, setPlaySound] = useState(false);
@@ -122,7 +122,6 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const [correctFirstTry, setCorrectFirstTry] = useState(0);
   const [hasTried, setHasTried] = useState(false);
   const [stopwatchRunning, setStopwatchRunning] = useState(true);
-  
 
   // NEW: Tracks if an RFID answer has been processed for the current round
   const [rfidReceived, setRfidReceived] = useState(false);
@@ -130,12 +129,14 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const [latestRFID, setLatestRFID] = useState<string | null>(null);
   const [fetchingRFID, setFetchingRFID] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(
+    null
+  );
   const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
 
   const route = useRoute();
   const { studentId } = route.params as { studentId: string };
-  
+
   const fadeAnim = useState(new Animated.Value(1))[0];
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const npcBounceAnim = useRef(new Animated.Value(1)).current;
@@ -143,7 +144,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   // Counters (optional)
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
-  
+
   useEffect(() => {
     console.log("Student ID received as prop:", studentId);
   }, [studentId]);
@@ -151,7 +152,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   const generateRounds = useCallback(() => {
     const categoryTypes = Object.keys(categories);
     if (categoryTypes.length === 0) {
-      console.error("❌ ERROR: No categories available!");
+      console.log("❌ ERROR: No categories available!");
       return;
     }
 
@@ -159,7 +160,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     const categoryItems = categories[categoryName] || [];
 
     if (categoryItems.length === 0) {
-      console.error("❌ ERROR: No items found in category:", categoryName);
+      console.log("❌ ERROR: No items found in category:", categoryName);
       return;
     }
 
@@ -167,9 +168,9 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     if (recommendations?.Easy?.[categoryName]?.length > 0) {
       const recommendedNames = recommendations.Easy[categoryName];
       selectedRounds = recommendedNames
-        .map(name => {
+        .map((name) => {
           const foundItem = categoryItems.find(
-            item => item.name.toLowerCase() === name.toLowerCase()
+            (item) => item.name.toLowerCase() === name.toLowerCase()
           );
           return foundItem
             ? { ...foundItem, type: categoryName }
@@ -180,7 +181,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       selectedRounds = categoryItems
         .sort(() => Math.random() - 0.5)
         .slice(0, numRounds)
-        .map(item => ({ ...item, type: categoryName }));
+        .map((item) => ({ ...item, type: categoryName }));
     }
 
     if (selectedRounds.length < numRounds) {
@@ -204,17 +205,19 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     if (!isGameRunning || gameEnded || rfidReceived) return;
     if (fetchingRFID) return;
     setFetchingRFID(true);
-  
+
     try {
       console.log("🔄 Fetching latest RFID answer...");
-      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
-  
+      const response = await axios.get(
+        "http://10.0.2.2:5001/latest-rfid-answer"
+      );
+
       if (response.data.success) {
         const { category, answer, timestamp } = response.data.data;
         console.log(
           `✅ Received RFID Answer: ${answer} (Category: ${category}) at ${timestamp}`
         );
-  
+
         // Always process if an answer is received
         if (answer) {
           const answerTime = new Date(timestamp);
@@ -224,18 +227,16 @@ export const BaseGame: React.FC<BaseGameProps> = ({
             console.log("Stale RFID answer or already processed, ignoring.");
           }
         }
-  
       } else {
         console.warn("⚠️ No RFID data found. Retrying...");
       }
     } catch (error: any) {
-      console.error("❌ Error fetching latest RFID answer:", error.message);
+      console.log("❌ Error fetching latest RFID answer:", error.message);
     } finally {
       setFetchingRFID(false);
     }
   }, [fetchingRFID, isGameRunning, gameEnded, rfidReceived]);
-  
-  
+
   const resetGameState = () => {
     setCurrentRound(0);
     setIsCorrect(null);
@@ -309,7 +310,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
   // Generate the multiple‐choice options for each round
   const generateOptions = (type: string, correctAnswer: string) => {
     if (!type || !categories[type]) {
-      console.error(`Error: Invalid category type '${type}'`);
+      console.log(`Error: Invalid category type '${type}'`);
       return;
     }
 
@@ -371,7 +372,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       }, 500);
     }
   };
-  
+
   // ========== CORRECT / INCORRECT ANSWER HANDLERS ==========
   const handleCorrectAnswer = () => {
     setIsCorrect(true);
@@ -456,18 +457,18 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = await AsyncStorage.getItem("studentId");
         if (!validStudentId || validStudentId.trim() === "") {
-          console.error("Student ID is missing, cannot update score.");
+          console.log("Student ID is missing, cannot update score.");
           return;
         }
       }
       if (!isClickable || currentRound >= rounds.length) return;
-  
+
       const currentQuestion = rounds[currentRound];
       const correctAnswer = currentQuestion.name;
       console.log(
         `🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`
       );
-  
+
       // Prevent further processing for this round
       setIsClickable(false);
       setRfidReceived(true);
@@ -476,15 +477,13 @@ export const BaseGame: React.FC<BaseGameProps> = ({
         pollingIntervalRef.current = null;
       }
       setLastProcessedRFID(rfidData);
-  
+
       // Check if RFID answer is correct
       const isAnswerCorrect =
         rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
-      console.log(
-        `✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`
-      );
+      console.log(`✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
       setIsCorrect(isAnswerCorrect);
-  
+
       // Send result to RFID Microservice (port 5001)
       try {
         await axios.post("http://10.0.2.2:5001/rfid-result", {
@@ -494,9 +493,9 @@ export const BaseGame: React.FC<BaseGameProps> = ({
           `📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`
         );
       } catch (error: any) {
-        console.error("❌ Error sending RFID result:", error.message);
+        console.log("❌ Error sending RFID result:", error.message);
       }
-  
+
       // Update Student Score in Main Server (port 5000)
       try {
         const authToken = await AsyncStorage.getItem("authToken");
@@ -513,22 +512,22 @@ export const BaseGame: React.FC<BaseGameProps> = ({
             },
           }
         );
-  
+
         if (response.status === 200) {
           console.log("✅ Student score updated successfully.");
         } else {
-          console.error(`⚠️ Unexpected response: ${response.status}`);
+          console.log(`⚠️ Unexpected response: ${response.status}`);
         }
       } catch (error: any) {
         if (error.response && error.response.status === 404) {
-          console.error(
+          console.log(
             "❌ API endpoint not found! Check if the server is running."
           );
         } else {
-          console.error("❌ Error updating student score:", error.message);
+          console.log("❌ Error updating student score:", error.message);
         }
       }
-  
+
       // Instead of using setTimeout to advance the round,
       // directly call the appropriate answer handler.
       if (isAnswerCorrect) {
@@ -547,7 +546,6 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       handleWrongAnswer,
     ]
   );
-  
 
   // Start polling for RFID input every 3 seconds when game is running
   useEffect(() => {
@@ -557,35 +555,42 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     return () => {
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
-    
   }, [isGameRunning, currentRound, rfidReceived, fetchLatestRFIDAnswer]);
- 
-  
 
   // End the game
   const endGame = async (finalScore: number) => {
     if (!gameEnded) {
-      console.log("🎉 Ending Game with Score:", finalScore, "Elapsed Time:", totalTime);
+      console.log(
+        "🎉 Ending Game with Score:",
+        finalScore,
+        "Elapsed Time:",
+        totalTime
+      );
       console.log(
         "🔍 Checking rounds before sending to onGameComplete:",
         rounds
       );
-  
+
       if (!rounds || rounds.length === 0) {
-        console.error("❌ ERROR: Rounds array is empty or undefined!");
+        console.log("❌ ERROR: Rounds array is empty or undefined!");
       }
-  
+
       setGameEnded(true);
       setIsGameRunning(false);
       setStopwatchRunning(false); // Stop the Stopwatch
       stopTimer();
-  
+
       if (onGameComplete) {
-        onGameComplete(elapsedTimeRef.current, finalScore, currentCategoryType, [...rounds]);
+        onGameComplete(
+          elapsedTimeRef.current,
+          finalScore,
+          currentCategoryType,
+          [...rounds]
+        );
       }
     }
   };
-  
+
   const triggerShake = () => {
     Animated.sequence([
       Animated.timing(shakeAnim, {
@@ -616,21 +621,21 @@ export const BaseGame: React.FC<BaseGameProps> = ({
     ]).start();
   };
 
-   const animateNpcBounce = () => {
-      Animated.sequence([
-        Animated.timing(npcBounceAnim, {
-          toValue: 1.1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(npcBounceAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    };
-    
+  const animateNpcBounce = () => {
+    Animated.sequence([
+      Animated.timing(npcBounceAnim, {
+        toValue: 1.1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(npcBounceAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const fadeInAnimation = () => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -638,7 +643,6 @@ export const BaseGame: React.FC<BaseGameProps> = ({
       useNativeDriver: true,
     }).start();
   };
-
 
   if (Object.keys(categories).length === 0) {
     return (
@@ -687,12 +691,13 @@ export const BaseGame: React.FC<BaseGameProps> = ({
             if (
               currentFrame?.type === FrameType.CORRECT_ANSWER ||
               currentFrame?.type === FrameType.INCORRECT_ANSWER
-            )  {if (currentRound < numRounds - 1) {
-              moveToNextRound(correctFirstTry);
-            } else {
-              endGame(correctFirstTry); // Call endGame on the last round
-            }
-            return;
+            ) {
+              if (currentRound < numRounds - 1) {
+                moveToNextRound(correctFirstTry);
+              } else {
+                endGame(correctFirstTry); // Call endGame on the last round
+              }
+              return;
             }
           }
 
@@ -718,7 +723,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
         <Animated.View style={[styles.npcContainer, { opacity: fadeAnim }]}>
           <Animated.Image
             source={currentFrame?.character === "EVA" ? npcImage : null}
-            style={[styles.npcImage,  { transform: [{ scale: npcBounceAnim }] }]}
+            style={[styles.npcImage, { transform: [{ scale: npcBounceAnim }] }]}
           />
           <View style={styles.dialogueContainer}>
             <Text style={styles.npcName}>
@@ -745,10 +750,14 @@ export const BaseGame: React.FC<BaseGameProps> = ({
         {/* Stopwatch - Positioned above itemContainer */}
         {currentFrame?.type === FrameType.QUESTION && (
           <View style={styles.stopwatchContainer}>
-            <Stopwatch 
+            <Stopwatch
               isRunning={stopwatchRunning}
               onStop={(finalElapsedSeconds: number) => {
-                console.log("⏱️ Stopwatch stopped with:", finalElapsedSeconds, "seconds");
+                console.log(
+                  "⏱️ Stopwatch stopped with:",
+                  finalElapsedSeconds,
+                  "seconds"
+                );
                 setTotalTime(finalElapsedSeconds);
                 elapsedTimeRef.current = finalElapsedSeconds;
               }}
@@ -793,7 +802,7 @@ export const BaseGame: React.FC<BaseGameProps> = ({
           setIsGameRunning(true);
         }}
         onButtonTwoPress={() => {
-          navigation.navigate("Home", {studentId});
+          navigation.navigate("Home", { studentId });
           setIsPaused(false);
         }}
       />

@@ -13,7 +13,7 @@ import Stopwatch from "../stopWatch";
 import SettingsModal from "../setting";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRoute } from '@react-navigation/native';
+import { useRoute } from "@react-navigation/native";
 import AudioPlayer from "../audio/AudioPlayer";
 
 const pauseBtn = require("../../../assets/buttons/pause.png");
@@ -98,9 +98,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     "shape"
   );
 
-   // New audio playback state
-    const [currentSound, setCurrentSound] = useState<any>(null);
-    const [playSound, setPlaySound] = useState(false);
+  // New audio playback state
+  const [currentSound, setCurrentSound] = useState<any>(null);
+  const [playSound, setPlaySound] = useState(false);
 
   const elapsedTimeRef = useRef(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
@@ -115,17 +115,18 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
   const [latestRFID, setLatestRFID] = useState<string | null>(null);
   const [fetchingRFID, setFetchingRFID] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(null);
+  const [lastProcessedRFID, setLastProcessedRFID] = useState<string | null>(
+    null
+  );
   const [roundStartTime, setRoundStartTime] = useState<Date>(new Date());
-     
+
   // Routes
   const route = useRoute();
   const { studentId } = route.params as { studentId: string };
 
   //Stopwatch
-    const [stopwatchRunning, setStopwatchRunning] = useState(true); // Changes
-  
-      
+  const [stopwatchRunning, setStopwatchRunning] = useState(true); // Changes
+
   useEffect(() => {
     console.log("Student ID received as prop:", studentId);
   }, [studentId]);
@@ -142,7 +143,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
 
     const selectedFigures = figures[randomFigureType];
     if (!selectedFigures || !selectedFigures[0]?.properties) {
-      console.error("Invalid figure data:", randomFigureType, selectedFigures);
+      console.log("Invalid figure data:", randomFigureType, selectedFigures);
       return;
     }
 
@@ -231,7 +232,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     if (rounds.length > 0 && currentRound < rounds.length) {
       const currentQuestion = rounds[currentRound];
       if (!currentQuestion) {
-        console.error("Invalid round data:", currentRound, rounds);
+        console.log("Invalid round data:", currentRound, rounds);
         return;
       }
 
@@ -292,9 +293,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     fadeInAnimation();
     setIsClickable(false);
 
-     // Play correct sound
-     setCurrentSound(correctSound);
-     setPlaySound(true);
+    // Play correct sound
+    setCurrentSound(correctSound);
+    setPlaySound(true);
 
     let updatedScore = correctFirstTry;
     if (!hasTried) {
@@ -332,9 +333,9 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     setHasTried(true);
     setIsClickable(false);
 
-     // Play correct sound
-     setCurrentSound(wrongSound);
-     setPlaySound(true);
+    // Play correct sound
+    setCurrentSound(wrongSound);
+    setPlaySound(true);
 
     setTimeout(() => {
       if (currentRound < rounds.length - 1) {
@@ -403,11 +404,11 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
       useNativeDriver: true,
     }).start();
   };
-  
+
   // Audio playback status handler
-    const handlePlaybackStatusUpdate = useCallback((status) => {
-      if (status.didJustFinish) setPlaySound(false);
-    }, []);
+  const handlePlaybackStatusUpdate = useCallback((status) => {
+    if (status.didJustFinish) setPlaySound(false);
+  }, []);
 
   const getQuestionText = () => {
     if (!rounds[currentRound]) return "";
@@ -432,12 +433,18 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
     setFetchingRFID(true);
     try {
       console.log("🔄 Fetching latest RFID answer...");
-      const response = await axios.get("http://10.0.2.2:5001/latest-rfid-answer");
+      const response = await axios.get(
+        "http://10.0.2.2:5001/latest-rfid-answer"
+      );
       if (response.data.success) {
         const { answer, timestamp } = response.data.data;
         console.log(`✅ Received RFID Answer: ${answer} at ${timestamp}`);
         const answerTime = new Date(timestamp);
-        if (answer && answerTime >= roundStartTime && answer !== lastProcessedRFID) {
+        if (
+          answer &&
+          answerTime >= roundStartTime &&
+          answer !== lastProcessedRFID
+        ) {
           processRFIDAnswer(answer);
         } else {
           console.log("⚠️ Stale RFID answer or already processed, ignoring.");
@@ -446,11 +453,17 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
         console.warn("⚠️ No RFID data found. Retrying...");
       }
     } catch (error: any) {
-      console.error("❌ Error fetching latest RFID answer:", error.message);
+      console.log("❌ Error fetching latest RFID answer:", error.message);
     } finally {
       setFetchingRFID(false);
     }
-  }, [isGameRunning, rfidReceived, fetchingRFID, roundStartTime, lastProcessedRFID]);
+  }, [
+    isGameRunning,
+    rfidReceived,
+    fetchingRFID,
+    roundStartTime,
+    lastProcessedRFID,
+  ]);
 
   const processRFIDAnswer = useCallback(
     async (rfidData: string) => {
@@ -458,15 +471,17 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
       if (!validStudentId || validStudentId.trim() === "") {
         validStudentId = await AsyncStorage.getItem("studentId");
         if (!validStudentId || validStudentId.trim() === "") {
-          console.error("Student ID is missing, cannot update score.");
+          console.log("Student ID is missing, cannot update score.");
           return;
         }
       }
-      
+
       if (!isClickable || currentRound >= rounds.length) return;
       const currentQuestion = rounds[currentRound];
       const correctAnswer = currentQuestion.correctAnswer || "";
-      console.log(`🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`);
+      console.log(
+        `🔍 Processing RFID Answer: ${rfidData} (Expected: ${correctAnswer})`
+      );
       setIsClickable(false);
       setRfidReceived(true);
       if (pollingIntervalRef.current) {
@@ -474,16 +489,19 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
         pollingIntervalRef.current = null;
       }
       setLastProcessedRFID(rfidData);
-      const isAnswerCorrect = rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+      const isAnswerCorrect =
+        rfidData.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
       console.log(`✅ Answer is ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
       setIsCorrect(isAnswerCorrect);
       try {
         await axios.post("http://10.0.2.2:5001/rfid-result", {
           result: isAnswerCorrect ? "Correct" : "Incorrect",
         });
-        console.log(`📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`);
+        console.log(
+          `📡 Sent RFID Result: ${isAnswerCorrect ? "Correct" : "Incorrect"}`
+        );
       } catch (error: any) {
-        console.error("❌ Error sending RFID result:", error.message);
+        console.log("❌ Error sending RFID result:", error.message);
       }
       if (isAnswerCorrect) {
         handleCorrectAnswer();
@@ -520,7 +538,7 @@ export const HardBaseGame: React.FC<HardGameProps> = ({
           autoPlay={true}
         />
       )}
-      
+
       <TouchableOpacity
         style={styles.pauseContainer}
         onPress={() => {
