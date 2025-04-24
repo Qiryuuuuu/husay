@@ -97,7 +97,7 @@ const PracticeHardScreen = ({ route }) => {
       setGamePhase("completed");
       setGameFinished(true); // ✅ Set game finished state
     } catch (error) {
-      console.error("Error updating score:", error);
+      console.log("Error updating score:", error);
     }
   };
 

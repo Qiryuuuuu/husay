@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
 } from "react-native";
 import { Searchbar } from "react-native-paper";
 import axios from "axios";
@@ -18,7 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome, Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useTimer } from "../../contexts/TimerContext";
-import PopupModal from "../../component/PopupModal"
+import PopupModal from "../../component/PopupModal";
 
 const API_URL =
   Platform.OS === "web"
@@ -61,7 +61,7 @@ export default function StudentProfileScreen({ navigation }) {
       if (response.status === 200) {
         const fetched = response.data.students;
         setStudents(fetched);
-      
+
         // Do NOT alert if just empty list
         if (!fetched || fetched.length === 0) {
           console.log("ℹ️ No students found — showing empty state.");
@@ -70,7 +70,7 @@ export default function StudentProfileScreen({ navigation }) {
         Alert.alert("Error", "Failed to fetch students.");
       }
     } catch (error) {
-      console.error("❌ Unexpected fetch error:", error.message);
+      console.log("❌ Unexpected fetch error:", error.message);
       Alert.alert("Error", "Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
@@ -94,17 +94,17 @@ export default function StudentProfileScreen({ navigation }) {
     );
   }
 
- 
   return (
     <View style={styles.container}>
       {/* Header and Search Bar */}
       <View style={styles.headerContainer}>
-
         <View style={styles.headerContent}>
           <Image source={logoImg} style={styles.logo} />
           <View style={styles.headerTagline}>
             <Text style={styles.title}>Husay</Text>
-            <Text style={styles.subtitle}>Hugis, Bilang, at Kulay, Aalalay!</Text>
+            <Text style={styles.subtitle}>
+              Hugis, Bilang, at Kulay, Aalalay!
+            </Text>
           </View>
         </View>
 
@@ -134,9 +134,7 @@ export default function StudentProfileScreen({ navigation }) {
             color="#5A8EF4"
             style={styles.buttonIcon}
           />
-          <Text
-            style={[styles.buttonText, styles.buttonTextDashboard]}
-          >
+          <Text style={[styles.buttonText, styles.buttonTextDashboard]}>
             View Dashboard
           </Text>
         </TouchableOpacity>
@@ -167,41 +165,51 @@ export default function StudentProfileScreen({ navigation }) {
             <View style={styles.cardWrapper}>
               <TouchableOpacity
                 style={styles.studentCard}
-                  onPress={async () => {
-                    console.log("🧠 Attempting to select student:", item._id);
+                onPress={async () => {
+                  console.log("🧠 Attempting to select student:", item._id);
 
-                    const token = await AsyncStorage.getItem("authToken");
-                    const baseUrl = Platform.OS === "web" ? "http://localhost:5000" : "http://10.0.2.2:5000";
+                  const token = await AsyncStorage.getItem("authToken");
+                  const baseUrl =
+                    Platform.OS === "web"
+                      ? "http://localhost:5000"
+                      : "http://10.0.2.2:5000";
 
-                    try {
-                      const response = await fetch(`${baseUrl}/api/students/get/${item._id}`, {
+                  try {
+                    const response = await fetch(
+                      `${baseUrl}/api/students/get/${item._id}`,
+                      {
                         headers: {
                           Authorization: `Bearer ${token}`,
                         },
-                      });
-
-                      const data = await response.json();
-                      const timeLeft = data?.student?.gameTime?.timeLeft ?? 0;
-
-                      console.log("⏳ Time Left for selected student:", timeLeft);
-
-                      if (timeLeft <= 0) {
-                        console.log("🚫 This student has already used up their screen time.");
-                        setShowLimitPopup(true);
-                        return;
                       }
-                      
+                    );
 
-                      startTimer(item._id);
-                      navigation.navigate("Home", {
-                        studentName: item.fullName,
-                        studentId: item._id,
-                      });
-                    } catch (err) {
-                      console.error("❌ Error checking student time:", err);
-                      Alert.alert("Error", "Could not verify student's screen time.");
+                    const data = await response.json();
+                    const timeLeft = data?.student?.gameTime?.timeLeft ?? 0;
+
+                    console.log("⏳ Time Left for selected student:", timeLeft);
+
+                    if (timeLeft <= 0) {
+                      console.log(
+                        "🚫 This student has already used up their screen time."
+                      );
+                      setShowLimitPopup(true);
+                      return;
                     }
-                  }}
+
+                    startTimer(item._id);
+                    navigation.navigate("Home", {
+                      studentName: item.fullName,
+                      studentId: item._id,
+                    });
+                  } catch (err) {
+                    console.log("❌ Error checking student time:", err);
+                    Alert.alert(
+                      "Error",
+                      "Could not verify student's screen time."
+                    );
+                  }
+                }}
               >
                 <Image
                   source={
@@ -221,7 +229,6 @@ export default function StudentProfileScreen({ navigation }) {
         <Text style={styles.noStudentsText}>No students added yet</Text>
       )}
 
-      
       <PopupModal
         visible={showLimitPopup}
         message="This student has already reached the 60-minute screen time limit. Please select another student."
@@ -233,16 +240,16 @@ export default function StudentProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: "#F5F7FA",
     padding: 16,
   },
   headerContainer: {
     marginBottom: 20,
   },
   headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   logo: {
@@ -251,35 +258,35 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerTagline: {
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: "column",
+    justifyContent: "center",
   },
   textHeader: {
-    width: '100%',
+    width: "100%",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
+    color: "#666",
+    fontStyle: "italic",
   },
   searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 12,
   },
   searchBar: {
     flex: 1,
     height: 46,
     borderRadius: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -290,41 +297,41 @@ const styles = StyleSheet.create({
   filterIcon: {
     marginLeft: 12,
     padding: 8,
-    backgroundColor: '#F0F4FF',
+    backgroundColor: "#F0F4FF",
     borderRadius: 10,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#5A8EF4',
-    width: '48%',
-    justifyContent: 'center',
+    backgroundColor: "#5A8EF4",
+    width: "48%",
+    justifyContent: "center",
   },
   dashboard: {
-    backgroundColor: '#F0F4FF',
+    backgroundColor: "#F0F4FF",
   },
   buttonIcon: {
     marginRight: 8,
   },
   buttonText: {
-    color: '#FFF',
-    fontWeight: '600',
+    color: "#FFF",
+    fontWeight: "600",
     fontSize: 14,
   },
   buttonTextDashboard: {
-    color: '#5A8EF4',
+    color: "#5A8EF4",
   },
   shadow: {
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -333,19 +340,19 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   cardWrapper: {
-    width: '23%',
+    width: "23%",
   },
   studentCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -358,14 +365,14 @@ const styles = StyleSheet.create({
   },
   studentName: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
+    fontWeight: "500",
+    color: "#333",
+    textAlign: "center",
   },
   noStudentsText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 16,
-    color: '#888',
+    color: "#888",
     marginTop: 40,
   },
 });

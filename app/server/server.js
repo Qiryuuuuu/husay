@@ -6,22 +6,26 @@ const bodyParser = require("body-parser");
 
 const app = express();
 
-
 // ✅ Middleware
-app.use(cors({
-  origin: '*'
-}));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ✅ MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ Connected to husayDB"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .catch((err) => console.log("❌ MongoDB connection error:", err));
 
 // ✅ Import Routes
-const authRoutes = require("./routes/authRoutes"); 
+const authRoutes = require("./routes/authRoutes");
 const classRoutes = require("./routes/classRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 
@@ -40,4 +44,3 @@ app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 app.use((req, res) => {
   res.status(404).json({ message: "API route not found" });
 });
-

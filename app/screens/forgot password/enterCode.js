@@ -1,18 +1,26 @@
 //enterCode.js
 import React, { useState } from "react";
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { auth } from "../../config/firebaseConfig"; // path to firebaseConfig.js
 import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
 
 const logoImg = require("../../../assets/logo.png");
 const backIcon = require("../../../assets/back-icon.png");
-const element1 = require("../../../assets/element1.png")
-const element2 = require("../../../assets/element2.png")
-const element3 = require("../../../assets/element3.png")
-const element4 = require("../../../assets/element4.png")
-const element5 = require("../../../assets/element5.png")
-const element6 = require("../../../assets/element6.png")
+const element1 = require("../../../assets/element1.png");
+const element2 = require("../../../assets/element2.png");
+const element3 = require("../../../assets/element3.png");
+const element4 = require("../../../assets/element4.png");
+const element5 = require("../../../assets/element5.png");
+const element6 = require("../../../assets/element6.png");
 
 export default function EnterCodeScreen() {
   const route = useRoute();
@@ -27,23 +35,26 @@ export default function EnterCodeScreen() {
       await signInWithCredential(auth, credential);
       navigation.navigate("SetPassword", { phoneNumber });
     } catch (error) {
-      console.error("❌ Code verification failed:", error);
+      console.log("❌ Code verification failed:", error);
       Alert.alert("Error", "Invalid verification code. Please try again.");
     }
   };
 
   return (
     <View style={styles.container}>
-        <Image source={element1} style={styles.element1} />
-        <Image source={element2} style={styles.element2} />
-        <Image source={element3} style={styles.element3} />
-        <Image source={element4} style={styles.element4} />
-        <Image source={element5} style={styles.element5} />
-        <Image source={element6} style={styles.element6} />
+      <Image source={element1} style={styles.element1} />
+      <Image source={element2} style={styles.element2} />
+      <Image source={element3} style={styles.element3} />
+      <Image source={element4} style={styles.element4} />
+      <Image source={element5} style={styles.element5} />
+      <Image source={element6} style={styles.element6} />
 
       {/* Back Button */}
       <View style={styles.backHeader}>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Login")}
+          style={styles.backButton}
+        >
           <Image source={backIcon} style={styles.backIcon} />
           <Text style={styles.backText}>Back to login</Text>
         </TouchableOpacity>
@@ -55,7 +66,9 @@ export default function EnterCodeScreen() {
       {/* Title & Subtitle */}
       <View style={styles.textHeader}>
         <Text style={styles.title}>Enter Verification Code</Text>
-        <Text style={styles.subtitle}>We have sent a code to your phone number</Text>
+        <Text style={styles.subtitle}>
+          We have sent a code to your phone number
+        </Text>
         <TouchableOpacity>
           <Text style={styles.resend}>Click here to resend</Text>
         </TouchableOpacity>
@@ -64,9 +77,9 @@ export default function EnterCodeScreen() {
       {/* Form */}
       <View style={styles.inputContainer}>
         <View style={styles.inputWrapper}>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Enter code" 
+          <TextInput
+            style={styles.input}
+            placeholder="Enter code"
             placeholderTextColor="#BDBDBD"
             keyboardType="number-pad"
             value={code}
@@ -74,53 +87,78 @@ export default function EnterCodeScreen() {
           />
         </View>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={verifyCode}>
+        <TouchableOpacity
+          style={[styles.button, styles.shadow]}
+          onPress={verifyCode}
+        >
           <Text style={styles.buttonText}>Verify</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+        <Text style={styles.footerText}>
+          © 2024 Husay. All Rights Reserved.
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  element1:{position: "absolute", bottom: -180, left: -10, resizeMode: "contain",},
-  element2:{position: "absolute", top: -180, right: -70, resizeMode: "contain",},
-  element3:{position: "absolute", left: -50, resizeMode: "contain",},
-  element4:{position: "absolute", right: -180 , resizeMode: "contain", },
-  element5:{position: "absolute", bottom: -40, right: 40 , resizeMode: "contain", },
-  element6:{position: "absolute", top: -70, left: 400, resizeMode: "contain", },
+  element1: {
+    position: "absolute",
+    bottom: -180,
+    left: -10,
+    resizeMode: "contain",
+  },
+  element2: {
+    position: "absolute",
+    top: -180,
+    right: -70,
+    resizeMode: "contain",
+  },
+  element3: { position: "absolute", left: -50, resizeMode: "contain" },
+  element4: { position: "absolute", right: -180, resizeMode: "contain" },
+  element5: {
+    position: "absolute",
+    bottom: -40,
+    right: 40,
+    resizeMode: "contain",
+  },
+  element6: {
+    position: "absolute",
+    top: -70,
+    left: 400,
+    resizeMode: "contain",
+  },
 
   backHeader: {
     position: "absolute",
-    top: 45,   
-    left: 30,  
-    zIndex: 10, 
+    top: 45,
+    left: 30,
+    zIndex: 10,
   },
   backButton: {
-    flexDirection: "row",  
-    alignItems: "center",  
+    flexDirection: "row",
+    alignItems: "center",
   },
   backIcon: {
-    width: 20, 
+    width: 20,
     height: 20,
-    marginRight: 5,  
+    marginRight: 5,
     resizeMode: "contain",
   },
   backText: {
     color: "#5A8EF4",
     fontSize: 16,
-  },  
+  },
   container: {
-    flex: 1,  
+    flex: 1,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
   logo: {
     width: 80,
@@ -177,7 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#333",
-    textAlign: "center"
+    textAlign: "center",
   },
   button: {
     width: "100%",
@@ -191,12 +229,12 @@ const styles = StyleSheet.create({
     borderColor: "white",
   },
   shadow: {
-    shadowColor: "#000",  
-    shadowOffset: { width: 2, height: 4 }, 
-    shadowOpacity: 0.3,  
-    shadowRadius: 4,  
-    elevation: 6, 
-    backgroundColor: "#4A90E2", 
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    backgroundColor: "#4A90E2",
   },
   buttonText: {
     color: "#fff",

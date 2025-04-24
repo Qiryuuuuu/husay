@@ -1,6 +1,13 @@
 //forgotPass.js
 import React, { useRef, useState } from "react";
-import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { auth } from "../../config/firebaseConfig"; // path to firebaseConfig.js
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 import { PhoneAuthProvider, signInWithPhoneNumber } from "firebase/auth";
@@ -16,7 +23,6 @@ const element5 = require("../../../assets/element5.png");
 const element6 = require("../../../assets/element6.png");
 
 export default function ForgotPasswordScreen({ navigation }) {
-
   // Phone number validation
   const [phoneNumber, setPhoneNumber] = React.useState("");
   const [showPhoneValidation, setShowPhoneValidation] = React.useState(false);
@@ -27,7 +33,10 @@ export default function ForgotPasswordScreen({ navigation }) {
   const handleSendCode = async () => {
     if (!isPhoneValid) {
       setShowPhoneValidation(true);
-      Alert.alert("❌ Invalid number", "It must start with 9 and be 10 digits long.");
+      Alert.alert(
+        "❌ Invalid number",
+        "It must start with 9 and be 10 digits long."
+      );
       return;
     }
 
@@ -45,7 +54,7 @@ export default function ForgotPasswordScreen({ navigation }) {
         verificationId,
       });
     } catch (error) {
-      console.error("❌ OTP send error:", error);
+      console.log("❌ OTP send error:", error);
       Alert.alert("Error", "Failed to send verification code.");
     }
   };
@@ -58,7 +67,6 @@ export default function ForgotPasswordScreen({ navigation }) {
         attemptInvisibleVerification={true}
       />
 
-      
       <Image source={element1} style={styles.element1} />
       <Image source={element2} style={styles.element2} />
       <Image source={element3} style={styles.element3} />
@@ -68,7 +76,10 @@ export default function ForgotPasswordScreen({ navigation }) {
 
       {/* Back Button */}
       <View style={styles.backHeader}>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Login")}
+          style={styles.backButton}
+        >
           <Image source={backIcon} style={styles.backIcon} />
           <Text style={styles.backText}>Back to login</Text>
         </TouchableOpacity>
@@ -89,9 +100,9 @@ export default function ForgotPasswordScreen({ navigation }) {
       <View style={styles.inputContainer}>
         <View style={styles.inputWrapper}>
           <Image source={phoneIcon} style={styles.inputIcon} />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Phone Number (+63)" 
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number (+63)"
             placeholderTextColor="#BDBDBD"
             keyboardType="numeric"
             value={phoneNumber}
@@ -101,17 +112,25 @@ export default function ForgotPasswordScreen({ navigation }) {
               const digitsOnly = text.replace(/\D/g, "");
               if (digitsOnly === "") {
                 setPhoneNumber("");
-              } else if (digitsOnly.length <= 10 && digitsOnly.startsWith("9")) {
+              } else if (
+                digitsOnly.length <= 10 &&
+                digitsOnly.startsWith("9")
+              ) {
                 setPhoneNumber(digitsOnly);
               }
             }}
           />
         </View>
 
-
         {showPhoneValidation && (
-          <Text style={[styles.requirementText, isPhoneValid && styles.validRequirement]}>
-            • Philippine number format only: starts with 9 and has 10 digits (e.g. 9123456789)
+          <Text
+            style={[
+              styles.requirementText,
+              isPhoneValid && styles.validRequirement,
+            ]}
+          >
+            • Philippine number format only: starts with 9 and has 10 digits
+            (e.g. 9123456789)
           </Text>
         )}
 
@@ -121,7 +140,7 @@ export default function ForgotPasswordScreen({ navigation }) {
         >
           <Text style={styles.buttonText}>Send</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity>
           <Text
             style={styles.securityQuestionText}
@@ -130,23 +149,45 @@ export default function ForgotPasswordScreen({ navigation }) {
             Try another way
           </Text>
         </TouchableOpacity>
-      </View >
+      </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+        <Text style={styles.footerText}>
+          © 2024 Husay. All Rights Reserved.
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
-  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element1: {
+    position: "absolute",
+    bottom: -180,
+    left: -10,
+    resizeMode: "contain",
+  },
+  element2: {
+    position: "absolute",
+    top: -180,
+    right: -70,
+    resizeMode: "contain",
+  },
   element3: { position: "absolute", left: -50, resizeMode: "contain" },
   element4: { position: "absolute", right: -180, resizeMode: "contain" },
-  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
-  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
-  
+  element5: {
+    position: "absolute",
+    bottom: -40,
+    right: 40,
+    resizeMode: "contain",
+  },
+  element6: {
+    position: "absolute",
+    top: -70,
+    left: 400,
+    resizeMode: "contain",
+  },
+
   backHeader: {
     position: "absolute",
     top: 45,

@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 
@@ -28,11 +36,14 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
 
     try {
       setLoadingQuestions(true);
-      const response = await fetch("http://10.0.2.2:5000/api/auth/user/security-questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const response = await fetch(
+        "http://10.0.2.2:5000/api/auth/user/security-questions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
       const data = await response.json();
       if (data.success) {
         setFetchedQuestions(data.questions);
@@ -41,7 +52,7 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
         Alert.alert("Error", data.message || "No questions found.");
       }
     } catch (error) {
-      console.error("Fetch error:", error);
+      console.log("Fetch error:", error);
       Alert.alert("Error", "Server error. Please try again.");
     } finally {
       setLoadingQuestions(false);
@@ -55,14 +66,17 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
     }
 
     try {
-      const response = await fetch("http://10.0.2.2:5000/api/auth/validate-security", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          securityAnswers: [{ question: selectedQuestion, answer }],
-        }),
-      });
+      const response = await fetch(
+        "http://10.0.2.2:5000/api/auth/validate-security",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            securityAnswers: [{ question: selectedQuestion, answer }],
+          }),
+        }
+      );
 
       const data = await response.json();
       if (data.message === "Security questions verified successfully.") {
@@ -71,7 +85,7 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
         Alert.alert("Error", data.message || "Incorrect answer.");
       }
     } catch (error) {
-      console.error("Validation error:", error);
+      console.log("Validation error:", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
@@ -86,7 +100,10 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
       <Image source={element6} style={styles.element6} />
 
       <View style={styles.backHeader}>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Login")}
+          style={styles.backButton}
+        >
           <Image source={backIcon} style={styles.backIcon} />
           <Text style={styles.backText}>Back to login</Text>
         </TouchableOpacity>
@@ -96,7 +113,9 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
         <Image source={logoImg} style={styles.logo} />
         <View style={styles.textHeader}>
           <Text style={styles.title}>Forgot password</Text>
-          <Text style={styles.subtitle}>Choose one security question to verify</Text>
+          <Text style={styles.subtitle}>
+            Choose one security question to verify
+          </Text>
         </View>
       </View>
 
@@ -121,7 +140,11 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
           />
         </View>
 
-        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleFetchQuestions} disabled={loadingQuestions}>
+        <TouchableOpacity
+          style={[styles.button, styles.shadow]}
+          onPress={handleFetchQuestions}
+          disabled={loadingQuestions}
+        >
           <Text style={styles.buttonText}>Get Security Questions</Text>
         </TouchableOpacity>
 
@@ -135,7 +158,11 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
                 style={styles.picker}
               >
                 {fetchedQuestions.map((q, index) => (
-                  <Picker.Item key={index} label={q.question} value={q.question} />
+                  <Picker.Item
+                    key={index}
+                    label={q.question}
+                    value={q.question}
+                  />
                 ))}
               </Picker>
             </View>
@@ -152,7 +179,10 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
               />
             </View>
 
-            <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSubmitAnswer}>
+            <TouchableOpacity
+              style={[styles.button, styles.shadow]}
+              onPress={handleSubmitAnswer}
+            >
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
           </>
@@ -160,19 +190,41 @@ export default function ForgotSecurityQuestionScreen({ navigation }) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+        <Text style={styles.footerText}>
+          © 2024 Husay. All Rights Reserved.
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
-  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element1: {
+    position: "absolute",
+    bottom: -180,
+    left: -10,
+    resizeMode: "contain",
+  },
+  element2: {
+    position: "absolute",
+    top: -180,
+    right: -70,
+    resizeMode: "contain",
+  },
   element3: { position: "absolute", left: -50, resizeMode: "contain" },
   element4: { position: "absolute", right: -180, resizeMode: "contain" },
-  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
-  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
+  element5: {
+    position: "absolute",
+    bottom: -40,
+    right: 40,
+    resizeMode: "contain",
+  },
+  element6: {
+    position: "absolute",
+    top: -70,
+    left: 400,
+    resizeMode: "contain",
+  },
 
   container: {
     flex: 1,
@@ -183,24 +235,24 @@ const styles = StyleSheet.create({
   },
   backHeader: {
     position: "absolute",
-    top: 45,   
-    left: 30,  
-    zIndex: 10, 
+    top: 45,
+    left: 30,
+    zIndex: 10,
   },
   backButton: {
-    flexDirection: "row",  
-    alignItems: "center",  
+    flexDirection: "row",
+    alignItems: "center",
   },
   backIcon: {
-    width: 20, 
+    width: 20,
     height: 20,
-    marginRight: 5,  
+    marginRight: 5,
     resizeMode: "contain",
   },
   backText: {
     color: "#5A8EF4",
     fontSize: 16,
-  },  
+  },
   headerContainer: {
     alignItems: "center",
     marginTop: 20,
@@ -246,9 +298,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     color: "#333",
-    backgroundColor: "transparent", 
-    borderWidth: 0, 
-    outline: "none", 
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    outline: "none",
   },
   inputIcon: {
     width: 20,

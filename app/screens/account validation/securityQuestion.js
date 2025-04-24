@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Alert,
+  Platform,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
 const logoImg = require("../../../assets/logo.png");
@@ -12,7 +21,7 @@ const element6 = require("../../../assets/element6.png");
 const answerIcon = require("../../../assets/book-icon.png");
 
 export default function SecurityQuestionScreen({ navigation, route }) {
-  const { email , isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
+  const { email, isRegistration = true } = route.params || {}; // Ensure isRegistration has a default value
 
   const [selectedQuestion1, setSelectedQuestion1] = useState("");
   const [answer1, setAnswer1] = useState("");
@@ -37,10 +46,8 @@ export default function SecurityQuestionScreen({ navigation, route }) {
 
   // Reuse or define this once in your file or config
   const baseUrl =
-    Platform.OS === "web"
-      ? "http://localhost:5000"
-      : "http://10.0.2.2:5000";
-  
+    Platform.OS === "web" ? "http://localhost:5000" : "http://10.0.2.2:5000";
+
   const handleSaveSecurityQuestions = async () => {
     if (
       !selectedQuestion1 ||
@@ -53,9 +60,9 @@ export default function SecurityQuestionScreen({ navigation, route }) {
       Alert.alert("Error", "Please select and answer all security questions.");
       return;
     }
-  
+
     console.log("🔄 Saving security questions to server:", securityAnswers);
-  
+
     try {
       const response = await fetch(`${baseUrl}/api/auth/save-security`, {
         method: "POST",
@@ -65,23 +72,25 @@ export default function SecurityQuestionScreen({ navigation, route }) {
           securityQuestions: securityAnswers,
         }),
       });
-  
+
       const data = await response.json();
       console.log("🔄 Server Response:", data);
-  
+
       if (response.ok) {
         console.log("✅ Security Questions Saved!");
         Alert.alert("Success", "Security questions saved successfully!");
         navigation.navigate("Login"); // Adjust based on next step
       } else {
-        Alert.alert("Error", data.message || "Failed to save security questions.");
+        Alert.alert(
+          "Error",
+          data.message || "Failed to save security questions."
+        );
       }
     } catch (error) {
-      console.error("❌ Error saving security questions:", error);
+      console.log("❌ Error saving security questions:", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -98,15 +107,33 @@ export default function SecurityQuestionScreen({ navigation, route }) {
         <Image source={logoImg} style={styles.logo} />
         <View style={styles.textHeader}>
           <Text style={styles.title}>Security Questions</Text>
-          <Text style={styles.subtitle}>Provide answers to secure your account</Text>
+          <Text style={styles.subtitle}>
+            Provide answers to secure your account
+          </Text>
         </View>
       </View>
 
       {/* Security Questions Form */}
       <View style={styles.inputContainer}>
-        {[{ question: selectedQuestion1, setQuestion: setSelectedQuestion1, answer: answer1, setAnswer: setAnswer1 },
-          { question: selectedQuestion2, setQuestion: setSelectedQuestion2, answer: answer2, setAnswer: setAnswer2 },
-          { question: selectedQuestion3, setQuestion: setSelectedQuestion3, answer: answer3, setAnswer: setAnswer3 }
+        {[
+          {
+            question: selectedQuestion1,
+            setQuestion: setSelectedQuestion1,
+            answer: answer1,
+            setAnswer: setAnswer1,
+          },
+          {
+            question: selectedQuestion2,
+            setQuestion: setSelectedQuestion2,
+            answer: answer2,
+            setAnswer: setAnswer2,
+          },
+          {
+            question: selectedQuestion3,
+            setQuestion: setSelectedQuestion3,
+            answer: answer3,
+            setAnswer: setAnswer3,
+          },
         ].map((item, index) => (
           <View key={index}>
             <View style={styles.inputWrapper}>
@@ -136,26 +163,50 @@ export default function SecurityQuestionScreen({ navigation, route }) {
       </View>
 
       {/* Save Button */}
-      <TouchableOpacity style={[styles.button, styles.shadow]} onPress={handleSaveSecurityQuestions}>
+      <TouchableOpacity
+        style={[styles.button, styles.shadow]}
+        onPress={handleSaveSecurityQuestions}
+      >
         <Text style={styles.buttonText}>Save</Text>
       </TouchableOpacity>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+        <Text style={styles.footerText}>
+          © 2024 Husay. All Rights Reserved.
+        </Text>
       </View>
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
-  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element1: {
+    position: "absolute",
+    bottom: -180,
+    left: -10,
+    resizeMode: "contain",
+  },
+  element2: {
+    position: "absolute",
+    top: -180,
+    right: -70,
+    resizeMode: "contain",
+  },
   element3: { position: "absolute", left: -50, resizeMode: "contain" },
   element4: { position: "absolute", right: -180, resizeMode: "contain" },
-  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
-  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
+  element5: {
+    position: "absolute",
+    bottom: -40,
+    right: 40,
+    resizeMode: "contain",
+  },
+  element6: {
+    position: "absolute",
+    top: -70,
+    left: 400,
+    resizeMode: "contain",
+  },
 
   container: {
     flex: 1,

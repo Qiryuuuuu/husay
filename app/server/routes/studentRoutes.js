@@ -39,7 +39,7 @@ router.get("/count", authenticateUser, async (req, res) => {
     const studentCount = await Student.countDocuments({ employeeNo });
     res.json({ count: studentCount });
   } catch (error) {
-    console.error("❌ Error fetching student count:", error);
+    console.log("❌ Error fetching student count:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
@@ -55,7 +55,7 @@ router.get("/all", authenticateUser, async (req, res) => {
 
     res.json({ students });
   } catch (error) {
-    console.error("❌ Error fetching students:", error);
+    console.log("❌ Error fetching students:", error);
     res.status(500).json({ message: "Server error fetching students." });
   }
 });
@@ -95,7 +95,7 @@ router.put(
         .status(200)
         .json({ message: "Attendance updated successfully", student });
     } catch (error) {
-      console.error("❌ Error updating attendance:", error);
+      console.log("❌ Error updating attendance:", error);
       res.status(500).json({ message: "Server error updating attendance" });
     }
   }
@@ -197,7 +197,7 @@ router.put("/update-score", authenticateUser, async (req, res) => {
       student,
     });
   } catch (error) {
-    console.error("❌ Error updating score:", error);
+    console.log("❌ Error updating score:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -221,13 +221,13 @@ function updateRecommendations(recommendations, rounds) {
     const mappedCategory = validCategoryMapping[category];
 
     if (!mappedCategory) {
-      console.error(`❌ Invalid category type: ${category}`);
+      console.log(`❌ Invalid category type: ${category}`);
       return; // Skip invalid categories
     }
 
     // Ensure the mapped category exists in the student data
     if (!student.subjects[mappedCategory]) {
-      console.error(`❌ Category not found in student data: ${mappedCategory}`);
+      console.log(`❌ Category not found in student data: ${mappedCategory}`);
       return;
     }
 
@@ -298,7 +298,7 @@ router.delete("/delete/:studentId", authenticateUser, async (req, res) => {
 
     res.status(200).json({ message: "Student deleted successfully" });
   } catch (error) {
-    console.error("❌ Error deleting student:", error);
+    console.log("❌ Error deleting student:", error);
     res.status(500).json({ message: "Server error deleting student" });
   }
 });
@@ -327,28 +327,31 @@ router.get("/get/:studentId", authenticateUser, async (req, res) => {
 
     res.json({ student });
   } catch (error) {
-    console.error("❌ Error fetching student data:", error);
+    console.log("❌ Error fetching student data:", error);
     res.status(500).json({ message: "Server error fetching student" });
   }
 });
 
 // ✅ Get only the student's profile image
-router.get("/get-student-image/:studentId", authenticateUser, async (req, res) => {
-  try {
-    const { studentId } = req.params;
-    const student = await Student.findById(studentId).select("profileImage");
+router.get(
+  "/get-student-image/:studentId",
+  authenticateUser,
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const student = await Student.findById(studentId).select("profileImage");
 
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      res.json({ profileImage: student.profileImage });
+    } catch (error) {
+      console.log("❌ Error fetching student image:", error);
+      res.status(500).json({ message: "Server error fetching student image" });
     }
-
-    res.json({ profileImage: student.profileImage });
-  } catch (error) {
-    console.error("❌ Error fetching student image:", error);
-    res.status(500).json({ message: "Server error fetching student image" });
   }
-});
-
+);
 
 router.get(
   "/get-student-name/:studentId",
@@ -362,7 +365,7 @@ router.get(
       }
       res.json({ fullName: student.fullName });
     } catch (error) {
-      console.error("❌ Error fetching student name:", error);
+      console.log("❌ Error fetching student name:", error);
       res.status(500).json({ message: "Server error fetching student name" });
     }
   }
@@ -395,10 +398,9 @@ router.put("/update-time/:studentId", authenticateUser, async (req, res) => {
       gameTime: student.gameTime,
     });
   } catch (err) {
-    console.error("❌ Error in /update-time route:", err);
+    console.log("❌ Error in /update-time route:", err);
     res.status(500).json({ message: "Server error updating time" });
   }
 });
-
 
 module.exports = router;

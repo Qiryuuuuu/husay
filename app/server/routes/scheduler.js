@@ -18,8 +18,12 @@ cron.schedule("0 0 * * *", async () => {
       }
     );
 
-    console.log(`✅ Daily reset complete. Updated ${result.modifiedCount || result.nModified} students.`);
+    console.log(
+      `✅ Daily reset complete. Updated ${
+        result.modifiedCount || result.nModified
+      } students.`
+    );
   } catch (err) {
-    console.error("❌ Error resetting game times:", err);
+    console.log("❌ Error resetting game times:", err);
   }
 });

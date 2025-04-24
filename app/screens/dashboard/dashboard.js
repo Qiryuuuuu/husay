@@ -11,7 +11,7 @@ import {
   Modal,
   TextInput,
   Alert,
-  Platform
+  Platform,
 } from "react-native";
 import { PieChart } from "react-native-svg-charts";
 import { Text as SVGText } from "react-native-svg";
@@ -49,8 +49,8 @@ export default function DashboardScreen({ navigation }) {
   const [attendanceData, setAttendanceData] = useState({});
 
   const today = moment(); // gets current date
-const detectedQuarter = Math.floor(today.month() / 3) + 1;
-const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
+  const detectedQuarter = Math.floor(today.month() / 3) + 1;
+  const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
   const [currentYear, setCurrentYear] = useState(today.year());
 
   // ✅ Fetch User Data
@@ -59,23 +59,23 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
       console.log("🔍 Fetching user data...");
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
-        console.error("❌ No token found, user might be logged out.");
+        console.log("❌ No token found, user might be logged out.");
         setLoading(false);
         return;
       }
 
       const baseUrl =
-      Platform.OS === "web"
-        ? "http://localhost:5000"
-        : "http://10.0.2.2:5000";
-    
-    const response = await fetch(`${baseUrl}/api/auth/user`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+
+      const response = await fetch(`${baseUrl}/api/auth/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await response.json();
       console.log("🔹 User Data:", data);
@@ -85,10 +85,10 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         setEmployeeNo(data.employeeNo); // ✅ Store employee number
         fetchClassData(data.employeeNo); // ✅ Fetch students from class
       } else {
-        console.error("❌ Error fetching user:", data.message);
+        console.log("❌ Error fetching user:", data.message);
       }
     } catch (error) {
-      console.error("❌ Network error fetching user:", error);
+      console.log("❌ Network error fetching user:", error);
     } finally {
       setLoading(false);
     }
@@ -98,51 +98,62 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
   const fetchClassData = async (employeeNo) => {
     try {
       if (!employeeNo) {
-        console.error("❌ Employee number not found. Cannot fetch class.");
+        console.log("❌ Employee number not found. Cannot fetch class.");
         return;
       }
 
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
-        console.error("❌ No token found, user might be logged out.");
+        console.log("❌ No token found, user might be logged out.");
         return;
       }
 
       console.log(`🔍 Fetching class data for employeeNo: ${employeeNo}...`);
 
       const baseUrl =
-      Platform.OS === "web"
-        ? "http://localhost:5000"
-        : "http://10.0.2.2:5000";
-    
-    const response = await fetch(
-      `${baseUrl}/api/class/get-students?employeeNo=${employeeNo}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+
+      const response = await fetch(
+        `${baseUrl}/api/class/get-students?employeeNo=${employeeNo}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
       console.log("🔹 Class API Response:", data);
 
-      if (response.ok && Array.isArray(data.students) && data.students.length > 0) {
+      if (
+        response.ok &&
+        Array.isArray(data.students) &&
+        data.students.length > 0
+      ) {
         setStudents(data.students);
         setSelectedStudent(data.students[0]);
-      } else if (response.ok && Array.isArray(data.students) && data.students.length === 0) {
+      } else if (
+        response.ok &&
+        Array.isArray(data.students) &&
+        data.students.length === 0
+      ) {
         console.log("ℹ️ No students found, new user likely.");
         setStudents([]);
         setSelectedStudent(null);
       } else {
-        console.error("❌ Unexpected class fetch error:", data.message || "Unknown error");
+        console.log(
+          "❌ Unexpected class fetch error:",
+          data.message || "Unknown error"
+        );
         setStudents([]);
         setSelectedStudent(null);
       }
     } catch (error) {
-      console.error("❌ Server error fetching students:", error);
+      console.log("❌ Server error fetching students:", error);
     }
   };
 
@@ -155,25 +166,25 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
       console.log("🔐 Token:", token);
 
       if (!token) {
-        console.error("❌ No token found, user might be logged out.");
+        console.log("❌ No token found, user might be logged out.");
         return;
       }
 
       const baseUrl =
-      Platform.OS === "web"
-        ? "http://localhost:5000"
-        : "http://10.0.2.2:5000";
-    
-    const response = await fetch(
-      `${baseUrl}/api/students/all?employeeNo=${employeeNo}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+
+      const response = await fetch(
+        `${baseUrl}/api/students/all?employeeNo=${employeeNo}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await response.json();
       console.log(
         "🔹 Fresh Student API Response:",
@@ -187,17 +198,17 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         // ✅ Fetch and update all related student data
         updateStudentData(data.students[0]);
       } else {
-        console.error("❌ No students found or API returned an error.");
+        console.log("❌ No students found or API returned an error.");
       }
     } catch (error) {
-      console.error("❌ Server error fetching students:", error);
+      console.log("❌ Server error fetching students:", error);
     }
   };
 
   const fetchStudentDetails = async (studentId) => {
     try {
       if (!studentId) {
-        console.error("❌ No student ID provided.");
+        console.log("❌ No student ID provided.");
         return;
       }
 
@@ -205,25 +216,22 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
 
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
-        console.error("❌ No token found. Cannot fetch student details.");
+        console.log("❌ No token found. Cannot fetch student details.");
         return;
       }
 
       const baseUrl =
-      Platform.OS === "web"
-        ? "http://localhost:5000"
-        : "http://10.0.2.2:5000";
-    
-    const response = await fetch(
-      `${baseUrl}/api/students/get/${studentId}`,
-      {
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+
+      const response = await fetch(`${baseUrl}/api/students/get/${studentId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
       const data = await response.json();
       console.log("🔹 Full API Response:", JSON.stringify(data, null, 2));
 
@@ -259,7 +267,7 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
           timeSpent,
           timeLeft,
           timeSpentColor: "#FF3B30", // Always Red for Spent
-          timeLeftColor: timeLeft > 0? "#4CD964" : "#FF3B30", // Green if some time is left, Red if full 60 mins
+          timeLeftColor: timeLeft > 0 ? "#4CD964" : "#FF3B30", // Green if some time is left, Red if full 60 mins
         });
 
         // ✅ Update attendance data
@@ -275,7 +283,7 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         // ✅ Fetch familiarity data
         fetchFamiliarityData(student);
       } else {
-        console.error("❌ Error fetching student details:", data.message);
+        console.log("❌ Error fetching student details:", data.message);
 
         // ✅ Handle case where API fails or student data is unreadable
         setTimeSpentData({
@@ -286,7 +294,7 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         });
       }
     } catch (error) {
-      console.error("❌ Network error fetching student details:", error);
+      console.log("❌ Network error fetching student details:", error);
 
       // ✅ Handle network failure scenario
       setTimeSpentData({
@@ -311,7 +319,7 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
 
       console.log("✅ User successfully logged out.");
     } catch (error) {
-      console.error("❌ Error logging out:", error);
+      console.log("❌ Error logging out:", error);
     }
   };
 
@@ -337,7 +345,7 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
   // ✅ Function to Process Attendance Data
   const getAttendanceData = (students) => {
     if (!students || students.length === 0) {
-      console.error("❌ No students provided for attendance processing.");
+      console.log("❌ No students provided for attendance processing.");
       return {};
     }
 
@@ -616,37 +624,39 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         Platform.OS === "web"
           ? "http://localhost:5000"
           : "http://10.0.2.2:5000";
-  
+
       try {
-        const response = await fetch(`${baseUrl}/api/students/get/${selectedStudent._id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
+        const response = await fetch(
+          `${baseUrl}/api/students/get/${selectedStudent._id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         const data = await response.json();
-  
+
         if (response.ok && data.student) {
           const student = data.student;
-  
+
           // ✅ Now populate edit fields safely
           setEditName(student.fullName || "");
           setEditAge(student.age ? student.age.toString() : "");
           setEditGender(student.gender || "");
-  
+
           setShowEditModal(true); // ✅ Open modal after data is set
         } else {
           Alert.alert("Error", data.message || "Failed to load student data.");
         }
       } catch (error) {
-        console.error("❌ Error fetching student for editing:", error);
+        console.log("❌ Error fetching student for editing:", error);
       }
     }
     setMenuOpenStudentId(null);
   };
-  
 
   // Handle delete button press
   const handleDeletePress = () => {
@@ -660,32 +670,32 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
     try {
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
-        console.error("❌ No token found, user might be logged out.");
+        console.log("❌ No token found, user might be logged out.");
         return;
       }
 
       console.log(`🔄 Updating student: ${selectedStudent._id}`);
 
       const baseUrl =
-      Platform.OS === "web"
-        ? "http://localhost:5000"
-        : "http://10.0.2.2:5000";
-    
-    const response = await fetch(
-      `${baseUrl}/api/students/edit/${selectedStudent._id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          fullName: editName.trim(),
-          age: parseInt(editAge, 10),
-          gender: editGender.trim(),
-        }),
-      }
-    );
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+
+      const response = await fetch(
+        `${baseUrl}/api/students/edit/${selectedStudent._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fullName: editName.trim(),
+            age: parseInt(editAge, 10),
+            gender: editGender.trim(),
+          }),
+        }
+      );
 
       const text = await response.text();
       console.log("🔹 Raw Update Response:", text);
@@ -717,10 +727,10 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
         // ✅ Update attendance when the student plays a game
         // await updateAttendance(selectedStudent._id);
       } else {
-        console.error("❌ Error updating student:", data.message);
+        console.log("❌ Error updating student:", data.message);
       }
     } catch (error) {
-      console.error("❌ Network error updating student:", error);
+      console.log("❌ Network error updating student:", error);
     }
 
     setShowEditModal(false);
@@ -734,14 +744,14 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
   // Handle delete confirmation
   const handleDelete = async () => {
     if (!selectedStudent) {
-      console.error("❌ No student selected.");
+      console.log("❌ No student selected.");
       return;
     }
 
     try {
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
-        console.error("❌ No token found, user might be logged out.");
+        console.log("❌ No token found, user might be logged out.");
         return;
       }
 
@@ -749,19 +759,19 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
 
       // ✅ Send DELETE request to backend
       const baseUrl =
-      Platform.OS === "web"
-        ? "http://localhost:5000"
-        : "http://10.0.2.2:5000";
-    
-    const response = await fetch(
-      `${baseUrl}/api/students/delete/${selectedStudent._id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+        Platform.OS === "web"
+          ? "http://localhost:5000"
+          : "http://10.0.2.2:5000";
+
+      const response = await fetch(
+        `${baseUrl}/api/students/delete/${selectedStudent._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const text = await response.text();
       console.log("🔹 Raw Delete Response:", text); // ✅ Log backend response
@@ -785,13 +795,13 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
             return updatedStudents;
           });
         } else {
-          console.error("❌ Error deleting student:", data.message);
+          console.log("❌ Error deleting student:", data.message);
         }
       } catch (jsonError) {
-        console.error("❌ JSON Parsing Error:", jsonError, "Response:", text);
+        console.log("❌ JSON Parsing Error:", jsonError, "Response:", text);
       }
     } catch (error) {
-      console.error("❌ Network error deleting student:", error);
+      console.log("❌ Network error deleting student:", error);
     }
 
     setShowDeleteModal(false); // ✅ Close delete modal
@@ -1051,47 +1061,51 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
           )}
 
           {/* Menu Button with Dropdown (Only for Selected Student) */}
-          
-            <View style={styles.menuContainer}>
+
+          <View style={styles.menuContainer}>
             <TouchableOpacity
               onPress={() => {
                 if (!selectedStudent) {
-                  Alert.alert("No student selected", "Please add a student first.");
+                  Alert.alert(
+                    "No student selected",
+                    "Please add a student first."
+                  );
                   return;
                 }
                 setMenuOpenStudentId(
-                  menuOpenStudentId === selectedStudent._id ? null : selectedStudent._id
+                  menuOpenStudentId === selectedStudent._id
+                    ? null
+                    : selectedStudent._id
                 );
               }}
             >
-                <Image
+              <Image
                 source={
                   selectedStudent && menuOpenStudentId === selectedStudent._id
                     ? require("../../../assets/dashboard/Close.png")
                     : require("../../../assets/dashboard/menu.png")
                 }
                 style={styles.menuIcon}
-            />
+              />
             </TouchableOpacity>
-              {/* Edit/Delete Menu */}
-              {selectedStudent && menuOpenStudentId === selectedStudent._id && (
-                <View style={styles.dropdownMenu}>
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={handleEditPress}
-                  >
-                    <Text style={styles.dropdownItemText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.dropdownItem, styles.lastDropdownItem]}
-                    onPress={handleDeletePress}
-                  >
-                    <Text style={styles.dropdownItemText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-
+            {/* Edit/Delete Menu */}
+            {selectedStudent && menuOpenStudentId === selectedStudent._id && (
+              <View style={styles.dropdownMenu}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={handleEditPress}
+                >
+                  <Text style={styles.dropdownItemText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dropdownItem, styles.lastDropdownItem]}
+                  onPress={handleDeletePress}
+                >
+                  <Text style={styles.dropdownItemText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Attendance Container */}
@@ -1244,25 +1258,28 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
             <Text style={styles.chartTitle}>Shape Familiarity</Text>
             <View style={styles.shapeChart}>
               <View style={styles.chartBarsContainer}>
-              {Object.entries(familiarityData?.Shapes || {
-                Square: 0, Triangle: 0, Circle: 0, Rectangle: 0
-              }).map(
-                  ([label, percentage], index) => (
-                    <View key={`shape-${index}`} style={styles.chartBarGroup}>
-                      <Text style={styles.percentageLabel}>{percentage}%</Text>
-                      <View
-                        style={[
-                          styles.chartBar,
-                          {
-                            height: Math.max(percentage * 1.2, 5),
-                            backgroundColor: "#FF3B30",
-                          },
-                        ]}
-                      />
-                      <Text style={styles.chartLabel}>{label}</Text>
-                    </View>
-                  )
-                )}
+                {Object.entries(
+                  familiarityData?.Shapes || {
+                    Square: 0,
+                    Triangle: 0,
+                    Circle: 0,
+                    Rectangle: 0,
+                  }
+                ).map(([label, percentage], index) => (
+                  <View key={`shape-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{percentage}%</Text>
+                    <View
+                      style={[
+                        styles.chartBar,
+                        {
+                          height: Math.max(percentage * 1.2, 5),
+                          backgroundColor: "#FF3B30",
+                        },
+                      ]}
+                    />
+                    <Text style={styles.chartLabel}>{label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -1272,25 +1289,31 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
             <Text style={styles.chartTitle}>Color Familiarity</Text>
             <View style={styles.colorChart}>
               <View style={styles.chartBarsContainer}>
-              {Object.entries(familiarityData?.Colors || {
-                Red: 0, Yellow: 0, Blue: 0, Green: 0, Black: 0, Gray: 0, White: 0
-              }).map(
-                  ([label, percentage], index) => (
-                    <View key={`color-${index}`} style={styles.chartBarGroup}>
-                      <Text style={styles.percentageLabel}>{percentage}%</Text>
-                      <View
-                        style={[
-                          styles.chartBar,
-                          {
-                            height: Math.max(percentage * 1.2, 5),
-                            backgroundColor: "#5A8EF4",
-                          },
-                        ]}
-                      />
-                      <Text style={styles.chartLabel}>{label}</Text>
-                    </View>
-                  )
-                )}
+                {Object.entries(
+                  familiarityData?.Colors || {
+                    Red: 0,
+                    Yellow: 0,
+                    Blue: 0,
+                    Green: 0,
+                    Black: 0,
+                    Gray: 0,
+                    White: 0,
+                  }
+                ).map(([label, percentage], index) => (
+                  <View key={`color-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{percentage}%</Text>
+                    <View
+                      style={[
+                        styles.chartBar,
+                        {
+                          height: Math.max(percentage * 1.2, 5),
+                          backgroundColor: "#5A8EF4",
+                        },
+                      ]}
+                    />
+                    <Text style={styles.chartLabel}>{label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -1300,26 +1323,34 @@ const [currentQuarter, setCurrentQuarter] = useState(detectedQuarter);
             <Text style={styles.chartTitle}>Number Familiarity</Text>
             <View style={styles.numberChart}>
               <View style={styles.chartBarsContainer}>
-              {Object.entries(familiarityData?.Numbers || {
-                "One (1)": 0, "Two (2)": 0, "Three (3)": 0, "Four (4)": 0, "Five (5)": 0,
-                "Six (6)": 0, "Seven (7)": 0, "Eight (8)": 0, "Nine (9)": 0, "Ten (10)": 0
-              }).map(
-                  ([label, percentage], index) => (
-                    <View key={`number-${index}`} style={styles.chartBarGroup}>
-                      <Text style={styles.percentageLabel}>{percentage}%</Text>
-                      <View
-                        style={[
-                          styles.chartBar,
-                          {
-                            height: Math.max(percentage * 1.2, 5),
-                            backgroundColor: "#4CAF50",
-                          },
-                        ]}
-                      />
-                      <Text style={styles.chartLabel}>{label}</Text>
-                    </View>
-                  )
-                )}
+                {Object.entries(
+                  familiarityData?.Numbers || {
+                    "One (1)": 0,
+                    "Two (2)": 0,
+                    "Three (3)": 0,
+                    "Four (4)": 0,
+                    "Five (5)": 0,
+                    "Six (6)": 0,
+                    "Seven (7)": 0,
+                    "Eight (8)": 0,
+                    "Nine (9)": 0,
+                    "Ten (10)": 0,
+                  }
+                ).map(([label, percentage], index) => (
+                  <View key={`number-${index}`} style={styles.chartBarGroup}>
+                    <Text style={styles.percentageLabel}>{percentage}%</Text>
+                    <View
+                      style={[
+                        styles.chartBar,
+                        {
+                          height: Math.max(percentage * 1.2, 5),
+                          backgroundColor: "#4CAF50",
+                        },
+                      ]}
+                    />
+                    <Text style={styles.chartLabel}>{label}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>

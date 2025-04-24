@@ -9,7 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   useWindowDimensions,
-  Platform
+  Platform,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,23 +27,20 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const baseUrl =
-  Platform.OS === "web"
-    ? "http://localhost:5000"
-    : "http://10.0.2.2:5000";
+    Platform.OS === "web" ? "http://localhost:5000" : "http://10.0.2.2:5000";
 
-const handleSignIn = async () => {
-  if (!email || !password) {
-    Alert.alert("Error", "Please enter both Email Address and password.");
-    return;
-  }
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both Email Address and password.");
+      return;
+    }
 
-  setLoading(true);
-  try {
-    const response = await axios.post(`${baseUrl}/api/auth/signin`, {
-      email,
-      password,
-    });
-  
+    setLoading(true);
+    try {
+      const response = await axios.post(`${baseUrl}/api/auth/signin`, {
+        email,
+        password,
+      });
 
       console.log("🧐 Raw Response:", response.data);
 
@@ -52,7 +49,7 @@ const handleSignIn = async () => {
       const employeeNo = response.data.employeeNo;
 
       if (!token) {
-        console.error("❌ No token received. Login failed.");
+        console.log("❌ No token received. Login failed.");
         Alert.alert("Error", "Invalid credentials or missing token.");
         return;
       }
@@ -68,7 +65,7 @@ const handleSignIn = async () => {
       Alert.alert("Success", "Login successful!");
       navigation.navigate("StudentProfile");
     } catch (error) {
-      console.error("❌ Login Error:", error);
+      console.log("❌ Login Error:", error);
       Alert.alert(
         "Error",
         error.response?.data?.message || "Something went wrong"

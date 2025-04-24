@@ -14,7 +14,7 @@ const authenticateUser = async (req, res, next) => {
     let token = req.headers.authorization;
 
     if (!token || !token.startsWith("Bearer ")) {
-      console.error("❌ Unauthorized Access Attempt: Token Missing or Invalid");
+      console.log("❌ Unauthorized Access Attempt: Token Missing or Invalid");
       return res
         .status(401)
         .json({ message: "Unauthorized: Token is missing or invalid." });
@@ -27,14 +27,14 @@ const authenticateUser = async (req, res, next) => {
       const user = await User.findById(decoded.id).select("-password");
 
       if (!user) {
-        console.error("❌ Token Verification Failed: User Not Found");
+        console.log("❌ Token Verification Failed: User Not Found");
         return res.status(404).json({ message: "User not found." });
       }
 
       req.user = { id: user._id, employeeNo: user.employeeNo };
       next();
     } catch (verifyError) {
-      console.error("❌ JWT Verification Error:", verifyError);
+      console.log("❌ JWT Verification Error:", verifyError);
       if (verifyError.name === "TokenExpiredError") {
         return res
           .status(401)
@@ -43,7 +43,7 @@ const authenticateUser = async (req, res, next) => {
       return res.status(403).json({ message: "Invalid token." });
     }
   } catch (error) {
-    console.error("❌ General Token Verification Failed:", error);
+    console.log("❌ General Token Verification Failed:", error);
     return res.status(403).json({ message: "Invalid token." });
   }
 };
@@ -53,7 +53,7 @@ router.get("/user", authenticateUser, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
-      console.error("❌ User Fetch Failed: User Not Found");
+      console.log("❌ User Fetch Failed: User Not Found");
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -65,7 +65,7 @@ router.get("/user", authenticateUser, async (req, res) => {
       profilePic: user.profilePic || null,
     });
   } catch (error) {
-    console.error("❌ Error Fetching User:", error);
+    console.log("❌ Error Fetching User:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
@@ -85,7 +85,7 @@ router.post("/signup", async (req, res) => {
 
     // ✅ Check if email ends with @plm.edu.ph
     if (!email.toLowerCase().endsWith("@plm.edu.ph")) {
-      console.error("❌ Signup Error: Invalid Email Domain");
+      console.log("❌ Signup Error: Invalid Email Domain");
       return res.status(400).json({
         message: "Only emails with the @plm.edu.ph domain are allowed.",
       });
@@ -93,10 +93,8 @@ router.post("/signup", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.error("❌ Signup Error: Email Already in Use");
-      return res
-        .status(400)
-        .json({ message: "Email Address already in use." });
+      console.log("❌ Signup Error: Email Already in Use");
+      return res.status(400).json({ message: "Email Address already in use." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -112,11 +110,10 @@ router.post("/signup", async (req, res) => {
     await newUser.save();
     res.status(201).json({ message: "User registered successfully." });
   } catch (error) {
-    console.error("❌ Signup Error:", error);
+    console.log("❌ Signup Error:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
-
 
 // ✅ User Login (Sign In)
 router.post("/signin", async (req, res) => {
@@ -125,13 +122,13 @@ router.post("/signin", async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.error("❌ Login Error: Invalid Credentials");
+      console.log("❌ Login Error: Invalid Credentials");
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.error("❌ Login Error: Incorrect Password");
+      console.log("❌ Login Error: Incorrect Password");
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
@@ -143,7 +140,7 @@ router.post("/signin", async (req, res) => {
 
     res.json({ token, userID: user._id, employeeNo: user.employeeNo });
   } catch (error) {
-    console.error("❌ Login Error:", error);
+    console.log("❌ Login Error:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
@@ -155,7 +152,7 @@ router.post("/save-security", async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.error("❌ Security Question Error: User Not Found");
+      console.log("❌ Security Question Error: User Not Found");
       return res.status(400).json({ message: "User not found." });
     }
 
@@ -170,7 +167,7 @@ router.post("/save-security", async (req, res) => {
 
     res.json({ message: "Security questions saved successfully!" });
   } catch (error) {
-    console.error("❌ Error Saving Security Questions:", error);
+    console.log("❌ Error Saving Security Questions:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
@@ -186,7 +183,9 @@ router.post("/validate-security", async (req, res) => {
     }
 
     if (!securityAnswers || securityAnswers.length === 0) {
-      return res.status(400).json({ message: "Security answers are required." });
+      return res
+        .status(400)
+        .json({ message: "Security answers are required." });
     }
 
     const { question, answer } = securityAnswers[0];
@@ -202,11 +201,10 @@ router.post("/validate-security", async (req, res) => {
 
     return res.json({ message: "Security questions verified successfully." });
   } catch (error) {
-    console.error("❌ Error Validating Security Questions:", error);
+    console.log("❌ Error Validating Security Questions:", error);
     return res.status(500).json({ message: "Server error." });
   }
 });
-
 
 // ✅ Fetch user's security questions by email
 router.post("/user/security-questions", async (req, res) => {
@@ -214,8 +212,14 @@ router.post("/user/security-questions", async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
-    if (!user || !user.securityQuestions || user.securityQuestions.length === 0) {
-      return res.status(404).json({ success: false, message: "No security questions found." });
+    if (
+      !user ||
+      !user.securityQuestions ||
+      user.securityQuestions.length === 0
+    ) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No security questions found." });
     }
 
     const questions = user.securityQuestions.map((q) => ({
@@ -224,7 +228,7 @@ router.post("/user/security-questions", async (req, res) => {
 
     res.json({ success: true, questions });
   } catch (err) {
-    console.error("❌ Error fetching security questions:", err);
+    console.log("❌ Error fetching security questions:", err);
     res.status(500).json({ success: false, message: "Server error." });
   }
 });
@@ -241,7 +245,7 @@ router.get("/count", authenticateUser, async (req, res) => {
 
     res.json({ count: userClass.students.length });
   } catch (error) {
-    console.error("❌ Error Fetching Student Count:", error);
+    console.log("❌ Error Fetching Student Count:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
@@ -253,7 +257,7 @@ router.put("/update", authenticateUser, async (req, res) => {
 
     const user = await User.findById(req.user.id);
     if (!user) {
-      console.error("❌ User Update Error: User Not Found");
+      console.log("❌ User Update Error: User Not Found");
       return res.status(404).json({ message: "User not found." });
     }
 
@@ -266,7 +270,7 @@ router.put("/update", authenticateUser, async (req, res) => {
 
     res.json({ message: "User updated successfully." });
   } catch (error) {
-    console.error("❌ Error Updating User:", error);
+    console.log("❌ Error Updating User:", error);
     res.status(500).json({ message: "Server error." });
   }
 });
@@ -277,7 +281,9 @@ router.post("/reset-password-sms", async (req, res) => {
     let { phoneNumber, newPassword } = req.body;
 
     if (!phoneNumber || !newPassword) {
-      return res.status(400).json({ success: false, message: "Missing phone or password." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing phone or password." });
     }
 
     // Strip +63 or 0 to match DB format (e.g., 9066041979)
@@ -289,16 +295,21 @@ router.post("/reset-password-sms", async (req, res) => {
 
     const user = await User.findOne({ phoneNumber });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
 
-    return res.json({ success: true, message: "Password updated successfully." });
+    return res.json({
+      success: true,
+      message: "Password updated successfully.",
+    });
   } catch (err) {
-    console.error("❌ Reset password error:", err);
+    console.log("❌ Reset password error:", err);
     return res.status(500).json({ success: false, message: "Server error." });
   }
 });
@@ -309,21 +320,28 @@ router.post("/reset-password-email", async (req, res) => {
     const { email, newPassword } = req.body;
 
     if (!email || !newPassword) {
-      return res.status(400).json({ success: false, message: "Missing email or password." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing email or password." });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
 
-    return res.json({ success: true, message: "Password updated successfully." });
+    return res.json({
+      success: true,
+      message: "Password updated successfully.",
+    });
   } catch (err) {
-    console.error("❌ Reset password (email) error:", err);
+    console.log("❌ Reset password (email) error:", err);
     return res.status(500).json({ success: false, message: "Server error." });
   }
 });

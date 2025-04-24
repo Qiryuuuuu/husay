@@ -94,7 +94,7 @@ const HardModeScreen = ({ route }) => {
   console.log("Challenge Hard received studentID:", studentId);
 
   if (!studentId) {
-    console.error("❌ ERROR: studentId is undefined!");
+    console.log("❌ ERROR: studentId is undefined!");
   }
 
   const handleGameComplete = async (
@@ -109,12 +109,12 @@ const HardModeScreen = ({ route }) => {
     console.log("⏳ Time Taken:", timeTaken);
 
     if (!studentId) {
-      console.error("❌ ERROR: studentId is missing!");
+      console.log("❌ ERROR: studentId is missing!");
       return;
     }
 
     if (!structuredRounds || structuredRounds.length === 0) {
-      console.error(
+      console.log(
         "❌ ERROR: structuredRounds is empty before submission! Check data flow."
       );
       return;
@@ -173,7 +173,7 @@ const HardModeScreen = ({ route }) => {
       const token = await AsyncStorage.getItem("authToken");
 
       if (!token) {
-        console.error("❌ ERROR: No auth token found.");
+        console.log("❌ ERROR: No auth token found.");
         return;
       }
       console.log("🔍 Data being sent in PUT request:", {
@@ -207,7 +207,7 @@ const HardModeScreen = ({ route }) => {
       console.log("📥 Response received, status:", response.status);
 
       if (!response.ok) {
-        console.error(
+        console.log(
           "❌ ERROR: Server returned an error status:",
           response.status
         );
@@ -218,7 +218,7 @@ const HardModeScreen = ({ route }) => {
       try {
         data = await response.json();
       } catch (jsonError) {
-        console.error("❌ ERROR: Failed to parse JSON response:", jsonError);
+        console.log("❌ ERROR: Failed to parse JSON response:", jsonError);
         return;
       }
 
@@ -228,7 +228,7 @@ const HardModeScreen = ({ route }) => {
         setUpdatedRecommendations(data.student?.recommendations || []);
         setGamePhase("completed");
       } else {
-        console.error("⚠️ Unexpected server response:", data.message);
+        console.log("⚠️ Unexpected server response:", data.message);
       }
 
       setFinalTimeTaken(timeTaken);
@@ -236,7 +236,7 @@ const HardModeScreen = ({ route }) => {
       setFinalSetGamePhase(() => setGamePhase);
       setGameFinished(true); // Now safely trigger game completion
     } catch (error) {
-      console.error("❌ ERROR: Handle game complete failed:", error);
+      console.log("❌ ERROR: Handle game complete failed:", error);
     }
   };
 

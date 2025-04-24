@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
   ImageBackground,
   Alert,
-  Platform
+  Platform,
 } from "react-native";
 import SettingsModal from "../../component/setting";
 import { playMusic, stopMusic } from "../../component/audio/MusicManager";
@@ -52,27 +52,27 @@ export default function HomeScreen({ route }) {
       try {
         const token = await AsyncStorage.getItem("authToken");
         if (!token) {
-          console.error("No auth token found");
+          console.log("No auth token found");
           return;
         }
 
         // Separate the URL from the options object
 
         const baseUrl =
-        Platform.OS === 'web'
-          ? 'http://localhost:5000' // Web: use localhost
-          : 'http://10.0.2.2:5000'; // Android emulator
-      
-      const response = await fetch(
-        `${baseUrl}/api/students/get-student-name/${studentId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+          Platform.OS === "web"
+            ? "http://localhost:5000" // Web: use localhost
+            : "http://10.0.2.2:5000"; // Android emulator
+
+        const response = await fetch(
+          `${baseUrl}/api/students/get-student-name/${studentId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -83,7 +83,7 @@ export default function HomeScreen({ route }) {
         setStudentName(data.fullName || "");
         console.log("Student Name: ", data.fullName);
       } catch (error) {
-        console.error("Error fetching student name:", error);
+        console.log("Error fetching student name:", error);
       } finally {
         setIsLoading(false);
       }
@@ -97,29 +97,31 @@ export default function HomeScreen({ route }) {
     }
   }, [studentId]);
 
-
   useEffect(() => {
     async function fetchStudentImage() {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const baseUrl =
-          Platform.OS === 'web'
-            ? 'http://localhost:5000'
-            : 'http://10.0.2.2:5000';
-  
-        const response = await fetch(`${baseUrl}/api/students/get-student-image/${studentId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
+          Platform.OS === "web"
+            ? "http://localhost:5000"
+            : "http://10.0.2.2:5000";
+
+        const response = await fetch(
+          `${baseUrl}/api/students/get-student-image/${studentId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         const data = await response.json();
         setStudentImage(data.profileImage || null);
       } catch (error) {
-        console.error("❌ Error fetching student image:", error);
+        console.log("❌ Error fetching student image:", error);
       }
     }
-  
+
     if (studentId) {
       fetchStudentImage();
     }
@@ -129,17 +131,16 @@ export default function HomeScreen({ route }) {
     try {
       await stopTimer(); // ✅ stop timer first
       await AsyncStorage.clear();
-  
+
       Alert.alert("Logged Out", "You have been logged out.", [
         { text: "OK", onPress: () => navigation.replace("Login") },
       ]);
-  
+
       console.log("✅ User successfully logged out.");
     } catch (error) {
-      console.error("❌ Error logging out:", error);
+      console.log("❌ Error logging out:", error);
     }
   };
-  
 
   const handleSwitchProfile = async () => {
     try {
@@ -147,10 +148,9 @@ export default function HomeScreen({ route }) {
       console.log("Switching Profile...");
       navigation.navigate("StudentProfile");
     } catch (error) {
-      console.error("❌ Error switching profile:", error);
+      console.log("❌ Error switching profile:", error);
     }
   };
-  
 
   return (
     <ImageBackground source={bgImg} style={styles.backgroundImage}>
@@ -160,14 +160,12 @@ export default function HomeScreen({ route }) {
           <Image source={logoImg} style={styles.logo} />
 
           <View style={styles.studentInfo}>
-          <Image
-            source={
-              studentImage
-                ? { uri: studentImage }
-                : studentImg // fallback default
-            }
-            style={styles.studentImg}
-          />
+            <Image
+              source={
+                studentImage ? { uri: studentImage } : studentImg // fallback default
+              }
+              style={styles.studentImg}
+            />
             <Text style={styles.studentName}>
               {studentName || "Student Name"}
             </Text>
@@ -180,7 +178,9 @@ export default function HomeScreen({ route }) {
 
         {/* Main content */}
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate("Class", {studentId})}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Class", { studentId })}
+          >
             <Image source={classCard} style={styles.cards} />
           </TouchableOpacity>
 

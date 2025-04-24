@@ -1,6 +1,14 @@
 //setPassword.js
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { auth } from "../../config/firebaseConfig"; // adjust path if needed
 
@@ -19,11 +27,13 @@ const element6 = require("../../../assets/element6.png");
 export default function SetPasswordScreen({}) {
   const route = useRoute();
   const navigation = useNavigation();
-  const { verificationId, phoneNumberForAuth, phoneNumber, email } = route.params;
+  const { verificationId, phoneNumberForAuth, phoneNumber, email } =
+    route.params;
 
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+  const [showPasswordRequirements, setShowPasswordRequirements] =
+    useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -34,33 +44,38 @@ export default function SetPasswordScreen({}) {
   const hasNumber = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*?/.,]/.test(password);
 
-  const isPasswordValid = isLengthValid && hasLowercase && hasUppercase && hasNumber && hasSpecialChar;
+  const isPasswordValid =
+    isLengthValid &&
+    hasLowercase &&
+    hasUppercase &&
+    hasNumber &&
+    hasSpecialChar;
 
   const handleResetPassword = async () => {
     if (!password || !confirmPassword) {
       Alert.alert("Error", "Please enter and confirm your password.");
       return;
     }
-  
+
     if (!isPasswordValid) {
       Alert.alert("Error", "Password does not meet the required criteria.");
       return;
     }
-  
+
     if (password !== confirmPassword) {
       Alert.alert("Error", "Passwords do not match.");
       return;
     }
-  
+
     let identifier = phoneNumber || email;
     let endpoint = "";
     let payload = {};
-  
+
     if (!identifier) {
       Alert.alert("Error", "Missing phone number or email.");
       return;
     }
-  
+
     if (phoneNumber) {
       // Normalize phone for DB format
       if (identifier.startsWith("+63")) {
@@ -74,16 +89,16 @@ export default function SetPasswordScreen({}) {
       endpoint = "http://10.0.2.2:5000/api/auth/reset-password-email";
       payload = { email: identifier, newPassword: password };
     }
-  
+
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-  
+
       const result = await response.json();
-  
+
       if (result.success) {
         Alert.alert("Success", "Password reset successful. Please log in.");
         navigation.navigate("Login");
@@ -91,11 +106,10 @@ export default function SetPasswordScreen({}) {
         Alert.alert("Error", result.message || "Failed to reset password.");
       }
     } catch (error) {
-      console.error("❌ Reset error:", error);
+      console.log("❌ Reset error:", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -128,27 +142,57 @@ export default function SetPasswordScreen({}) {
             onBlur={() => setShowPasswordRequirements(false)}
             onChangeText={setPassword}
           />
-          <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-            <Image source={passwordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
+          <TouchableOpacity
+            onPress={() => setPasswordVisible(!passwordVisible)}
+          >
+            <Image
+              source={passwordVisible ? eyeOpen : eyeClosed}
+              style={styles.eyeIcon}
+            />
           </TouchableOpacity>
         </View>
 
         {/* Password Requirements Message */}
         {showPasswordRequirements && (
           <View style={styles.passwordRequirements}>
-            <Text style={[styles.requirementText, isLengthValid && styles.validRequirement]}>
+            <Text
+              style={[
+                styles.requirementText,
+                isLengthValid && styles.validRequirement,
+              ]}
+            >
               • At least 8 characters long
             </Text>
-            <Text style={[styles.requirementText, hasLowercase && styles.validRequirement]}>
+            <Text
+              style={[
+                styles.requirementText,
+                hasLowercase && styles.validRequirement,
+              ]}
+            >
               • Contains at least one lowercase letter (a-z)
             </Text>
-            <Text style={[styles.requirementText, hasUppercase && styles.validRequirement]}>
+            <Text
+              style={[
+                styles.requirementText,
+                hasUppercase && styles.validRequirement,
+              ]}
+            >
               • Contains at least one uppercase letter (A-Z)
             </Text>
-            <Text style={[styles.requirementText, hasNumber && styles.validRequirement]}>
+            <Text
+              style={[
+                styles.requirementText,
+                hasNumber && styles.validRequirement,
+              ]}
+            >
               • Includes a number (0-9)
             </Text>
-            <Text style={[styles.requirementText, hasSpecialChar && styles.validRequirement]}>
+            <Text
+              style={[
+                styles.requirementText,
+                hasSpecialChar && styles.validRequirement,
+              ]}
+            >
               • Includes a special character (!@#$%^&*?/.,)
             </Text>
           </View>
@@ -165,8 +209,13 @@ export default function SetPasswordScreen({}) {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
           />
-          <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}>
-            <Image source={confirmPasswordVisible ? eyeOpen : eyeClosed} style={styles.eyeIcon} />
+          <TouchableOpacity
+            onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+          >
+            <Image
+              source={confirmPasswordVisible ? eyeOpen : eyeClosed}
+              style={styles.eyeIcon}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -179,19 +228,41 @@ export default function SetPasswordScreen({}) {
       </TouchableOpacity>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Husay. All Rights Reserved.</Text>
+        <Text style={styles.footerText}>
+          © 2024 Husay. All Rights Reserved.
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  element1: { position: "absolute", bottom: -180, left: -10, resizeMode: "contain" },
-  element2: { position: "absolute", top: -180, right: -70, resizeMode: "contain" },
+  element1: {
+    position: "absolute",
+    bottom: -180,
+    left: -10,
+    resizeMode: "contain",
+  },
+  element2: {
+    position: "absolute",
+    top: -180,
+    right: -70,
+    resizeMode: "contain",
+  },
   element3: { position: "absolute", left: -50, resizeMode: "contain" },
   element4: { position: "absolute", right: -180, resizeMode: "contain" },
-  element5: { position: "absolute", bottom: -40, right: 40, resizeMode: "contain" },
-  element6: { position: "absolute", top: -70, left: 400, resizeMode: "contain" },
+  element5: {
+    position: "absolute",
+    bottom: -40,
+    right: 40,
+    resizeMode: "contain",
+  },
+  element6: {
+    position: "absolute",
+    top: -70,
+    left: 400,
+    resizeMode: "contain",
+  },
 
   container: {
     flex: 1,
@@ -284,12 +355,12 @@ const styles = StyleSheet.create({
     borderColor: "white",
   },
   shadow: {
-    shadowColor: "#000",  
-    shadowOffset: { width: 2, height: 4 }, 
-    shadowOpacity: 0.3,  
-    shadowRadius: 4,  
-    elevation: 6, 
-    backgroundColor: "#4A90E2", 
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    backgroundColor: "#4A90E2",
   },
   buttonText: {
     color: "#fff",

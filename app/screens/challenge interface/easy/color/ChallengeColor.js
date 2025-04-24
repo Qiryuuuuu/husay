@@ -9,7 +9,6 @@ import { useNavigation } from "@react-navigation/native";
 import { playMusic, stopMusic } from "../../../../component/audio/MusicManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 const bg = require("../../../../../assets/gameBackground/challenge/easy/default-easy.webp");
 
 const DialogData = {
@@ -57,7 +56,7 @@ const ChallengeColorScreen = ({ route }) => {
   console.log("Challenge Color easy received studentID:", studentId);
 
   if (!studentId) {
-    console.error("❌ ERROR: studentId is undefined!");
+    console.log("❌ ERROR: studentId is undefined!");
   }
 
   useEffect(() => {
@@ -73,7 +72,7 @@ const ChallengeColorScreen = ({ route }) => {
           currentCategoryType
         );
       } else {
-        console.error("❌ ERROR: setGamePhase is not a function.");
+        console.log("❌ ERROR: setGamePhase is not a function.");
       }
     }
   }, [gameFinished, finalScore, finalTimeTaken, finalSetGamePhase]);
@@ -87,12 +86,12 @@ const ChallengeColorScreen = ({ route }) => {
     console.log("Submitting game results...");
     console.log("Time Taken:", timeTaken);
     if (!studentId) {
-      console.error("❌ ERROR: Cannot submit score, studentId is missing.");
+      console.log("❌ ERROR: Cannot submit score, studentId is missing.");
       return;
     }
 
     if (!gameRounds || gameRounds.length === 0) {
-      console.error("❌ ERROR: Cannot submit score, rounds are missing.");
+      console.log("❌ ERROR: Cannot submit score, rounds are missing.");
       return;
     }
 
@@ -102,7 +101,7 @@ const ChallengeColorScreen = ({ route }) => {
     const token = await AsyncStorage.getItem("authToken");
 
     if (!token) {
-      console.error("No auth token found");
+      console.log("No auth token found");
       return;
     }
 
@@ -158,7 +157,7 @@ const ChallengeColorScreen = ({ route }) => {
       if (response.status === 200) {
         setUpdatedRecommendations(data.student.recommendations);
       } else {
-        console.error("Error updating score:", data.message);
+        console.log("Error updating score:", data.message);
       }
 
       // ✅ Wait until API call is done before marking the game as finished
@@ -167,7 +166,7 @@ const ChallengeColorScreen = ({ route }) => {
       setFinalSetGamePhase(() => setGamePhase);
       setGameFinished(true); // Now safely trigger game completion
     } catch (error) {
-      console.error("Error updating score:", error);
+      console.log("Error updating score:", error);
     }
   };
 
@@ -191,7 +190,7 @@ const ChallengeColorScreen = ({ route }) => {
             );
 
             if (!Array.isArray(updatedRounds)) {
-              console.error(
+              console.log(
                 "❌ ERROR: Received invalid rounds data:",
                 updatedRounds
               );

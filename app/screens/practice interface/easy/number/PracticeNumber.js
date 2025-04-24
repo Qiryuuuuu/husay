@@ -121,7 +121,7 @@ const NumberModeScreen = ({ route }) => {
       console.log("✅ Updating game phase to 'completed'");
       setGamePhase("completed");
     } catch (error) {
-      console.error("Error updating score:", error);
+      console.log("Error updating score:", error);
     }
   };
   return (

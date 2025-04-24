@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
@@ -59,7 +59,7 @@ export default function AddStudentScreen({ navigation }) {
         }
         setEmployeeNo(storedEmployeeNo);
       } catch (error) {
-        console.error("❌ Error fetching user:", error);
+        console.log("❌ Error fetching user:", error);
         Alert.alert("Error", "Could not fetch user data.");
         navigation.navigate("Login");
       } finally {
@@ -136,7 +136,7 @@ export default function AddStudentScreen({ navigation }) {
         navigation.navigate("StudentProfile");
       }
     } catch (error) {
-      console.error("❌ Error adding student:", error);
+      console.log("❌ Error adding student:", error);
       Alert.alert(
         "Error",
         error.response?.data?.message || "Failed to add student."

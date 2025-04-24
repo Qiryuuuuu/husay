@@ -8,8 +8,10 @@ const authenticateUser = async (req, res, next) => {
     console.log("🔹 Token Received:", token);
 
     if (!token || !token.startsWith("Bearer ")) {
-      console.error("❌ Unauthorized: Token is missing or invalid.");
-      return res.status(401).json({ message: "Unauthorized: Token is missing or invalid." });
+      console.log("❌ Unauthorized: Token is missing or invalid.");
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Token is missing or invalid." });
     }
 
     token = token.split(" ")[1]; // ✅ Extract actual token
@@ -21,26 +23,30 @@ const authenticateUser = async (req, res, next) => {
 
       const user = await User.findById(decoded.id).select("-password");
       if (!user) {
-        console.error("❌ User not found for token.");
+        console.log("❌ User not found for token.");
         return res.status(404).json({ message: "User not found." });
       }
 
-      console.log("🔹 Authenticated User:", { id: user._id, employeeNo: user.employeeNo });
+      console.log("🔹 Authenticated User:", {
+        id: user._id,
+        employeeNo: user.employeeNo,
+      });
 
       req.user = { id: user._id, employeeNo: user.employeeNo };
       next();
     } catch (verifyError) {
-      console.error("❌ JWT Verification Error:", verifyError);
+      console.log("❌ JWT Verification Error:", verifyError);
       if (verifyError.name === "TokenExpiredError") {
-        return res.status(401).json({ message: "Token expired. Please log in again." });
+        return res
+          .status(401)
+          .json({ message: "Token expired. Please log in again." });
       }
       return res.status(403).json({ message: "Invalid token." });
     }
   } catch (error) {
-    console.error("❌ General Token Verification Failed:", error);
+    console.log("❌ General Token Verification Failed:", error);
     return res.status(403).json({ message: "Invalid token." });
   }
 };
-
 
 module.exports = authenticateUser;
